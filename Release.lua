@@ -1,5 +1,5 @@
 -- ==========================================
--- 👑 URIEL DEV | RIVALS (FULL EDITION)
+-- 👑 URIEL DEV | RIVALS (ULTIMATE EDITION)
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -21,13 +21,31 @@ local Theme = {
 }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "UrielDev_FullUI"
+ScreenGui.Name = "UrielDev_Ultimate"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
 -- ==========================================
--- ✨ BOTÓN FLOTANTE (PÍLDORA)
+-- ✨ PARTÍCULAS DE FONDO Y BOTÓN FLOTANTE
 -- ==========================================
+local ParticleBg = Instance.new("ImageLabel", ScreenGui)
+ParticleBg.Size = UDim2.new(1, 0, 1, 0)
+ParticleBg.BackgroundTransparency = 1
+ParticleBg.Image = "rbxassetid://243660364"
+ParticleBg.ImageTransparency = 0.7
+ParticleBg.ImageColor3 = Color3.fromRGB(150, 0, 255) 
+ParticleBg.ScaleType = Enum.ScaleType.Tile
+ParticleBg.TileSize = UDim2.new(0, 200, 0, 200)
+ParticleBg.ZIndex = 1
+
+task.spawn(function()
+    while true do
+        ParticleBg.Position = UDim2.new(0, 0, 0, 0)
+        TweenService:Create(ParticleBg, TweenInfo.new(15, Enum.EasingStyle.Linear), {Position = UDim2.new(0, 0, -1, 0)}):Play()
+        task.wait(15)
+    end
+end)
+
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 200, 0, 45)
 ToggleBtn.Position = UDim2.new(0.5, -100, 0, 20)
@@ -64,8 +82,8 @@ end)
 -- 🖥️ VENTANA PRINCIPAL
 -- ==========================================
 local MainFrame = Instance.new("CanvasGroup")
-MainFrame.Size = UDim2.new(0, 400, 0, 320)
-MainFrame.Position = UDim2.new(0.5, -200, 0.5, -160)
+MainFrame.Size = UDim2.new(0, 420, 0, 340)
+MainFrame.Position = UDim2.new(0.5, -210, 0.5, -170)
 MainFrame.BackgroundColor3 = Theme.BG
 MainFrame.BackgroundTransparency = 0.05
 MainFrame.BorderSizePixel = 0
@@ -77,7 +95,6 @@ local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Color = Theme.Accent
 MainStroke.Thickness = 1.5
 
--- CABECERA
 local Header = Instance.new("Frame", MainFrame)
 Header.Size = UDim2.new(1, 0, 0, 40)
 Header.BackgroundTransparency = 1
@@ -87,10 +104,10 @@ local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(1, -80, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "URIEL DEV"
+Title.Text = "URIEL DEV | ULTIMATE"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.FredokaOne
-Title.TextSize = 18
+Title.TextSize = 16
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.ZIndex = 10
 
@@ -106,7 +123,6 @@ CloseBtn.ZIndex = 10
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 5)
 CloseBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false ToggleBtn.Visible = true end)
 
--- Mover Ventana
 local dragging, dragStart, startPos
 Header.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -123,16 +139,15 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
--- Abrir
 ToggleBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = true; ToggleBtn.Visible = false
-    MainFrame.GroupTransparency = 1; MainFrame.Size = UDim2.new(0, 380, 0, 300)
+    MainFrame.GroupTransparency = 1; MainFrame.Size = UDim2.new(0, 400, 0, 320)
     TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
-        GroupTransparency = 0, Size = UDim2.new(0, 400, 0, 320)
+        GroupTransparency = 0, Size = UDim2.new(0, 420, 0, 340)
     }):Play()
 end)
 
--- BARRA LATERAL
+-- BARRA LATERAL Y CONTENIDO
 local Sidebar = Instance.new("Frame", MainFrame)
 Sidebar.Size = UDim2.new(0, 50, 1, -55)
 Sidebar.Position = UDim2.new(0, 10, 0, 50)
@@ -190,6 +205,7 @@ local BoxesEnabled, NamesEnabled, HealthEnabled, TracersEnabled, ChamsEnabled = 
 local AimbotEnabled, SoftLockEnabled = false, false
 local fovEnabled, calculatedRadius = false, 180
 local SpeedHack, FlyHack, Noclip = false, false, false
+local HitboxEnabled = false
 
 local function isEnemy(plr)
     if not plr or plr == LocalPlayer then return false end
@@ -234,13 +250,13 @@ for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then createDrawin
 Players.PlayerAdded:Connect(createDrawings)
 
 local activeTargetPos = nil 
+local mainGui, fovCircle, stroke, corner
 
 RunService.RenderStepped:Connect(function()
     local rainbowColor = Color3.fromHSV((tick() % 5) / 5, 1, 1)
     local currentColor = ESP_Rainbow and rainbowColor or ESP_Color
     local screenCenter = Camera.ViewportSize / 2
     
-    -- FOV Circle UI
     if not mainGui then
         mainGui = Instance.new("ScreenGui", CoreGui)
         mainGui.IgnoreGuiInset = true 
@@ -270,6 +286,17 @@ RunService.RenderStepped:Connect(function()
             local highlight = char:FindFirstChild("Highlight") or Instance.new("Highlight", char)
             
             if head and torso and humanoid then
+                -- Hitbox Expander
+                if HitboxEnabled then
+                    head.Size = Vector3.new(10, 10, 10)
+                    head.Transparency = 0.5
+                    head.CanCollide = false
+                else
+                    head.Size = Vector3.new(2, 1, 1)
+                    head.Transparency = 0
+                    head.CanCollide = true
+                end
+
                 local distFromMe = (head.Position - Camera.CFrame.Position).Magnitude
                 local headPos, onScreen = Camera:WorldToViewportPoint(head.Position)
                 local torsoPos, torsoOnScreen = Camera:WorldToViewportPoint(torso.Position)
@@ -279,25 +306,21 @@ RunService.RenderStepped:Connect(function()
                     local height = math.abs(torsoPos.Y - headPos.Y) * 1.5
                     local width = height / 2
                     
-                    -- Boxes
                     draw.Box.Visible = BoxesEnabled
                     draw.Box.Size = Vector2.new(width, height)
                     draw.Box.Position = Vector2.new(headPos.X - width/2, headPos.Y - height/4)
                     draw.Box.Color = currentColor
                     
-                    -- Names
                     draw.Name.Visible = NamesEnabled
                     draw.Name.Text = plr.Name
                     draw.Name.Position = Vector2.new(headPos.X, headPos.Y - height/2 - 16)
                     draw.Name.Color = currentColor
                     
-                    -- Tracers
                     draw.Tracer.Visible = TracersEnabled
                     draw.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, 0)
                     draw.Tracer.To = Vector2.new(torsoPos.X, torsoPos.Y)
                     draw.Tracer.Color = currentColor
 
-                    -- Health Bar
                     draw.Health.Visible = HealthEnabled
                     draw.HealthBg.Visible = HealthEnabled
                     if HealthEnabled then
@@ -312,11 +335,9 @@ RunService.RenderStepped:Connect(function()
                     draw.Tracer.Visible = false; draw.Health.Visible = false; draw.HealthBg.Visible = false
                 end
 
-                -- Chams
                 highlight.Enabled = ChamsEnabled; 
                 highlight.FillColor = currentColor
 
-                -- Aimbot Logic
                 if onScreen and distFromMe <= maxDistance then
                     if SoftLockEnabled then
                         if fovDist <= calculatedRadius and fovDist < shortestDist then
@@ -347,7 +368,6 @@ local old; old = hookmetamethod(game, "__index", newcclosure(function(self, idx)
     return old(self, idx)
 end))
 
--- Loop de movimiento (Speed y Noclip)
 RunService.Heartbeat:Connect(function()
     if LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -361,7 +381,7 @@ RunService.Heartbeat:Connect(function()
 end)
 
 -- ==========================================
--- 🧱 CREACIÓN DE OPCIONES (UI)
+-- 🧱 COMPONENTES DE LA UI (CHECKBOXES, SLIDERS, COLORES)
 -- ==========================================
 local function CreateCheckbox(parent, text, default, callback)
     local btn = Instance.new("TextButton", parent)
@@ -463,8 +483,44 @@ local function CreateSlider(parent, text, min, max, default, callback)
     end)
 end
 
+local function CreateColorPicker(parent, text, defaultColor, callback)
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(1, 0, 0, 30)
+    btn.BackgroundColor3 = Theme.Card
+    btn.BackgroundTransparency = 0.2
+    btn.Text = ""
+    btn.ZIndex = 2
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    
+    local label = Instance.new("TextLabel", btn)
+    label.Size = UDim2.new(1, -40, 1, 0)
+    label.Position = UDim2.new(0, 8, 0, 0)
+    label.Text = text
+    label.TextColor3 = Theme.Text
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.BuilderSansMedium
+    label.TextSize = 11
+    
+    local colorBox = Instance.new("Frame", btn)
+    colorBox.Size = UDim2.new(0, 16, 0, 16)
+    colorBox.Position = UDim2.new(1, -24, 0.5, -8)
+    colorBox.BackgroundColor3 = defaultColor
+    colorBox.ZIndex = 3
+    Instance.new("UICorner", colorBox).CornerRadius = UDim.new(1, 0)
+    
+    btn.MouseButton1Click:Connect(function()
+        local r = math.random(0, 255)
+        local g = math.random(0, 255)
+        local b = math.random(0, 255)
+        local newColor = Color3.fromRGB(r, g, b)
+        colorBox.BackgroundColor3 = newColor
+        if callback then callback(newColor) end
+    end)
+end
+
 -- ==========================================
--- 📑 CONSTRUCCIÓN DE LAS PESTAÑAS COMPLETAS
+-- 📑 CONSTRUCCIÓN DE LAS PESTAÑAS (MUCHAS OPCIONES)
 -- ==========================================
 -- Tab ESP
 local ESPPage = CreateTabBtn("rbxassetid://13571270194", "ESP")
@@ -474,6 +530,7 @@ CreateCheckbox(ESPPage, "Tracers (Líneas)", false, function(s) TracersEnabled =
 CreateCheckbox(ESPPage, "Names (Nombres)", false, function(s) NamesEnabled = s end)
 CreateCheckbox(ESPPage, "Health (Vida)", false, function(s) HealthEnabled = s end)
 CreateCheckbox(ESPPage, "Modo Arcoíris", false, function(s) ESP_Rainbow = s end)
+CreateColorPicker(ESPPage, "Color del ESP", ESP_Color, function(c) ESP_Color = c end)
 
 -- Tab Combat
 local CombatPage = CreateTabBtn("rbxassetid://80964454894155", "Combat")
@@ -482,6 +539,7 @@ CreateCheckbox(CombatPage, "Soft Lock (FOV)", false, function(s) SoftLockEnabled
 CreateCheckbox(CombatPage, "Mostrar FOV Circle", false, function(s) fovEnabled = s end)
 CreateSlider(CombatPage, "FOV Size", 1, 10, 3, function(v) calculatedRadius = v * 60 end)
 CreateSlider(CombatPage, "Max Distance", 100, 2000, 500, function(v) maxDistance = v end)
+CreateCheckbox(CombatPage, "Hitbox Expander (Cabeza)", false, function(s) HitboxEnabled = s end)
 
 -- Tab Player
 local PlayerPage = CreateTabBtn("rbxassetid://13492318225", "Player")
@@ -506,6 +564,22 @@ CreateCheckbox(PlayerPage, "Volar (Fly)", false, function(s)
                 bv:Destroy()
             end
         end)
+    end
+end)
+
+-- Tab Visuals / Extras
+local VisualsPage = CreateTabBtn("rbxassetid://13492318225", "Visuals")
+CreateCheckbox(VisualsPage, "Fullbright", false, function(s) 
+    Lighting.Brightness = s and 2 or 1 
+    Lighting.ClockTime = s and 14 or 12 
+    Lighting.GlobalShadows = not s 
+end)
+CreateColorPicker(VisualsPage, "Color de Partículas", Color3.fromRGB(150, 0, 255), function(c) ParticleBg.ImageColor3 = c end)
+CreateCheckbox(VisualsPage, "Quitar Texturas", false, function(s)
+    if s then
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("Texture") or v:IsA("Decal") then v:Destroy() end
+        end
     end
 end)
 
