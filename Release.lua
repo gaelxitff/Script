@@ -1,5 +1,5 @@
 -- ==========================================
--- 👑 URIEL DEV | RIVALS (ULTIMATE EDITION)
+-- 👑 URIEL DEV | MURDER MYSTERY 2 (MM2)
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -10,24 +10,24 @@ local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- SISTEMA DE IDIOMAS COMPLETO
+-- SISTEMA DE IDIOMAS
 local Language = "ES"
 local Texts = {
     ES = {
-        Title = "URIEL DEV",
-        ESP = {Chams = "Chams (Resaltar)", Boxes = "Cajas (Box)", Tracers = "Líneas (Tracers)", Names = "Nombres", Health = "Barra de Vida", Rainbow = "Modo Arcoíris", Color = "Color del ESP"},
-        Combat = {Aimbot = "Aimbot (Silent)", SoftLock = "Soft Lock (FOV)", ShowFOV = "Mostrar Círculo FOV", FOVSize = "Tamaño FOV", MaxDist = "Distancia Máxima", Hitbox = "Expandir Hitbox"},
+        Title = "URIEL DEV | MM2",
+        ESP = {RoleESP = "Role ESP (Colores)", Boxes = "Cajas (Box)", Tracers = "Líneas (Tracers)", Names = "Nombres", Health = "Barra de Vida", Rainbow = "Modo Arcoíris", Color = "Color Base"},
+        Combat = {Aimbot = "Aimbot al Murder", KillAll = "Kill All (Rango)", AutoGrab = "Auto Recoger Arma", MaxDist = "Distancia de Aimbot"},
         Player = {Speed = "Speed Hack", Noclip = "Atravesar Paredes", Fly = "Volar (Fly)", Jump = "Salto Infinito"},
-        World = {Fullbright = "Fullbright (Iluminación)", RemoveTex = "Quitar Texturas", Time = "Cambiar Hora"},
+        World = {Fullbright = "Fullbright (Iluminación)", RemoveTex = "Quitar Texturas"},
         Settings = {ParticleColor = "Color de Partículas", ParticleTrans = "Transparencia"},
         Credits = {Title = "Creado por Uriel Dev", Desc = "Gracias por usar este Hub.\nÚnete a mi comunidad para más scripts.", Btn = "Copiar Discord"}
     },
     EN = {
-        Title = "URIEL DEV",
-        ESP = {Chams = "Chams", Boxes = "Boxes", Tracers = "Tracers", Names = "Names", Health = "Health Bar", Rainbow = "Rainbow Mode", Color = "ESP Color"},
-        Combat = {Aimbot = "Aimbot (Silent)", SoftLock = "Soft Lock (FOV)", ShowFOV = "Show FOV Circle", FOVSize = "FOV Size", MaxDist = "Max Distance", Hitbox = "Hitbox Expander"},
+        Title = "URIEL DEV | MM2",
+        ESP = {RoleESP = "Role ESP (Colors)", Boxes = "Boxes", Tracers = "Tracers", Names = "Names", Health = "Health Bar", Rainbow = "Rainbow Mode", Color = "Base Color"},
+        Combat = {Aimbot = "Aimbot Murder", KillAll = "Kill All (Range)", AutoGrab = "Auto Grab Weapon", MaxDist = "Aimbot Distance"},
         Player = {Speed = "Speed Hack", Noclip = "Noclip", Fly = "Fly", Jump = "Infinite Jump"},
-        World = {Fullbright = "Fullbright", RemoveTex = "Remove Textures", Time = "Time of Day"},
+        World = {Fullbright = "Fullbright", RemoveTex = "Remove Textures"},
         Settings = {ParticleColor = "Particle Color", ParticleTrans = "Transparency"},
         Credits = {Title = "Created by Uriel Dev", Desc = "Thanks for using this Hub.\nJoin my community for more scripts.", Btn = "Copy Discord"}
     }
@@ -36,7 +36,7 @@ local Texts = {
 local Theme = { BG = Color3.fromRGB(15, 15, 20), Card = Color3.fromRGB(25, 25, 32), Border = Color3.fromRGB(50, 50, 65), Accent = Color3.fromRGB(0, 150, 255), Text = Color3.fromRGB(255, 255, 255), Muted = Color3.fromRGB(150, 150, 160), Red = Color3.fromRGB(255, 60, 60) }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "UrielDev_Ultimate"
+ScreenGui.Name = "UrielDev_MM2"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
@@ -79,7 +79,7 @@ local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 420, 0, 340)
 MainFrame.Position = UDim2.new(0.5, -210, 0.5, -170)
 MainFrame.BackgroundColor3 = Theme.BG
-MainFrame.BackgroundTransparency = 0.3 -- Transparencia para ver las partículas
+MainFrame.BackgroundTransparency = 0.3
 MainFrame.BorderSizePixel = 0
 MainFrame.Visible = false
 MainFrame.ZIndex = 10
@@ -89,7 +89,7 @@ local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Color = Theme.Accent
 MainStroke.Thickness = 1.5
 
--- PARTÍCULAS (Visibles dentro del menú)
+-- PARTÍCULAS
 local ParticleBg = Instance.new("ImageLabel", MainFrame)
 ParticleBg.Size = UDim2.new(1, 0, 1, 0)
 ParticleBg.BackgroundTransparency = 1
@@ -159,23 +159,39 @@ ToggleBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = true; ToggleBtn.Visible = false
 end)
 
--- VARIABLES DEL JUEGO
-local ESP_Color = Color3.fromRGB(0, 150, 255)
+-- ==========================================
+-- VARIABLES DEL JUEGO (MM2)
+-- ==========================================
+local ESP_Color = Color3.fromRGB(255, 255, 255)
 local ESP_Rainbow = false
 local maxDistance = 500
-local BoxesEnabled, NamesEnabled, HealthEnabled, TracersEnabled, ChamsEnabled = false, false, false, false, false
-local AimbotEnabled, SoftLockEnabled = false, false
-local fovEnabled, calculatedRadius = false, 180
+local BoxesEnabled, NamesEnabled, HealthEnabled, TracersEnabled, RoleESPEnabled = false, false, false, false, false
+local AimbotEnabled, KillAllEnabled, AutoGrabEnabled = false, false, false
 local SpeedHack, FlyHack, Noclip, InfJump = false, false, false, false
-local HitboxEnabled = false
 
-local function isEnemy(plr)
-    if not plr or plr == LocalPlayer then return false end
-    local myT = LocalPlayer:GetAttribute("TeamID")
-    local thrT = plr:GetAttribute("TeamID")
-    if myT ~= nil and thrT ~= nil then return tostring(myT) ~= tostring(thrT) end
-    if LocalPlayer.Team and plr.Team then return LocalPlayer.Team ~= plr.Team end
-    return true
+-- FUNCIÓN PARA DETECTAR ROLES EN MM2
+local function getRole(plr)
+    if not plr.Character then return "Innocent" end
+    -- Revisar manos
+    for _, t in pairs(plr.Character:GetChildren()) do
+        if t:IsA("Tool") then
+            local n = t.Name:lower()
+            if n:find("knife") then return "Murderer" end
+            if n:find("gun") or n:find("revolver") then return "Sheriff" end
+        end
+    end
+    -- Revisar mochila
+    local bp = plr:FindFirstChild("Backpack")
+    if bp then
+        for _, t in pairs(bp:GetChildren()) do
+            if t:IsA("Tool") then
+                local n = t.Name:lower()
+                if n:find("knife") then return "Murderer" end
+                if n:find("gun") or n:find("revolver") then return "Sheriff" end
+            end
+        end
+    end
+    return "Innocent"
 end
 
 local function getValidHead(char)
@@ -210,50 +226,34 @@ for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then createDrawin
 Players.PlayerAdded:Connect(createDrawings)
 
 local activeTargetPos = nil 
-local mainGui, fovCircle, stroke, corner
 
 RunService.RenderStepped:Connect(function()
     local rainbowColor = Color3.fromHSV((tick() % 5) / 5, 1, 1)
-    local currentColor = ESP_Rainbow and rainbowColor or ESP_Color
     local screenCenter = Camera.ViewportSize / 2
     
-    if not mainGui then
-        mainGui = Instance.new("ScreenGui", CoreGui)
-        mainGui.IgnoreGuiInset = true 
-        fovCircle = Instance.new("Frame", mainGui)
-        stroke = Instance.new("UIStroke", fovCircle)
-        corner = Instance.new("UICorner", fovCircle)
-        fovCircle.AnchorPoint = Vector2.new(0.5, 0.5); fovCircle.Position = UDim2.new(0.5, 0, 0.5, 0)
-        fovCircle.BackgroundTransparency = 1; stroke.Thickness = 2; corner.CornerRadius = UDim.new(1, 0)
-    end
-    
-    fovCircle.Visible = fovEnabled
-    if fovEnabled then
-        fovCircle.Size = UDim2.new(0, calculatedRadius * 2, 0, calculatedRadius * 2)
-        stroke.Color = currentColor
-    end
-
     local bestHead = nil
     local shortestDist = 9e9
 
     for _, plr in pairs(Players:GetPlayers()) do
         local draw = Drawings[plr]
         local char = plr.Character
-        if char and isEnemy(plr) and draw then
+        if char and plr ~= LocalPlayer and draw then
             local head = char:FindFirstChild("Head")
             local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("HumanoidRootPart")
             local humanoid = char:FindFirstChildOfClass("Humanoid")
             local highlight = char:FindFirstChild("Highlight") or Instance.new("Highlight", char)
             
-            if head and torso and humanoid then
-                if HitboxEnabled then
-                    head.Size = Vector3.new(10, 10, 10)
-                    head.Transparency = 0.5
-                    head.CanCollide = false
-                else
-                    head.Size = Vector3.new(2, 1, 1)
-                    head.Transparency = 0
-                    head.CanCollide = true
+            if head and torso and humanoid and humanoid.Health > 0 then
+                local role = getRole(plr)
+                
+                -- COLORES POR ROL
+                local roleColor = ESP_Color
+                if RoleESPEnabled then
+                    if role == "Murderer" then roleColor = Color3.fromRGB(255, 0, 0)
+                    elseif role == "Sheriff" then roleColor = Color3.fromRGB(0, 150, 255)
+                    else roleColor = Color3.fromRGB(0, 0, 0) end
+                elseif ESP_Rainbow then
+                    roleColor = rainbowColor
                 end
 
                 local distFromMe = (head.Position - Camera.CFrame.Position).Magnitude
@@ -268,17 +268,17 @@ RunService.RenderStepped:Connect(function()
                     draw.Box.Visible = BoxesEnabled
                     draw.Box.Size = Vector2.new(width, height)
                     draw.Box.Position = Vector2.new(headPos.X - width/2, headPos.Y - height/4)
-                    draw.Box.Color = currentColor
+                    draw.Box.Color = roleColor
                     
                     draw.Name.Visible = NamesEnabled
-                    draw.Name.Text = plr.Name
+                    draw.Name.Text = plr.Name .. " [" .. role .. "]"
                     draw.Name.Position = Vector2.new(headPos.X, headPos.Y - height/2 - 16)
-                    draw.Name.Color = currentColor
+                    draw.Name.Color = roleColor
                     
                     draw.Tracer.Visible = TracersEnabled
                     draw.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, 0)
                     draw.Tracer.To = Vector2.new(torsoPos.X, torsoPos.Y)
-                    draw.Tracer.Color = currentColor
+                    draw.Tracer.Color = roleColor
 
                     draw.Health.Visible = HealthEnabled
                     draw.HealthBg.Visible = HealthEnabled
@@ -294,20 +294,16 @@ RunService.RenderStepped:Connect(function()
                     draw.Tracer.Visible = false; draw.Health.Visible = false; draw.HealthBg.Visible = false
                 end
 
-                highlight.Enabled = ChamsEnabled; 
-                highlight.FillColor = currentColor
+                -- CHAMS
+                highlight.Enabled = (RoleESPEnabled or ESP_Rainbow)
+                highlight.FillColor = roleColor
+                highlight.FillTransparency = 0.5
 
-                if onScreen and distFromMe <= maxDistance then
-                    if SoftLockEnabled then
-                        if fovDist <= calculatedRadius and fovDist < shortestDist then
-                            local valid = getValidHead(char)
-                            if valid then shortestDist = fovDist; bestHead = valid end
-                        end
-                    elseif AimbotEnabled then
-                        if fovDist < shortestDist then
-                            local valid = getValidHead(char)
-                            if valid then shortestDist = fovDist; bestHead = valid end
-                        end
+                -- AIMBOT (SOLO AL MURDER)
+                if AimbotEnabled and role == "Murderer" and onScreen and distFromMe <= maxDistance then
+                    if fovDist < shortestDist then
+                        local valid = getValidHead(char)
+                        if valid then shortestDist = fovDist; bestHead = valid end
                     end
                 end
             end
@@ -319,13 +315,67 @@ RunService.RenderStepped:Connect(function()
     activeTargetPos = bestHead and bestHead.Position or nil
 end)
 
+-- SILENT AIM HOOK
 local old; old = hookmetamethod(game, "__index", newcclosure(function(self, idx)
-    if (AimbotEnabled or SoftLockEnabled) and activeTargetPos and not checkcaller() and idx == "ViewportSize" and self == Camera then
+    if AimbotEnabled and activeTargetPos and not checkcaller() and idx == "ViewportSize" and self == Camera then
         local pos, on = Camera:WorldToViewportPoint(activeTargetPos)
         if on then return Vector2.new(pos.X * 2, pos.Y * 2) end
     end
     return old(self, idx)
 end))
+
+-- KILL ALL Y AUTO GRAB (LOOP LENTO)
+task.spawn(function()
+    while task.wait(0.1) do
+        if LocalPlayer.Character then
+            -- Auto Grab
+            if AutoGrabEnabled then
+                local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if myRoot then
+                    for _, obj in ipairs(workspace:GetDescendants()) do
+                        if obj:IsA("Tool") and (obj.Name:lower():find("knife") or obj.Name:lower():find("gun") or obj.Name:lower():find("revolver")) then
+                            local handle = obj:FindFirstChild("Handle")
+                            if handle and (handle.Position - myRoot.Position).Magnitude <= 15 then
+                                pcall(function()
+                                    if firetouchinterest then
+                                        firetouchinterest(handle, myRoot, 0)
+                                        firetouchinterest(handle, myRoot, 1)
+                                    end
+                                end)
+                            end
+                        end
+                    end
+                end
+            end
+
+            -- Kill All
+            if KillAllEnabled then
+                local knife = LocalPlayer.Character:FindFirstChild("Knife")
+                if knife then
+                    for _, plr in pairs(Players:GetPlayers()) do
+                        if plr ~= LocalPlayer and plr.Character and getRole(plr) ~= "Murderer" then
+                            local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                            local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                            if hrp and myRoot and (hrp.Position - myRoot.Position).Magnitude <= 20 then
+                                pcall(function() knife:Activate() end)
+                                for _, part in pairs(plr.Character:GetDescendants()) do
+                                    if part:IsA("BasePart") then
+                                        pcall(function()
+                                            if firetouchinterest then
+                                                firetouchinterest(part, part, 0)
+                                                firetouchinterest(part, part, 1)
+                                            end
+                                        end)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
 
 -- INFINITE JUMP & MOVEMENT
 UIS.JumpRequest:Connect(function()
@@ -540,7 +590,7 @@ local function BuildMenu()
 
     -- ESP
     local ESPPage = CreateTabBtn("rbxassetid://13571270194", "ESP")
-    CreateCheckbox(ESPPage, Texts[Language].ESP.Chams, false, function(s) ChamsEnabled = s end)
+    CreateCheckbox(ESPPage, Texts[Language].ESP.RoleESP, false, function(s) RoleESPEnabled = s end)
     CreateCheckbox(ESPPage, Texts[Language].ESP.Boxes, false, function(s) BoxesEnabled = s end)
     CreateCheckbox(ESPPage, Texts[Language].ESP.Tracers, false, function(s) TracersEnabled = s end)
     CreateCheckbox(ESPPage, Texts[Language].ESP.Names, false, function(s) NamesEnabled = s end)
@@ -551,11 +601,9 @@ local function BuildMenu()
     -- COMBAT
     local CombatPage = CreateTabBtn("rbxassetid://80964454894155", "Combat")
     CreateCheckbox(CombatPage, Texts[Language].Combat.Aimbot, false, function(s) AimbotEnabled = s end)
-    CreateCheckbox(CombatPage, Texts[Language].Combat.SoftLock, false, function(s) SoftLockEnabled = s end)
-    CreateCheckbox(CombatPage, Texts[Language].Combat.ShowFOV, false, function(s) fovEnabled = s end)
-    CreateSlider(CombatPage, Texts[Language].Combat.FOVSize, 1, 10, 3, function(v) calculatedRadius = v * 60 end)
+    CreateCheckbox(CombatPage, Texts[Language].Combat.KillAll, false, function(s) KillAllEnabled = s end)
+    CreateCheckbox(CombatPage, Texts[Language].Combat.AutoGrab, false, function(s) AutoGrabEnabled = s end)
     CreateSlider(CombatPage, Texts[Language].Combat.MaxDist, 100, 2000, 500, function(v) maxDistance = v end)
-    CreateCheckbox(CombatPage, Texts[Language].Combat.Hitbox, false, function(s) HitboxEnabled = s end)
 
     -- PLAYER
     local PlayerPage = CreateTabBtn("rbxassetid://13492318225", "Player")
@@ -595,8 +643,7 @@ local function BuildMenu()
         if s then
             for _, v in pairs(workspace:GetDescendants()) do
                 if v:IsA("Texture") or v:IsA("Decal") then v:Destroy() end
-            end
-        end
+            end        end
     end)
 
     -- SETTINGS
