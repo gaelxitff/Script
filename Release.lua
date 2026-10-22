@@ -1,4 +1,4 @@
--- SANCHO STAR HUB - V15 (PROFESSIONAL EDITION)
+-- SANCHO STAR HUB - V16 (PREMIUM EDITION & TRANSLATION)
 -- Optimizado para Delta Executor / Celular
 
 local TweenService = game:GetService("TweenService")
@@ -10,10 +10,59 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- ==========================================
--- 🟢 TUS IMÁGENES CONFIGURADAS
+-- 🟢 TUS IMÁGENES (RECUERDA RENOMBRARLAS EN GITHUB A fondo.jpg y logo.jpg)
 -- ==========================================
 local ImgFondo = "https://raw.githubusercontent.com/gaelxitff/Script/main/e82ccb62d42683c1758df82a1b43c6ca.jpg"
 local ImgLogo = "https://raw.githubusercontent.com/gaelxitff/Script/main/15ea3b2984d4d74634226262852641b8.jpg"
+
+-- ==========================================
+-- 🌎 SISTEMA DE IDIOMAS
+-- ==========================================
+local Language = "ES" -- Por defecto Español
+local Texts = {
+    ES = {
+        Title = "SANCHO STAR",
+        LanguageSelect = "Selecciona tu Idioma",
+        VisualTab = "Visual (ESP)",
+        CombatTab = "Combate",
+        PlayerTab = "Jugador",
+        SettingsTab = "Ajustes",
+        Boxes = "Cajas (Box)",
+        Chams = "Pintar Cuerpo (Chams)",
+        Tracers = "Líneas (Tracers)",
+        Names = "Nombres",
+        Health = "Barra de Vida",
+        EnemyRed = "Enemigos de Color Rojo",
+        Aimbot = "Aimbot Suave",
+        SilentAim = "Silent Aim",
+        AutoShoot = "Disparo Automático",
+        Fly = "Volar (Fly)",
+        Speed = "Velocidad (Speed)",
+        InfJump = "Salto Infinito",
+        Unload = "Desactivar Script"
+    },
+    EN = {
+        Title = "SANCHO STAR",
+        LanguageSelect = "Select your Language",
+        VisualTab = "Visual (ESP)",
+        CombatTab = "Combat",
+        PlayerTab = "Player",
+        SettingsTab = "Settings",
+        Boxes = "Boxes",
+        Chams = "Chams (Highlight)",
+        Tracers = "Tracers",
+        Names = "Names",
+        Health = "Health Bar",
+        EnemyRed = "Red Enemy ESP",
+        Aimbot = "Smooth Aimbot",
+        SilentAim = "Silent Aim",
+        AutoShoot = "Auto Shoot",
+        Fly = "Fly",
+        Speed = "Speed Hack",
+        InfJump = "Infinite Jump",
+        Unload = "Unload Script"
+    }
+}
 
 local Theme = {
     BG = Color3.fromRGB(15, 15, 20),
@@ -31,7 +80,46 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
 -- ==========================================
--- 1. BOTÓN FLOTANTE (LOGO PARA ABRIR)
+-- 1. MENÚ DE SELECCIÓN DE IDIOMA
+-- ==========================================
+local LangFrame = Instance.new("Frame")
+LangFrame.Size = UDim2.new(0, 250, 0, 150)
+LangFrame.Position = UDim2.new(0.5, -125, 0.5, -75)
+LangFrame.BackgroundColor3 = Theme.BG
+LangFrame.Parent = ScreenGui
+Instance.new("UICorner", LangFrame).CornerRadius = UDim.new(0, 10)
+local LangStroke = Instance.new("UIStroke", LangFrame)
+LangStroke.Color = Theme.Accent
+
+local LangTitle = Instance.new("TextLabel", LangFrame)
+LangTitle.Size = UDim2.new(1, 0, 0, 40)
+LangTitle.BackgroundTransparency = 1
+LangTitle.Text = "Select Language / Selecciona Idioma"
+LangTitle.TextColor3 = Theme.Text
+LangTitle.Font = Enum.Font.BuilderSansBold
+LangTitle.TextSize = 12
+LangTitle.Parent = LangFrame
+
+local BtnES = Instance.new("TextButton", LangFrame)
+BtnES.Size = UDim2.new(0.4, 0, 0, 35)
+BtnES.Position = UDim2.new(0.05, 0, 0, 60)
+BtnES.BackgroundColor3 = Theme.Card
+BtnES.Text = "Español"
+BtnES.TextColor3 = Theme.Text
+BtnES.Font = Enum.Font.BuilderSansBold
+Instance.new("UICorner", BtnES).CornerRadius = UDim.new(0, 6)
+
+local BtnEN = Instance.new("TextButton", LangFrame)
+BtnEN.Size = UDim2.new(0.4, 0, 0, 35)
+BtnEN.Position = UDim2.new(0.55, 0, 0, 60)
+BtnEN.BackgroundColor3 = Theme.Card
+BtnEN.Text = "English"
+BtnEN.TextColor3 = Theme.Text
+BtnEN.Font = Enum.Font.BuilderSansBold
+Instance.new("UICorner", BtnEN).CornerRadius = UDim.new(0, 6)
+
+-- ==========================================
+-- 2. BOTÓN FLOTANTE (LOGO)
 -- ==========================================
 local FloatLogo = Instance.new("ImageButton")
 FloatLogo.Size = UDim2.new(0, 55, 0, 55)
@@ -39,14 +127,13 @@ FloatLogo.Position = UDim2.new(0, 20, 0.5, -27)
 FloatLogo.BackgroundColor3 = Theme.BG
 FloatLogo.Image = ImgLogo
 FloatLogo.ZIndex = 100
-FloatLogo.Visible = true
+FloatLogo.Visible = false
 FloatLogo.Parent = ScreenGui
 Instance.new("UICorner", FloatLogo).CornerRadius = UDim.new(1, 0)
 local fStroke = Instance.new("UIStroke", FloatLogo)
 fStroke.Color = Theme.Accent
 fStroke.Thickness = 2
 
--- Arrastrar el logo flotante
 local dragLogo, startLogo, posLogo
 FloatLogo.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -66,11 +153,11 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 -- ==========================================
--- 2. VENTANA PRINCIPAL (TAMAÑO CELULAR)
+-- 3. VENTANA PRINCIPAL
 -- ==========================================
 local MainFrame = Instance.new("CanvasGroup")
-MainFrame.Size = UDim2.new(0, 340, 0, 280)
-MainFrame.Position = UDim2.new(0.5, -170, 0.5, -140)
+MainFrame.Size = UDim2.new(0, 360, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -180, 0.5, -150)
 MainFrame.BackgroundColor3 = Theme.BG
 MainFrame.BackgroundTransparency = 0.05
 MainFrame.BorderSizePixel = 0
@@ -82,19 +169,18 @@ local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Color = Theme.Accent
 MainStroke.Thickness = 1.5
 
--- FONDO PERSONALIZADO (URIEL)
 local BgImage = Instance.new("ImageLabel", MainFrame)
 BgImage.Size = UDim2.new(1, 0, 1, 0)
 BgImage.BackgroundTransparency = 1
 BgImage.Image = ImgFondo
-BgImage.ImageTransparency = 0.6 -- Transparencia para que se lea el menú
+BgImage.ImageTransparency = 0.6
 BgImage.ScaleType = Enum.ScaleType.Crop
 BgImage.ZIndex = 0
 Instance.new("UICorner", BgImage).CornerRadius = UDim.new(0, 10)
 
 -- HEADER
 local Header = Instance.new("Frame", MainFrame)
-Header.Size = UDim2.new(1, 0, 0, 35)
+Header.Size = UDim2.new(1, 0, 0, 40)
 Header.BackgroundTransparency = 1
 Header.ZIndex = 10
 
@@ -105,11 +191,10 @@ Title.BackgroundTransparency = 1
 Title.Text = "SANCHO STAR"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.FredokaOne
-Title.TextSize = 16
+Title.TextSize = 18
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.ZIndex = 10
 
--- MINIMIZAR
 local MinBtn = Instance.new("TextButton", Header)
 MinBtn.Size = UDim2.new(0, 24, 0, 24)
 MinBtn.Position = UDim2.new(1, -60, 0.5, -12)
@@ -117,12 +202,10 @@ MinBtn.BackgroundColor3 = Theme.Card
 MinBtn.Text = "—"
 MinBtn.TextColor3 = Theme.Text
 MinBtn.Font = Enum.Font.GothamBold
-MinBtn.TextSize = 12
 MinBtn.ZIndex = 10
 Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 5)
 MinBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false FloatLogo.Visible = true end)
 
--- CERRAR
 local CloseBtn = Instance.new("TextButton", Header)
 CloseBtn.Size = UDim2.new(0, 24, 0, 24)
 CloseBtn.Position = UDim2.new(1, -30, 0.5, -12)
@@ -135,19 +218,16 @@ CloseBtn.ZIndex = 10
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 5)
 CloseBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false FloatLogo.Visible = true end)
 
--- ABRIR MENÚ CON EL LOGO
 FloatLogo.MouseButton1Click:Connect(function()
     MainFrame.Visible = true
     FloatLogo.Visible = false
-    -- Animación de apertura
     MainFrame.GroupTransparency = 1
-    MainFrame.Size = UDim2.new(0, 320, 0, 260)
+    MainFrame.Size = UDim2.new(0, 340, 0, 280)
     TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
-        GroupTransparency = 0, Size = UDim2.new(0, 340, 0, 280)
+        GroupTransparency = 0, Size = UDim2.new(0, 360, 0, 300)
     }):Play()
 end)
 
--- ARRASTRAR VENTANA
 local dragging, dragStart, startPos
 Header.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -166,20 +246,18 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- ==========================================
--- 3. BARRA LATERAL (TABS) Y CONTENIDO
--- ==========================================
+-- BARRA LATERAL
 local Sidebar = Instance.new("Frame", MainFrame)
-Sidebar.Size = UDim2.new(0, 45, 1, -50)
-Sidebar.Position = UDim2.new(0, 10, 0, 45)
+Sidebar.Size = UDim2.new(0, 50, 1, -55)
+Sidebar.Position = UDim2.new(0, 10, 0, 50)
 Sidebar.BackgroundColor3 = Theme.Sidebar
 Sidebar.BackgroundTransparency = 0.2
 Sidebar.ZIndex = 2
 Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 8)
 
 local ContentHost = Instance.new("Frame", MainFrame)
-ContentHost.Size = UDim2.new(1, -75, 1, -50)
-ContentHost.Position = UDim2.new(0, 65, 0, 45)
+ContentHost.Size = UDim2.new(1, -85, 1, -55)
+ContentHost.Position = UDim2.new(0, 75, 0, 50)
 ContentHost.BackgroundTransparency = 1
 ContentHost.ZIndex = 2
 
@@ -204,24 +282,25 @@ end
 
 local function CreateTabButton(iconId, pageName)
     local btn = Instance.new("ImageButton", Sidebar)
-    btn.Size = UDim2.new(0, 30, 0, 30)
-    btn.Position = UDim2.new(0, 7.5, 0, 7.5 + (#Sidebar:GetChildren() * 38))
+    btn.Size = UDim2.new(0, 32, 0, 32)
+    btn.Position = UDim2.new(0, 9, 0, 9 + (#Sidebar:GetChildren() * 40))
     btn.BackgroundColor3 = Theme.Card
     btn.BackgroundTransparency = 0.5
     btn.Image = iconId
     btn.ImageColor3 = Theme.Accent
     btn.ZIndex = 2
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
     btn.MouseButton1Click:Connect(function() SwitchPage(pageName) end)
     return CreatePage(pageName)
 end
 
 -- ==========================================
--- 4. LÓGICA DEL JUEGO (ARSENAL)
+-- 4. LÓGICA DEL JUEGO (CON ENEMIGOS ROJOS)
 -- ==========================================
 local ESP_Boxes = false
 local ESP_Chams = false
 local ESP_Tracers = false
+local ESP_RedEnemies = false
 local Aimbot_Enabled = false
 local AimSmoothness = 0.15
 
@@ -246,7 +325,8 @@ task.spawn(function()
                         h.Adornee = p.Character
                         h.Parent = p.Character
                     end
-                    h.FillColor = Theme.Accent
+                    -- Color Rojo si está activado, si no Azul
+                    h.FillColor = ESP_RedEnemies and Color3.fromRGB(255, 0, 0) or Theme.Accent
                     h.FillTransparency = 0.5
                 else
                     if h then h:Destroy() end
@@ -276,19 +356,23 @@ RunService.RenderStepped:Connect(function()
             local hrpPos, onScreen2 = Camera:WorldToViewportPoint(hrp.Position - Vector3.new(0, 3, 0))
             
             if onScreen and onScreen2 then
+                local currentColor = ESP_RedEnemies and Color3.fromRGB(255, 0, 0) or Theme.Accent
+                
                 if ESP_Boxes then
                     local height = math.abs(hrpPos.Y - headPos.Y)
                     local width = height / 2
                     draw.Box.Size = Vector2.new(width, height)
                     draw.Box.Position = Vector2.new(headPos.X - width/2, headPos.Y)
+                    draw.Box.Color = currentColor
                     draw.Box.Visible = true
                 else
                     draw.Box.Visible = false
                 end
                 
                 if ESP_Tracers then
-                    draw.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, 0) -- Desde arriba hacia el jugador
+                    draw.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, 0)
                     draw.Tracer.To = Vector2.new(hrpPos.X, hrpPos.Y)
+                    draw.Tracer.Color = currentColor
                     draw.Tracer.Visible = true
                 else
                     draw.Tracer.Visible = false
@@ -339,11 +423,11 @@ local function ToggleFly(state)
 end
 
 -- ==========================================
--- 5. COMPONENTES VISUALES (CHECKBOXES)
+-- 5. COMPONENTES (CHECKBOXES)
 -- ==========================================
-local function CreateCheckbox(parent, text, callback)
+local function CreateCheckbox(parent, textKey, callback)
     local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1, 0, 0, 30)
+    btn.Size = UDim2.new(1, 0, 0, 32)
     btn.BackgroundColor3 = Theme.Card
     btn.BackgroundTransparency = 0.2
     btn.Text = ""
@@ -371,7 +455,7 @@ local function CreateCheckbox(parent, text, callback)
     local label = Instance.new("TextLabel", btn)
     label.Size = UDim2.new(1, -40, 1, 0)
     label.Position = UDim2.new(0, 32, 0, 0)
-    label.Text = text
+    label.Text = Texts[Language][textKey] -- Traducción dinámica
     label.TextColor3 = Theme.Text
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.BackgroundTransparency = 1
@@ -390,30 +474,54 @@ local function CreateCheckbox(parent, text, callback)
 end
 
 -- ==========================================
--- 6. CONSTRUIR PESTAÑAS Y OPCIONES
+-- 6. CONSTRUCCIÓN DEL MENÚ
 -- ==========================================
--- Pestaña Visual (ESP)
-local VisualPage = CreateTabButton("rbxassetid://13571270194", "Visual")
-CreateCheckbox(VisualPage, "Boxes (Cajas)", function(s) ESP_Boxes = s end)
-CreateCheckbox(VisualPage, "Chams (Pintar Cuerpo)", function(s) ESP_Chams = s end)
-CreateCheckbox(VisualPage, "Tracers (Líneas arriba)", function(s) ESP_Tracers = s end)
-CreateCheckbox(VisualPage, "Names (Nombres)", function(s) print("Names:", s) end)
-CreateCheckbox(VisualPage, "Health (Vida)", function(s) print("Health:", s) end)
+local function BuildMenu()
+    -- Visual Page
+    local VisualPage = CreateTabButton("rbxassetid://13571270194", "Visual")
+    CreateCheckbox(VisualPage, "Boxes", function(s) ESP_Boxes = s end)
+    CreateCheckbox(VisualPage, "Chams", function(s) ESP_Chams = s end)
+    CreateCheckbox(VisualPage, "Tracers", function(s) ESP_Tracers = s end)
+    CreateCheckbox(VisualPage, "EnemyRed", function(s) ESP_RedEnemies = s end)
 
--- Pestaña Combat (Aimbot)
-local CombatPage = CreateTabButton("rbxassetid://80964454894155", "Combat")
-CreateCheckbox(CombatPage, "Aimbot Suave", function(s) Aimbot_Enabled = s; UpdateAimbot() end)
-CreateCheckbox(CombatPage, "Silent Aim", function(s) print("Silent Aim:", s) end)
-CreateCheckbox(CombatPage, "Auto Shoot", function(s) print("Auto Shoot:", s) end)
+    -- Combat Page
+    local CombatPage = CreateTabButton("rbxassetid://80964454894155", "Combat")
+    CreateCheckbox(CombatPage, "Aimbot", function(s) Aimbot_Enabled = s; UpdateAimbot() end)
+    CreateCheckbox(CombatPage, "SilentAim", function(s) print("Silent Aim:", s) end)
+    CreateCheckbox(CombatPage, "AutoShoot", function(s) print("Auto Shoot:", s) end)
 
--- Pestaña Player (Movimiento)
-local PlayerPage = CreateTabButton("rbxassetid://13492318225", "Player")
-CreateCheckbox(PlayerPage, "Volar (Fly)", function(s) ToggleFly(s) end)
-CreateCheckbox(PlayerPage, "Speed Hack", function(s) 
-    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-    if hum then hum.WalkSpeed = s and 50 or 16 end
+    -- Player Page
+    local PlayerPage = CreateTabButton("rbxassetid://13492318225", "Player")
+    CreateCheckbox(PlayerPage, "Fly", function(s) ToggleFly(s) end)
+    CreateCheckbox(PlayerPage, "Speed", function(s) 
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.WalkSpeed = s and 50 or 16 end
+    end)
+    CreateCheckbox(PlayerPage, "InfJump", function(s) 
+        if s then
+            UserInputService.JumpRequest:Connect(function()
+                local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+                if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+            end)
+        end
+    end)
+
+    SwitchPage("Visual")
+end
+
+-- ==========================================
+-- 7. SELECCIÓN DE IDIOMA
+-- ==========================================
+BtnES.MouseButton1Click:Connect(function()
+    Language = "ES"
+    LangFrame:Destroy()
+    FloatLogo.Visible = true
+    BuildMenu()
 end)
-CreateCheckbox(PlayerPage, "Infinite Jump", function(s) print("Jump:", s) end)
 
--- INICIAR EN LA PÁGINA VISUAL
-SwitchPage("Visual")
+BtnEN.MouseButton1Click:Connect(function()
+    Language = "EN"
+    LangFrame:Destroy()
+    FloatLogo.Visible = true
+    BuildMenu()
+end)
