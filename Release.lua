@@ -1,5 +1,5 @@
 -- ==========================================
--- 👑 URIEL DEV | RIVALS (CUSTOM UI)
+-- 👑 URIEL DEV | RIVALS (FULL EDITION)
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -10,9 +10,6 @@ local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- ==========================================
--- 🎨 DISEÑO Y COLORES
--- ==========================================
 local Theme = {
     BG = Color3.fromRGB(15, 15, 20),
     Card = Color3.fromRGB(25, 25, 32),
@@ -24,12 +21,12 @@ local Theme = {
 }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "UrielDev_UI"
+ScreenGui.Name = "UrielDev_FullUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
 -- ==========================================
--- ✨ BOTÓN FLOTANTE (ESTILO PÍLDORA)
+-- ✨ BOTÓN FLOTANTE (PÍLDORA)
 -- ==========================================
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 200, 0, 45)
@@ -46,13 +43,11 @@ local TStroke = Instance.new("UIStroke", ToggleBtn)
 TStroke.Color = Theme.Accent
 TStroke.Thickness = 2
 
--- SISTEMA PARA MOVER EL BOTÓN
+-- Mover Botón
 local dragToggle, startToggle, posToggle
 ToggleBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragToggle = true
-        startToggle = input.Position
-        posToggle = ToggleBtn.Position
+        dragToggle = true; startToggle = input.Position; posToggle = ToggleBtn.Position
     end
 end)
 UIS.InputEnded:Connect(function(input)
@@ -69,8 +64,8 @@ end)
 -- 🖥️ VENTANA PRINCIPAL
 -- ==========================================
 local MainFrame = Instance.new("CanvasGroup")
-MainFrame.Size = UDim2.new(0, 380, 0, 300)
-MainFrame.Position = UDim2.new(0.5, -190, 0.5, -150)
+MainFrame.Size = UDim2.new(0, 400, 0, 320)
+MainFrame.Position = UDim2.new(0.5, -200, 0.5, -160)
 MainFrame.BackgroundColor3 = Theme.BG
 MainFrame.BackgroundTransparency = 0.05
 MainFrame.BorderSizePixel = 0
@@ -111,13 +106,11 @@ CloseBtn.ZIndex = 10
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 5)
 CloseBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false ToggleBtn.Visible = true end)
 
--- MOVER LA VENTANA
+-- Mover Ventana
 local dragging, dragStart, startPos
 Header.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = MainFrame.Position
+        dragging = true; dragStart = input.Position; startPos = MainFrame.Position
     end
 end)
 UIS.InputEnded:Connect(function(input)
@@ -130,18 +123,16 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
--- ABRIR MENÚ AL TOCAR EL BOTÓN
+-- Abrir
 ToggleBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = true
-    ToggleBtn.Visible = false
-    MainFrame.GroupTransparency = 1
-    MainFrame.Size = UDim2.new(0, 360, 0, 280)
+    MainFrame.Visible = true; ToggleBtn.Visible = false
+    MainFrame.GroupTransparency = 1; MainFrame.Size = UDim2.new(0, 380, 0, 300)
     TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
-        GroupTransparency = 0, Size = UDim2.new(0, 380, 0, 300)
+        GroupTransparency = 0, Size = UDim2.new(0, 400, 0, 320)
     }):Play()
 end)
 
--- BARRA LATERAL (TABS)
+-- BARRA LATERAL
 local Sidebar = Instance.new("Frame", MainFrame)
 Sidebar.Size = UDim2.new(0, 50, 1, -55)
 Sidebar.Position = UDim2.new(0, 10, 0, 50)
@@ -166,7 +157,7 @@ local function CreatePage(name)
     page.Visible = false
     page.ZIndex = 2
     local layout = Instance.new("UIListLayout", page)
-    layout.Padding = UDim.new(0, 6)
+    layout.Padding = UDim.new(0, 5)
     Pages[name] = page
     return page
 end
@@ -190,11 +181,15 @@ local function CreateTabBtn(iconId, pageName)
 end
 
 -- ==========================================
--- ⚙️ LÓGICA DEL JUEGO (RIVALS)
+-- ⚙️ VARIABLES DEL JUEGO
 -- ==========================================
 local ESP_Color = Color3.fromRGB(0, 150, 255)
 local ESP_Rainbow = false
 local maxDistance = 500
+local BoxesEnabled, NamesEnabled, HealthEnabled, TracersEnabled, ChamsEnabled = false, false, false, false, false
+local AimbotEnabled, SoftLockEnabled = false, false
+local fovEnabled, calculatedRadius = false, 180
+local SpeedHack, FlyHack, Noclip = false, false, false
 
 local function isEnemy(plr)
     if not plr or plr == LocalPlayer then return false end
@@ -215,55 +210,120 @@ local function getValidHead(char)
     return (result == nil or result.Instance:IsDescendantOf(char)) and head or nil
 end
 
--- ESP Y TRACERS
-local tracers = {}
-local function createTracer(plr)
-    local l = Drawing.new("Line")
-    l.Thickness = 1.5; l.Transparency = 1; l.Visible = false; tracers[plr] = l
+-- ==========================================
+-- 🔥 DIBUJOS Y MOTOR PRINCIPAL
+-- ==========================================
+local Drawings = {}
+local function CreateDrawing(class, props)
+    if not Drawing then return nil end
+    local obj = Drawing.new(class)
+    for k, v in pairs(props) do obj[k] = v end
+    return obj
 end
-for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then createTracer(p) end end
-Players.PlayerAdded:Connect(createTracer)
+
+local function createDrawings(plr)
+    Drawings[plr] = {
+        Box = CreateDrawing("Square", {Thickness = 1, Color = Theme.Accent, Filled = false, Visible = false}),
+        Tracer = CreateDrawing("Line", {Thickness = 1.5, Color = Theme.Accent, Visible = false}),
+        Name = CreateDrawing("Text", {Size = 14, Center = true, Outline = true, Visible = false}),
+        HealthBg = CreateDrawing("Square", {Filled = true, Color = Color3.new(0,0,0), Visible = false}),
+        Health = CreateDrawing("Square", {Filled = true, Color = Color3.fromRGB(0, 255, 0), Visible = false})
+    }
+end
+for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then createDrawings(p) end end
+Players.PlayerAdded:Connect(createDrawings)
 
 local activeTargetPos = nil 
-local ESP_Enabled = false
-local Tracers_Enabled = false
-local SilentAim_Enabled = false
 
 RunService.RenderStepped:Connect(function()
     local rainbowColor = Color3.fromHSV((tick() % 5) / 5, 1, 1)
     local currentColor = ESP_Rainbow and rainbowColor or ESP_Color
     local screenCenter = Camera.ViewportSize / 2
+    
+    -- FOV Circle UI
+    if not mainGui then
+        mainGui = Instance.new("ScreenGui", CoreGui)
+        mainGui.IgnoreGuiInset = true 
+        fovCircle = Instance.new("Frame", mainGui)
+        stroke = Instance.new("UIStroke", fovCircle)
+        corner = Instance.new("UICorner", fovCircle)
+        fovCircle.AnchorPoint = Vector2.new(0.5, 0.5); fovCircle.Position = UDim2.new(0.5, 0, 0.5, 0)
+        fovCircle.BackgroundTransparency = 1; stroke.Thickness = 2; corner.CornerRadius = UDim.new(1, 0)
+    end
+    
+    fovCircle.Visible = fovEnabled
+    if fovEnabled then
+        fovCircle.Size = UDim2.new(0, calculatedRadius * 2, 0, calculatedRadius * 2)
+        stroke.Color = currentColor
+    end
+
     local bestHead = nil
     local shortestDist = 9e9
 
     for _, plr in pairs(Players:GetPlayers()) do
-        local tracer = tracers[plr]
+        local draw = Drawings[plr]
         local char = plr.Character
-        if char and isEnemy(plr) then
+        if char and isEnemy(plr) and draw then
             local head = char:FindFirstChild("Head")
             local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("HumanoidRootPart")
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
             local highlight = char:FindFirstChild("Highlight") or Instance.new("Highlight", char)
             
-            if head and torso then
+            if head and torso and humanoid then
                 local distFromMe = (head.Position - Camera.CFrame.Position).Magnitude
-                local headPos, headOnScreen = Camera:WorldToViewportPoint(head.Position)
+                local headPos, onScreen = Camera:WorldToViewportPoint(head.Position)
                 local torsoPos, torsoOnScreen = Camera:WorldToViewportPoint(torso.Position)
                 local fovDist = (Vector2.new(headPos.X, headPos.Y) - screenCenter).Magnitude
 
-                if tracer then
-                    tracer.Visible = (Tracers_Enabled and torsoOnScreen and distFromMe <= maxDistance)
-                    if tracer.Visible then
-                        tracer.From = screenCenter 
-                        tracer.To = Vector2.new(torsoPos.X, torsoPos.Y)
-                        tracer.Color = currentColor
+                if onScreen and torsoOnScreen and distFromMe <= maxDistance then
+                    local height = math.abs(torsoPos.Y - headPos.Y) * 1.5
+                    local width = height / 2
+                    
+                    -- Boxes
+                    draw.Box.Visible = BoxesEnabled
+                    draw.Box.Size = Vector2.new(width, height)
+                    draw.Box.Position = Vector2.new(headPos.X - width/2, headPos.Y - height/4)
+                    draw.Box.Color = currentColor
+                    
+                    -- Names
+                    draw.Name.Visible = NamesEnabled
+                    draw.Name.Text = plr.Name
+                    draw.Name.Position = Vector2.new(headPos.X, headPos.Y - height/2 - 16)
+                    draw.Name.Color = currentColor
+                    
+                    -- Tracers
+                    draw.Tracer.Visible = TracersEnabled
+                    draw.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, 0)
+                    draw.Tracer.To = Vector2.new(torsoPos.X, torsoPos.Y)
+                    draw.Tracer.Color = currentColor
+
+                    -- Health Bar
+                    draw.Health.Visible = HealthEnabled
+                    draw.HealthBg.Visible = HealthEnabled
+                    if HealthEnabled then
+                        local hpPct = humanoid.Health / humanoid.MaxHealth
+                        draw.Health.Size = Vector2.new(3, height * hpPct)
+                        draw.Health.Position = Vector2.new(headPos.X - width/2 - 6, headPos.Y + height/2 - (height * hpPct))
+                        draw.HealthBg.Size = Vector2.new(3, height)
+                        draw.HealthBg.Position = Vector2.new(headPos.X - width/2 - 6, headPos.Y - height/4)
                     end
+                else
+                    draw.Box.Visible = false; draw.Name.Visible = false
+                    draw.Tracer.Visible = false; draw.Health.Visible = false; draw.HealthBg.Visible = false
                 end
 
-                highlight.Enabled = ESP_Enabled; 
+                -- Chams
+                highlight.Enabled = ChamsEnabled; 
                 highlight.FillColor = currentColor
 
-                if headOnScreen and distFromMe <= maxDistance then
-                    if SilentAim_Enabled then
+                -- Aimbot Logic
+                if onScreen and distFromMe <= maxDistance then
+                    if SoftLockEnabled then
+                        if fovDist <= calculatedRadius and fovDist < shortestDist then
+                            local valid = getValidHead(char)
+                            if valid then shortestDist = fovDist; bestHead = valid end
+                        end
+                    elseif AimbotEnabled then
                         if fovDist < shortestDist then
                             local valid = getValidHead(char)
                             if valid then shortestDist = fovDist; bestHead = valid end
@@ -271,25 +331,41 @@ RunService.RenderStepped:Connect(function()
                     end
                 end
             end
-        elseif tracer then tracer.Visible = false end
+        elseif draw then
+            draw.Box.Visible = false; draw.Name.Visible = false
+            draw.Tracer.Visible = false; draw.Health.Visible = false; draw.HealthBg.Visible = false
+        end
     end
     activeTargetPos = bestHead and bestHead.Position or nil
 end)
 
 local old; old = hookmetamethod(game, "__index", newcclosure(function(self, idx)
-    if SilentAim_Enabled and activeTargetPos and not checkcaller() and idx == "ViewportSize" and self == Camera then
+    if (AimbotEnabled or SoftLockEnabled) and activeTargetPos and not checkcaller() and idx == "ViewportSize" and self == Camera then
         local pos, on = Camera:WorldToViewportPoint(activeTargetPos)
         if on then return Vector2.new(pos.X * 2, pos.Y * 2) end
     end
     return old(self, idx)
 end))
 
+-- Loop de movimiento (Speed y Noclip)
+RunService.Heartbeat:Connect(function()
+    if LocalPlayer.Character then
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum and SpeedHack then hum.WalkSpeed = 50 end
+        if Noclip then
+            for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+                if v:IsA("BasePart") then v.CanCollide = false end
+            end
+        end
+    end
+end)
+
 -- ==========================================
--- 🧱 CREACIÓN DE OPCIONES (CHECKBOXES Y SLIDERS)
+-- 🧱 CREACIÓN DE OPCIONES (UI)
 -- ==========================================
 local function CreateCheckbox(parent, text, default, callback)
     local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1, 0, 0, 32)
+    btn.Size = UDim2.new(1, 0, 0, 30)
     btn.BackgroundColor3 = Theme.Card
     btn.BackgroundTransparency = 0.2
     btn.Text = ""
@@ -338,13 +414,13 @@ end
 
 local function CreateSlider(parent, text, min, max, default, callback)
     local wrap = Instance.new("Frame", parent)
-    wrap.Size = UDim2.new(1, 0, 0, 45)
+    wrap.Size = UDim2.new(1, 0, 0, 40)
     wrap.BackgroundTransparency = 1
     
     local label = Instance.new("TextLabel", wrap)
-    label.Size = UDim2.new(1, -40, 0, 20)
+    label.Size = UDim2.new(1, 0, 0, 20)
     label.BackgroundTransparency = 1
-    label.Text = text
+    label.Text = text .. ": " .. tostring(default)
     label.TextColor3 = Theme.Text
     label.Font = Enum.Font.BuilderSansMedium
     label.TextSize = 11
@@ -367,6 +443,7 @@ local function CreateSlider(parent, text, min, max, default, callback)
         local pct = math.clamp((x - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
         fill.Size = UDim2.new(pct, 0, 1, 0)
         local val = math.floor(min + (max - min) * pct)
+        label.Text = text .. ": " .. tostring(val)
         if callback then callback(val) end
     end
     
@@ -387,34 +464,42 @@ local function CreateSlider(parent, text, min, max, default, callback)
 end
 
 -- ==========================================
--- 📑 CONSTRUCCIÓN DE LAS PESTAÑAS
+-- 📑 CONSTRUCCIÓN DE LAS PESTAÑAS COMPLETAS
 -- ==========================================
 -- Tab ESP
 local ESPPage = CreateTabBtn("rbxassetid://13571270194", "ESP")
-CreateCheckbox(ESPPage, "Chams (Resaltar)", false, function(s) ESP_Enabled = s end)
-CreateCheckbox(ESPPage, "Tracers (Líneas)", false, function(s) Tracers_Enabled = s end)
+CreateCheckbox(ESPPage, "Chams (Resaltar)", false, function(s) ChamsEnabled = s end)
+CreateCheckbox(ESPPage, "Boxes (Cajas)", false, function(s) BoxesEnabled = s end)
+CreateCheckbox(ESPPage, "Tracers (Líneas)", false, function(s) TracersEnabled = s end)
+CreateCheckbox(ESPPage, "Names (Nombres)", false, function(s) NamesEnabled = s end)
+CreateCheckbox(ESPPage, "Health (Vida)", false, function(s) HealthEnabled = s end)
 CreateCheckbox(ESPPage, "Modo Arcoíris", false, function(s) ESP_Rainbow = s end)
 
 -- Tab Combat
 local CombatPage = CreateTabBtn("rbxassetid://80964454894155", "Combat")
-CreateCheckbox(CombatPage, "Silent Aim", false, function(s) SilentAim_Enabled = s end)
+CreateCheckbox(CombatPage, "Aimbot (Silent)", false, function(s) AimbotEnabled = s end)
+CreateCheckbox(CombatPage, "Soft Lock (FOV)", false, function(s) SoftLockEnabled = s end)
+CreateCheckbox(CombatPage, "Mostrar FOV Circle", false, function(s) fovEnabled = s end)
+CreateSlider(CombatPage, "FOV Size", 1, 10, 3, function(v) calculatedRadius = v * 60 end)
 CreateSlider(CombatPage, "Max Distance", 100, 2000, 500, function(v) maxDistance = v end)
 
 -- Tab Player
 local PlayerPage = CreateTabBtn("rbxassetid://13492318225", "Player")
-local flyEnabled, noclipEnabled = false, false
+CreateCheckbox(PlayerPage, "Speed Hack", false, function(s) SpeedHack = s end)
+CreateCheckbox(PlayerPage, "Noclip", false, function(s) Noclip = s end)
 CreateCheckbox(PlayerPage, "Volar (Fly)", false, function(s) 
-    flyEnabled = s
+    FlyHack = s
     if s then
         task.spawn(function()
             local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
             if hrp then
                 local bv = Instance.new("BodyVelocity", hrp)
                 bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-                while flyEnabled do
+                while FlyHack do
                     local move = Vector3.zero
                     if UIS:IsKeyDown(Enum.KeyCode.W) then move += Camera.CFrame.LookVector end
                     if UIS:IsKeyDown(Enum.KeyCode.S) then move -= Camera.CFrame.LookVector end
+                    if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
                     bv.Velocity = move * 60
                     task.wait()
                 end
@@ -423,8 +508,6 @@ CreateCheckbox(PlayerPage, "Volar (Fly)", false, function(s)
         end)
     end
 end)
-CreateCheckbox(PlayerPage, "Atravesar Paredes", false, function(s) noclipEnabled = s end)
-RunService.Stepped:Connect(function() if noclipEnabled and LocalPlayer.Character then for _, v in pairs(LocalPlayer.Character:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide = false end end end end)
 
 -- INICIAR EN ESP
 SwitchPage("ESP")
