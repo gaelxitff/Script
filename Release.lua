@@ -1,5 +1,5 @@
 -- ==========================================
--- 👑 URIEL DEV | RIVALS (MASTER EDITION)
+-- 👑 URIEL DEV | RIVALS (PREMIUM V2)
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -18,21 +18,23 @@ local Texts = {
     ES = {
         Title = "URIEL DEV",
         Sub = "RIVALS HUB",
-        Tabs = {ESP = "ESP", Combat = "Combate", Player = "Jugador", Visual = "Visuales", Credits = "Créditos"},
+        Tabs = {ESP = "ESP", Combat = "Combate", Player = "Jugador", World = "Mundo", Settings = "Ajustes", Credits = "Créditos"},
         ESP = {Chams = "Chams (Resaltar)", Boxes = "Cajas (Box)", Tracers = "Líneas (Tracers)", Names = "Nombres", Health = "Barra de Vida", Rainbow = "Modo Arcoíris", Color = "Color del ESP"},
-        Combat = {Aimbot = "Aimbot (Silent)", SoftLock = "Soft Lock (FOV)", ShowFOV = "Mostrar Círculo FOV", FOVSize = "Tamaño FOV", MaxDist = "Distancia Máxima", Hitbox = "Expandir Hitbox (Cabeza)"},
-        Player = {Speed = "Speed Hack", Noclip = "Atravesar Paredes", Fly = "Volar (Fly)"},
-        Visual = {Fullbright = "Fullbright (Iluminación)", ParticleColor = "Color de Partículas", RemoveTex = "Quitar Texturas"},
+        Combat = {Aimbot = "Aimbot (Silent)", SoftLock = "Soft Lock (FOV)", ShowFOV = "Mostrar Círculo FOV", FOVSize = "Tamaño FOV", MaxDist = "Distancia Máxima", Hitbox = "Expandir Hitbox"},
+        Player = {Speed = "Speed Hack", Noclip = "Atravesar Paredes", Fly = "Volar (Fly)", Jump = "Salto Infinito"},
+        World = {Fullbright = "Fullbright (Iluminación)", RemoveTex = "Quitar Texturas", Time = "Cambiar Hora"},
+        Settings = {ParticleColor = "Color de Partículas", ParticleTrans = "Transparencia de Partículas"},
         Credits = {Title = "Creado por Uriel Dev", Desc = "Gracias por usar este Hub.\nÚnete a mi comunidad para más scripts.", Btn = "Copiar Discord"}
     },
     EN = {
         Title = "URIEL DEV",
         Sub = "RIVALS HUB",
-        Tabs = {ESP = "ESP", Combat = "Combat", Player = "Player", Visual = "Visuals", Credits = "Credits"},
+        Tabs = {ESP = "ESP", Combat = "Combat", Player = "Player", World = "World", Settings = "Settings", Credits = "Credits"},
         ESP = {Chams = "Chams", Boxes = "Boxes", Tracers = "Tracers", Names = "Names", Health = "Health Bar", Rainbow = "Rainbow Mode", Color = "ESP Color"},
         Combat = {Aimbot = "Aimbot (Silent)", SoftLock = "Soft Lock (FOV)", ShowFOV = "Show FOV Circle", FOVSize = "FOV Size", MaxDist = "Max Distance", Hitbox = "Hitbox Expander"},
-        Player = {Speed = "Speed Hack", Noclip = "Noclip", Fly = "Fly"},
-        Visual = {Fullbright = "Fullbright", ParticleColor = "Particle Color", RemoveTex = "Remove Textures"},
+        Player = {Speed = "Speed Hack", Noclip = "Noclip", Fly = "Fly", Jump = "Infinite Jump"},
+        World = {Fullbright = "Fullbright", RemoveTex = "Remove Textures", Time = "Time of Day"},
+        Settings = {ParticleColor = "Particle Color", ParticleTrans = "Particle Transparency"},
         Credits = {Title = "Created by Uriel Dev", Desc = "Thanks for using this Hub.\nJoin my community for more scripts.", Btn = "Copy Discord"}
     }
 }
@@ -51,17 +53,39 @@ local Theme = {
 }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "UrielDev_Master"
+ScreenGui.Name = "UrielDev_Premium"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
 -- ==========================================
--- ✨ BOTÓN FLOTANTE
+-- ✨ FONDO DE PARTÍCULAS (DETRÁS DE TODO)
+-- ==========================================
+local ParticleBg = Instance.new("ImageLabel", ScreenGui)
+ParticleBg.Size = UDim2.new(1, 0, 1, 0)
+ParticleBg.BackgroundTransparency = 1
+ParticleBg.Image = "rbxassetid://243660364"
+ParticleBg.ImageTransparency = 0.5
+ParticleBg.ImageColor3 = Color3.fromRGB(150, 0, 255)
+ParticleBg.ScaleType = Enum.ScaleType.Tile
+ParticleBg.TileSize = UDim2.new(0, 200, 0, 200)
+ParticleBg.ZIndex = 1
+
+task.spawn(function()
+    while true do
+        ParticleBg.Position = UDim2.new(0, 0, 0, 0)
+        TweenService:Create(ParticleBg, TweenInfo.new(15, Enum.EasingStyle.Linear), {Position = UDim2.new(0, 0, -1, 0)}):Play()
+        task.wait(15)
+    end
+end)
+
+-- ==========================================
+-- 🔘 BOTÓN FLOTANTE
 -- ==========================================
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 200, 0, 45)
 ToggleBtn.Position = UDim2.new(0.5, -100, 0, 20)
 ToggleBtn.BackgroundColor3 = Theme.BG
+ToggleBtn.BackgroundTransparency = 0.2
 ToggleBtn.Text = "URIEL DEV"
 ToggleBtn.TextColor3 = Theme.Text
 ToggleBtn.Font = Enum.Font.FredokaOne
@@ -92,45 +116,27 @@ UIS.InputChanged:Connect(function(input)
 end)
 
 -- ==========================================
--- 🖥️ VENTANA PRINCIPAL
+-- 🖥️ VENTANA PRINCIPAL (EFECTO CRISTAL)
 -- ==========================================
-local MainFrame = Instance.new("CanvasGroup")
+local MainFrame = Instance.new("Frame") -- Cambiado a Frame para evitar bugs de CanvasGroup con transparencia
 MainFrame.Size = UDim2.new(0, 420, 0, 340)
 MainFrame.Position = UDim2.new(0.5, -210, 0.5, -170)
 MainFrame.BackgroundColor3 = Theme.BG
-MainFrame.BackgroundTransparency = 0.1
+MainFrame.BackgroundTransparency = 0.3 -- Transparencia para ver las partículas
 MainFrame.BorderSizePixel = 0
-MainFrame.GroupTransparency = 1
 MainFrame.Visible = false
+MainFrame.ZIndex = 10
 MainFrame.Parent = ScreenGui
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Color = Theme.Accent
 MainStroke.Thickness = 1.5
 
--- PARTÍCULAS DE FONDO (DENTRO DEL MENÚ)
-local ParticleBg = Instance.new("ImageLabel", MainFrame)
-ParticleBg.Size = UDim2.new(1, 0, 1, 0)
-ParticleBg.BackgroundTransparency = 1
-ParticleBg.Image = "rbxassetid://243660364"
-ParticleBg.ImageTransparency = 0.8
-ParticleBg.ImageColor3 = Color3.fromRGB(150, 0, 255)
-ParticleBg.ScaleType = Enum.ScaleType.Tile
-ParticleBg.TileSize = UDim2.new(0, 200, 0, 200)
-ParticleBg.ZIndex = 0
-
-task.spawn(function()
-    while true do
-        ParticleBg.Position = UDim2.new(0, 0, 0, 0)
-        TweenService:Create(ParticleBg, TweenInfo.new(15, Enum.EasingStyle.Linear), {Position = UDim2.new(0, 0, -1, 0)}):Play()
-        task.wait(15)
-    end
-end)
-
+-- HEADER
 local Header = Instance.new("Frame", MainFrame)
 Header.Size = UDim2.new(1, 0, 0, 40)
 Header.BackgroundTransparency = 1
-Header.ZIndex = 10
+Header.ZIndex = 11
 
 local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(1, -80, 1, 0)
@@ -141,7 +147,7 @@ Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.FredokaOne
 Title.TextSize = 16
 Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.ZIndex = 10
+Title.ZIndex = 12
 
 local CloseBtn = Instance.new("TextButton", Header)
 CloseBtn.Size = UDim2.new(0, 24, 0, 24)
@@ -151,10 +157,11 @@ CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Theme.Text
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextSize = 10
-CloseBtn.ZIndex = 10
+CloseBtn.ZIndex = 12
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 5)
 CloseBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false ToggleBtn.Visible = true end)
 
+-- Mover Ventana
 local dragging, dragStart, startPos
 Header.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -173,9 +180,9 @@ end)
 
 ToggleBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = true; ToggleBtn.Visible = false
-    MainFrame.GroupTransparency = 1; MainFrame.Size = UDim2.new(0, 400, 0, 320)
+    MainFrame.Size = UDim2.new(0, 400, 0, 320)
     TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
-        GroupTransparency = 0, Size = UDim2.new(0, 420, 0, 340)
+        Size = UDim2.new(0, 420, 0, 340)
     }):Play()
 end)
 
@@ -188,7 +195,7 @@ local maxDistance = 500
 local BoxesEnabled, NamesEnabled, HealthEnabled, TracersEnabled, ChamsEnabled = false, false, false, false, false
 local AimbotEnabled, SoftLockEnabled = false, false
 local fovEnabled, calculatedRadius = false, 180
-local SpeedHack, FlyHack, Noclip = false, false, false
+local SpeedHack, FlyHack, Noclip, InfJump = false, false, false, false
 local HitboxEnabled = false
 
 local function isEnemy(plr)
@@ -351,6 +358,14 @@ local old; old = hookmetamethod(game, "__index", newcclosure(function(self, idx)
     return old(self, idx)
 end))
 
+-- INFINITE JUMP & MOVEMENT
+UIS.JumpRequest:Connect(function()
+    if InfJump then
+        local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
+
 RunService.Heartbeat:Connect(function()
     if LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -370,16 +385,16 @@ local function CreateCheckbox(parent, text, default, callback)
     local btn = Instance.new("TextButton", parent)
     btn.Size = UDim2.new(1, 0, 0, 30)
     btn.BackgroundColor3 = Theme.Card
-    btn.BackgroundTransparency = 0.2
+    btn.BackgroundTransparency = 0.5
     btn.Text = ""
-    btn.ZIndex = 2
+    btn.ZIndex = 12
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     
     local boxBg = Instance.new("Frame", btn)
     boxBg.Size = UDim2.new(0, 16, 0, 16)
     boxBg.Position = UDim2.new(0, 8, 0.5, -8)
     boxBg.BackgroundColor3 = Theme.BG
-    boxBg.ZIndex = 3
+    boxBg.ZIndex = 13
     Instance.new("UICorner", boxBg).CornerRadius = UDim.new(0, 3)
     local boxStroke = Instance.new("UIStroke", boxBg)
     boxStroke.Color = Theme.Border
@@ -391,7 +406,7 @@ local function CreateCheckbox(parent, text, default, callback)
     check.Image = "rbxassetid://6031091004"
     check.ImageColor3 = Theme.Accent
     check.Visible = false
-    check.ZIndex = 4
+    check.ZIndex = 14
     
     local label = Instance.new("TextLabel", btn)
     label.Size = UDim2.new(1, -40, 1, 0)
@@ -402,7 +417,7 @@ local function CreateCheckbox(parent, text, default, callback)
     label.BackgroundTransparency = 1
     label.Font = Enum.Font.BuilderSansMedium
     label.TextSize = 11
-    label.ZIndex = 3
+    label.ZIndex = 13
     
     local state = default
     if state then check.Visible = true boxStroke.Color = Theme.Accent end
@@ -419,6 +434,7 @@ local function CreateSlider(parent, text, min, max, default, callback)
     local wrap = Instance.new("Frame", parent)
     wrap.Size = UDim2.new(1, 0, 0, 40)
     wrap.BackgroundTransparency = 1
+    wrap.ZIndex = 12
     
     local label = Instance.new("TextLabel", wrap)
     label.Size = UDim2.new(1, 0, 0, 20)
@@ -428,17 +444,20 @@ local function CreateSlider(parent, text, min, max, default, callback)
     label.Font = Enum.Font.BuilderSansMedium
     label.TextSize = 11
     label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 13
     
     local bar = Instance.new("TextButton", wrap)
     bar.Size = UDim2.new(1, 0, 0, 8)
     bar.Position = UDim2.new(0, 0, 0, 25)
     bar.BackgroundColor3 = Theme.Border
     bar.Text = ""
+    bar.ZIndex = 13
     Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
     
     local fill = Instance.new("Frame", bar)
     fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
     fill.BackgroundColor3 = Theme.Accent
+    fill.ZIndex = 14
     Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
     
     local sliding = false
@@ -470,9 +489,9 @@ local function CreateColorPicker(parent, text, defaultColor, callback)
     local btn = Instance.new("TextButton", parent)
     btn.Size = UDim2.new(1, 0, 0, 30)
     btn.BackgroundColor3 = Theme.Card
-    btn.BackgroundTransparency = 0.2
+    btn.BackgroundTransparency = 0.5
     btn.Text = ""
-    btn.ZIndex = 2
+    btn.ZIndex = 12
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     
     local label = Instance.new("TextLabel", btn)
@@ -484,12 +503,13 @@ local function CreateColorPicker(parent, text, defaultColor, callback)
     label.BackgroundTransparency = 1
     label.Font = Enum.Font.BuilderSansMedium
     label.TextSize = 11
+    label.ZIndex = 13
     
     local colorBox = Instance.new("Frame", btn)
     colorBox.Size = UDim2.new(0, 16, 0, 16)
     colorBox.Position = UDim2.new(1, -24, 0.5, -8)
     colorBox.BackgroundColor3 = defaultColor
-    colorBox.ZIndex = 3
+    colorBox.ZIndex = 13
     Instance.new("UICorner", colorBox).CornerRadius = UDim.new(1, 0)
     
     btn.MouseButton1Click:Connect(function()
@@ -510,15 +530,15 @@ local function BuildMenu()
     Sidebar.Size = UDim2.new(0, 50, 1, -55)
     Sidebar.Position = UDim2.new(0, 10, 0, 50)
     Sidebar.BackgroundColor3 = Theme.Card
-    Sidebar.BackgroundTransparency = 0.2
-    Sidebar.ZIndex = 2
+    Sidebar.BackgroundTransparency = 0.4
+    Sidebar.ZIndex = 11
     Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 8)
 
     local ContentHost = Instance.new("Frame", MainFrame)
     ContentHost.Size = UDim2.new(1, -85, 1, -55)
     ContentHost.Position = UDim2.new(0, 75, 0, 50)
     ContentHost.BackgroundTransparency = 1
-    ContentHost.ZIndex = 2
+    ContentHost.ZIndex = 11
 
     local Pages = {}
     local function CreatePage(name)
@@ -528,7 +548,7 @@ local function BuildMenu()
         page.ScrollBarThickness = 2
         page.AutomaticCanvasSize = Enum.AutomaticSize.Y
         page.Visible = false
-        page.ZIndex = 2
+        page.ZIndex = 12
         local layout = Instance.new("UIListLayout", page)
         layout.Padding = UDim.new(0, 5)
         Pages[name] = page
@@ -547,7 +567,7 @@ local function BuildMenu()
         btn.BackgroundTransparency = 0.5
         btn.Image = iconId
         btn.ImageColor3 = Theme.Accent
-        btn.ZIndex = 2
+        btn.ZIndex = 11
         Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
         btn.MouseButton1Click:Connect(function() SwitchPage(pageName) end)
         return CreatePage(pageName)
@@ -597,22 +617,27 @@ local function BuildMenu()
             end)
         end
     end)
+    CreateCheckbox(PlayerPage, Texts[Language].Player.Jump, false, function(s) InfJump = s end)
 
-    -- TAB VISUALS
-    local VisualsPage = CreateTabBtn("rbxassetid://13492318225", "Visuals")
-    CreateCheckbox(VisualsPage, Texts[Language].Visual.Fullbright, false, function(s) 
+    -- TAB WORLD
+    local WorldPage = CreateTabBtn("rbxassetid://13492318225", "World")
+    CreateCheckbox(WorldPage, Texts[Language].World.Fullbright, false, function(s) 
         Lighting.Brightness = s and 2 or 1 
         Lighting.ClockTime = s and 14 or 12 
         Lighting.GlobalShadows = not s 
     end)
-    CreateColorPicker(VisualsPage, Texts[Language].Visual.ParticleColor, Color3.fromRGB(150, 0, 255), function(c) ParticleBg.ImageColor3 = c end)
-    CreateCheckbox(VisualsPage, Texts[Language].Visual.RemoveTex, false, function(s)
+    CreateCheckbox(WorldPage, Texts[Language].World.RemoveTex, false, function(s)
         if s then
             for _, v in pairs(workspace:GetDescendants()) do
                 if v:IsA("Texture") or v:IsA("Decal") then v:Destroy() end
             end
         end
     end)
+
+    -- TAB SETTINGS
+    local SettingsPage = CreateTabBtn("rbxassetid://13492318225", "Settings")
+    CreateColorPicker(SettingsPage, Texts[Language].Settings.ParticleColor, Color3.fromRGB(150, 0, 255), function(c) ParticleBg.ImageColor3 = c end)
+    CreateSlider(SettingsPage, Texts[Language].Settings.ParticleTrans, 0, 0.9, 0.5, function(v) ParticleBg.ImageTransparency = v end)
 
     -- TAB CREDITS
     local CreditsPage = CreateTabBtn("rbxassetid://13492318225", "Credits")
@@ -624,6 +649,7 @@ local function BuildMenu()
     creditLabel.Font = Enum.Font.BuilderSansBold
     creditLabel.TextSize = 12
     creditLabel.TextWrapped = true
+    creditLabel.ZIndex = 13
 
     local copyBtn = Instance.new("TextButton", CreditsPage)
     copyBtn.Size = UDim2.new(1, 0, 0, 30)
@@ -631,9 +657,10 @@ local function BuildMenu()
     copyBtn.Text = Texts[Language].Credits.Btn
     copyBtn.TextColor3 = Theme.Text
     copyBtn.Font = Enum.Font.BuilderSansBold
+    copyBtn.ZIndex = 13
     Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0, 6)
     copyBtn.MouseButton1Click:Connect(function()
-        setclipboard("urieldev") -- Cambia "urieldev" por tu discord real
+        setclipboard("urieldev") 
     end)
 
     SwitchPage("ESP")
