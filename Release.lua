@@ -1,5 +1,5 @@
 -- ==========================================
--- 👑 URIEL DEV | RIVALS (PREMIUM V2)
+-- 👑 URIEL DEV | RIVALS (ULTIMATE EDITION)
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -10,77 +10,37 @@ local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- ==========================================
--- 🌎 SISTEMA DE IDIOMAS
--- ==========================================
+-- SISTEMA DE IDIOMAS COMPLETO
 local Language = "ES"
 local Texts = {
     ES = {
         Title = "URIEL DEV",
-        Sub = "RIVALS HUB",
-        Tabs = {ESP = "ESP", Combat = "Combate", Player = "Jugador", World = "Mundo", Settings = "Ajustes", Credits = "Créditos"},
         ESP = {Chams = "Chams (Resaltar)", Boxes = "Cajas (Box)", Tracers = "Líneas (Tracers)", Names = "Nombres", Health = "Barra de Vida", Rainbow = "Modo Arcoíris", Color = "Color del ESP"},
         Combat = {Aimbot = "Aimbot (Silent)", SoftLock = "Soft Lock (FOV)", ShowFOV = "Mostrar Círculo FOV", FOVSize = "Tamaño FOV", MaxDist = "Distancia Máxima", Hitbox = "Expandir Hitbox"},
         Player = {Speed = "Speed Hack", Noclip = "Atravesar Paredes", Fly = "Volar (Fly)", Jump = "Salto Infinito"},
         World = {Fullbright = "Fullbright (Iluminación)", RemoveTex = "Quitar Texturas", Time = "Cambiar Hora"},
-        Settings = {ParticleColor = "Color de Partículas", ParticleTrans = "Transparencia de Partículas"},
+        Settings = {ParticleColor = "Color de Partículas", ParticleTrans = "Transparencia"},
         Credits = {Title = "Creado por Uriel Dev", Desc = "Gracias por usar este Hub.\nÚnete a mi comunidad para más scripts.", Btn = "Copiar Discord"}
     },
     EN = {
         Title = "URIEL DEV",
-        Sub = "RIVALS HUB",
-        Tabs = {ESP = "ESP", Combat = "Combat", Player = "Player", World = "World", Settings = "Settings", Credits = "Credits"},
         ESP = {Chams = "Chams", Boxes = "Boxes", Tracers = "Tracers", Names = "Names", Health = "Health Bar", Rainbow = "Rainbow Mode", Color = "ESP Color"},
         Combat = {Aimbot = "Aimbot (Silent)", SoftLock = "Soft Lock (FOV)", ShowFOV = "Show FOV Circle", FOVSize = "FOV Size", MaxDist = "Max Distance", Hitbox = "Hitbox Expander"},
         Player = {Speed = "Speed Hack", Noclip = "Noclip", Fly = "Fly", Jump = "Infinite Jump"},
         World = {Fullbright = "Fullbright", RemoveTex = "Remove Textures", Time = "Time of Day"},
-        Settings = {ParticleColor = "Particle Color", ParticleTrans = "Particle Transparency"},
+        Settings = {ParticleColor = "Particle Color", ParticleTrans = "Transparency"},
         Credits = {Title = "Created by Uriel Dev", Desc = "Thanks for using this Hub.\nJoin my community for more scripts.", Btn = "Copy Discord"}
     }
 }
 
--- ==========================================
--- 🎨 DISEÑO
--- ==========================================
-local Theme = {
-    BG = Color3.fromRGB(15, 15, 20),
-    Card = Color3.fromRGB(25, 25, 32),
-    Border = Color3.fromRGB(50, 50, 65),
-    Accent = Color3.fromRGB(0, 150, 255),
-    Text = Color3.fromRGB(255, 255, 255),
-    Muted = Color3.fromRGB(150, 150, 160),
-    Red = Color3.fromRGB(255, 60, 60)
-}
+local Theme = { BG = Color3.fromRGB(15, 15, 20), Card = Color3.fromRGB(25, 25, 32), Border = Color3.fromRGB(50, 50, 65), Accent = Color3.fromRGB(0, 150, 255), Text = Color3.fromRGB(255, 255, 255), Muted = Color3.fromRGB(150, 150, 160), Red = Color3.fromRGB(255, 60, 60) }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "UrielDev_Premium"
+ScreenGui.Name = "UrielDev_Ultimate"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
--- ==========================================
--- ✨ FONDO DE PARTÍCULAS (DETRÁS DE TODO)
--- ==========================================
-local ParticleBg = Instance.new("ImageLabel", ScreenGui)
-ParticleBg.Size = UDim2.new(1, 0, 1, 0)
-ParticleBg.BackgroundTransparency = 1
-ParticleBg.Image = "rbxassetid://243660364"
-ParticleBg.ImageTransparency = 0.5
-ParticleBg.ImageColor3 = Color3.fromRGB(150, 0, 255)
-ParticleBg.ScaleType = Enum.ScaleType.Tile
-ParticleBg.TileSize = UDim2.new(0, 200, 0, 200)
-ParticleBg.ZIndex = 1
-
-task.spawn(function()
-    while true do
-        ParticleBg.Position = UDim2.new(0, 0, 0, 0)
-        TweenService:Create(ParticleBg, TweenInfo.new(15, Enum.EasingStyle.Linear), {Position = UDim2.new(0, 0, -1, 0)}):Play()
-        task.wait(15)
-    end
-end)
-
--- ==========================================
--- 🔘 BOTÓN FLOTANTE
--- ==========================================
+-- BOTÓN FLOTANTE
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 200, 0, 45)
 ToggleBtn.Position = UDim2.new(0.5, -100, 0, 20)
@@ -98,7 +58,6 @@ local TStroke = Instance.new("UIStroke", ToggleBtn)
 TStroke.Color = Theme.Accent
 TStroke.Thickness = 2
 
--- Mover Botón
 local dragToggle, startToggle, posToggle
 ToggleBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -115,10 +74,8 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
--- ==========================================
--- 🖥️ VENTANA PRINCIPAL (EFECTO CRISTAL)
--- ==========================================
-local MainFrame = Instance.new("Frame") -- Cambiado a Frame para evitar bugs de CanvasGroup con transparencia
+-- VENTANA PRINCIPAL
+local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 420, 0, 340)
 MainFrame.Position = UDim2.new(0.5, -210, 0.5, -170)
 MainFrame.BackgroundColor3 = Theme.BG
@@ -131,6 +88,27 @@ Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Color = Theme.Accent
 MainStroke.Thickness = 1.5
+
+-- PARTÍCULAS (Visibles dentro del menú)
+local ParticleBg = Instance.new("ImageLabel", MainFrame)
+ParticleBg.Size = UDim2.new(1, 0, 1, 0)
+ParticleBg.BackgroundTransparency = 1
+ParticleBg.Image = "rbxassetid://243660364"
+ParticleBg.ImageTransparency = 0.5
+ParticleBg.ImageColor3 = Color3.fromRGB(150, 0, 255)
+ParticleBg.ScaleType = Enum.ScaleType.Tile
+ParticleBg.TileSize = UDim2.new(0, 200, 0, 200)
+ParticleBg.ZIndex = 10
+ParticleBg.ClipsDescendants = true
+Instance.new("UICorner", ParticleBg).CornerRadius = UDim.new(0, 10)
+
+task.spawn(function()
+    while true do
+        ParticleBg.Position = UDim2.new(0, 0, 0, 0)
+        TweenService:Create(ParticleBg, TweenInfo.new(15, Enum.EasingStyle.Linear), {Position = UDim2.new(0, 0, -1, 0)}):Play()
+        task.wait(15)
+    end
+end)
 
 -- HEADER
 local Header = Instance.new("Frame", MainFrame)
@@ -161,7 +139,6 @@ CloseBtn.ZIndex = 12
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 5)
 CloseBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false ToggleBtn.Visible = true end)
 
--- Mover Ventana
 local dragging, dragStart, startPos
 Header.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -180,15 +157,9 @@ end)
 
 ToggleBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = true; ToggleBtn.Visible = false
-    MainFrame.Size = UDim2.new(0, 400, 0, 320)
-    TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 420, 0, 340)
-    }):Play()
 end)
 
--- ==========================================
--- ⚙️ VARIABLES DEL JUEGO
--- ==========================================
+-- VARIABLES DEL JUEGO
 local ESP_Color = Color3.fromRGB(0, 150, 255)
 local ESP_Rainbow = false
 local maxDistance = 500
@@ -217,9 +188,7 @@ local function getValidHead(char)
     return (result == nil or result.Instance:IsDescendantOf(char)) and head or nil
 end
 
--- ==========================================
--- 🔥 MOTOR DEL JUEGO
--- ==========================================
+-- MOTOR DEL JUEGO
 local Drawings = {}
 local function CreateDrawing(class, props)
     if not Drawing then return nil end
@@ -378,9 +347,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- ==========================================
--- 🧱 COMPONENTES DE LA UI
--- ==========================================
+-- COMPONENTES DE LA UI
 local function CreateCheckbox(parent, text, default, callback)
     local btn = Instance.new("TextButton", parent)
     btn.Size = UDim2.new(1, 0, 0, 30)
@@ -522,9 +489,7 @@ local function CreateColorPicker(parent, text, defaultColor, callback)
     end)
 end
 
--- ==========================================
--- 📑 CONSTRUCCIÓN DEL MENÚ
--- ==========================================
+-- CONSTRUCCIÓN DEL MENÚ
 local function BuildMenu()
     local Sidebar = Instance.new("Frame", MainFrame)
     Sidebar.Size = UDim2.new(0, 50, 1, -55)
@@ -573,7 +538,7 @@ local function BuildMenu()
         return CreatePage(pageName)
     end
 
-    -- TAB ESP
+    -- ESP
     local ESPPage = CreateTabBtn("rbxassetid://13571270194", "ESP")
     CreateCheckbox(ESPPage, Texts[Language].ESP.Chams, false, function(s) ChamsEnabled = s end)
     CreateCheckbox(ESPPage, Texts[Language].ESP.Boxes, false, function(s) BoxesEnabled = s end)
@@ -583,7 +548,7 @@ local function BuildMenu()
     CreateCheckbox(ESPPage, Texts[Language].ESP.Rainbow, false, function(s) ESP_Rainbow = s end)
     CreateColorPicker(ESPPage, Texts[Language].ESP.Color, ESP_Color, function(c) ESP_Color = c end)
 
-    -- TAB COMBAT
+    -- COMBAT
     local CombatPage = CreateTabBtn("rbxassetid://80964454894155", "Combat")
     CreateCheckbox(CombatPage, Texts[Language].Combat.Aimbot, false, function(s) AimbotEnabled = s end)
     CreateCheckbox(CombatPage, Texts[Language].Combat.SoftLock, false, function(s) SoftLockEnabled = s end)
@@ -592,7 +557,7 @@ local function BuildMenu()
     CreateSlider(CombatPage, Texts[Language].Combat.MaxDist, 100, 2000, 500, function(v) maxDistance = v end)
     CreateCheckbox(CombatPage, Texts[Language].Combat.Hitbox, false, function(s) HitboxEnabled = s end)
 
-    -- TAB PLAYER
+    -- PLAYER
     local PlayerPage = CreateTabBtn("rbxassetid://13492318225", "Player")
     CreateCheckbox(PlayerPage, Texts[Language].Player.Speed, false, function(s) SpeedHack = s end)
     CreateCheckbox(PlayerPage, Texts[Language].Player.Noclip, false, function(s) Noclip = s end)
@@ -619,7 +584,7 @@ local function BuildMenu()
     end)
     CreateCheckbox(PlayerPage, Texts[Language].Player.Jump, false, function(s) InfJump = s end)
 
-    -- TAB WORLD
+    -- WORLD
     local WorldPage = CreateTabBtn("rbxassetid://13492318225", "World")
     CreateCheckbox(WorldPage, Texts[Language].World.Fullbright, false, function(s) 
         Lighting.Brightness = s and 2 or 1 
@@ -634,12 +599,12 @@ local function BuildMenu()
         end
     end)
 
-    -- TAB SETTINGS
+    -- SETTINGS
     local SettingsPage = CreateTabBtn("rbxassetid://13492318225", "Settings")
     CreateColorPicker(SettingsPage, Texts[Language].Settings.ParticleColor, Color3.fromRGB(150, 0, 255), function(c) ParticleBg.ImageColor3 = c end)
     CreateSlider(SettingsPage, Texts[Language].Settings.ParticleTrans, 0, 0.9, 0.5, function(v) ParticleBg.ImageTransparency = v end)
 
-    -- TAB CREDITS
+    -- CREDITS
     local CreditsPage = CreateTabBtn("rbxassetid://13492318225", "Credits")
     local creditLabel = Instance.new("TextLabel", CreditsPage)
     creditLabel.Size = UDim2.new(1, 0, 0, 60)
@@ -666,9 +631,7 @@ local function BuildMenu()
     SwitchPage("ESP")
 end
 
--- ==========================================
--- 🌎 SELECTOR DE IDIOMA INICIAL
--- ==========================================
+-- SELECTOR DE IDIOMA
 local LangGui = Instance.new("ScreenGui", CoreGui)
 local LangFrame = Instance.new("Frame", LangGui)
 LangFrame.Size = UDim2.new(0, 250, 0, 150)
