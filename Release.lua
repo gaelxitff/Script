@@ -1,5 +1,5 @@
 -- ==========================================
--- 👑 URIEL DEV | MURDER MYSTERY 2 (MM2)
+-- 👑 URIEL DEV | MURDER MYSTERY 2 (ULTIMATE)
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -15,48 +15,62 @@ local Language = "ES"
 local Texts = {
     ES = {
         Title = "URIEL DEV | MM2",
-        ESP = {RoleESP = "Role ESP (Colores)", Boxes = "Cajas (Box)", Tracers = "Líneas (Tracers)", Names = "Nombres", Health = "Barra de Vida", Rainbow = "Modo Arcoíris", Color = "Color Base"},
-        Combat = {Aimbot = "Aimbot al Murder", KillAll = "Kill All (Rango)", AutoGrab = "Auto Recoger Arma", MaxDist = "Distancia de Aimbot"},
-        Player = {Speed = "Speed Hack", Noclip = "Atravesar Paredes", Fly = "Volar (Fly)", Jump = "Salto Infinito"},
-        World = {Fullbright = "Fullbright (Iluminación)", RemoveTex = "Quitar Texturas"},
-        Settings = {ParticleColor = "Color de Partículas", ParticleTrans = "Transparencia"},
-        Credits = {Title = "Creado por Uriel Dev", Desc = "Gracias por usar este Hub.\nÚnete a mi comunidad para más scripts.", Btn = "Copiar Discord"}
+        ESP = {RoleESP = "Role ESP (Colores)", GunESP = "Cham de Armas", OnlyMurder = "Solo ver Murder", OnlySheriff = "Solo ver Sheriff", Boxes = "Cajas (Box)", Tracers = "Líneas", Names = "Nombres", Health = "Barra de Vida", Rainbow = "Modo Arcoíris"},
+        Combat = {Aimbot = "Aimbot al Murder", KillAll = "Kill All", AutoGrab = "Auto Recoger Arma", MaxDist = "Distancia"},
+        Player = {Speed = "Speed Hack", Noclip = "Noclip", Fly = "Volar", Jump = "Salto Infinito"},
+        World = {Fullbright = "Fullbright", RemoveTex = "Quitar Texturas"},
+        Settings = {ParticleColor = "Color de Estrellas", ParticleTrans = "Transparencia Estrellas", RoleColors = "Colores por Rol", Fill = "Relleno", Outline = "Contorno"},
+        Credits = {Title = "Creado por Uriel Dev", Desc = "Gracias por usar este Hub.", Btn = "Copiar Discord"}
     },
     EN = {
         Title = "URIEL DEV | MM2",
-        ESP = {RoleESP = "Role ESP (Colors)", Boxes = "Boxes", Tracers = "Tracers", Names = "Names", Health = "Health Bar", Rainbow = "Rainbow Mode", Color = "Base Color"},
-        Combat = {Aimbot = "Aimbot Murder", KillAll = "Kill All (Range)", AutoGrab = "Auto Grab Weapon", MaxDist = "Aimbot Distance"},
+        ESP = {RoleESP = "Role ESP (Colors)", GunESP = "Gun ESP", OnlyMurder = "Only Murder", OnlySheriff = "Only Sheriff", Boxes = "Boxes", Tracers = "Tracers", Names = "Names", Health = "Health Bar", Rainbow = "Rainbow Mode"},
+        Combat = {Aimbot = "Aimbot Murder", KillAll = "Kill All", AutoGrab = "Auto Grab Weapon", MaxDist = "Distance"},
         Player = {Speed = "Speed Hack", Noclip = "Noclip", Fly = "Fly", Jump = "Infinite Jump"},
         World = {Fullbright = "Fullbright", RemoveTex = "Remove Textures"},
-        Settings = {ParticleColor = "Particle Color", ParticleTrans = "Transparency"},
-        Credits = {Title = "Created by Uriel Dev", Desc = "Thanks for using this Hub.\nJoin my community for more scripts.", Btn = "Copy Discord"}
+        Settings = {ParticleColor = "Star Color", ParticleTrans = "Star Transparency", RoleColors = "Role Colors", Fill = "Fill", Outline = "Outline"},
+        Credits = {Title = "Created by Uriel Dev", Desc = "Thanks for using this Hub.", Btn = "Copy Discord"}
     }
 }
 
-local Theme = { BG = Color3.fromRGB(15, 15, 20), Card = Color3.fromRGB(25, 25, 32), Border = Color3.fromRGB(50, 50, 65), Accent = Color3.fromRGB(0, 150, 255), Text = Color3.fromRGB(255, 255, 255), Muted = Color3.fromRGB(150, 150, 160), Red = Color3.fromRGB(255, 60, 60) }
+local Theme = { BG = Color3.fromRGB(15, 15, 20), Card = Color3.fromRGB(25, 25, 32), Border = Color3.fromRGB(50, 50, 65), Accent = Color3.fromRGB(0, 150, 255), Text = Color3.fromRGB(255, 255, 255), Red = Color3.fromRGB(255, 60, 60) }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "UrielDev_MM2"
+ScreenGui.Name = "UrielDev_MM2_Ultimate"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
--- BOTÓN FLOTANTE
+-- ==========================================
+-- 🔘 BOTÓN FLOTANTE CON BORDES
+-- ==========================================
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 200, 0, 45)
-ToggleBtn.Position = UDim2.new(0.5, -100, 0, 20)
+ToggleBtn.Size = UDim2.new(0, 210, 0, 50)
+ToggleBtn.Position = UDim2.new(0.5, -105, 0, 20)
 ToggleBtn.BackgroundColor3 = Theme.BG
-ToggleBtn.BackgroundTransparency = 0.2
+ToggleBtn.BackgroundTransparency = 0.1
 ToggleBtn.Text = "URIEL DEV"
 ToggleBtn.TextColor3 = Theme.Text
 ToggleBtn.Font = Enum.Font.FredokaOne
-ToggleBtn.TextSize = 16
+ToggleBtn.TextSize = 18
+ToggleBtn.AutoButtonColor = false
 ToggleBtn.ZIndex = 100
 ToggleBtn.Visible = false
 ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
+
 local TStroke = Instance.new("UIStroke", ToggleBtn)
 TStroke.Color = Theme.Accent
-TStroke.Thickness = 2
+TStroke.Thickness = 3
+
+-- Animación del botón
+ToggleBtn.MouseButton1Down:Connect(function()
+    TweenService:Create(ToggleBtn, TweenInfo.new(0.1), {Size = UDim2.new(0, 200, 0, 45)}):Play()
+    TweenService:Create(TStroke, TweenInfo.new(0.1), {Thickness = 5}):Play()
+end)
+ToggleBtn.MouseButton1Up:Connect(function()
+    TweenService:Create(ToggleBtn, TweenInfo.new(0.1), {Size = UDim2.new(0, 210, 0, 50)}):Play()
+    TweenService:Create(TStroke, TweenInfo.new(0.1), {Thickness = 3}):Play()
+end)
 
 local dragToggle, startToggle, posToggle
 ToggleBtn.InputBegan:Connect(function(input)
@@ -74,10 +88,12 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
--- VENTANA PRINCIPAL
+-- ==========================================
+-- 🖥️ VENTANA PRINCIPAL
+-- ==========================================
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 420, 0, 340)
-MainFrame.Position = UDim2.new(0.5, -210, 0.5, -170)
+MainFrame.Size = UDim2.new(0, 430, 0, 360)
+MainFrame.Position = UDim2.new(0.5, -215, 0.5, -180)
 MainFrame.BackgroundColor3 = Theme.BG
 MainFrame.BackgroundTransparency = 0.3
 MainFrame.BorderSizePixel = 0
@@ -89,24 +105,34 @@ local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Color = Theme.Accent
 MainStroke.Thickness = 1.5
 
--- PARTÍCULAS
-local ParticleBg = Instance.new("ImageLabel", MainFrame)
-ParticleBg.Size = UDim2.new(1, 0, 1, 0)
-ParticleBg.BackgroundTransparency = 1
-ParticleBg.Image = "rbxassetid://243660364"
-ParticleBg.ImageTransparency = 0.5
-ParticleBg.ImageColor3 = Color3.fromRGB(150, 0, 255)
-ParticleBg.ScaleType = Enum.ScaleType.Tile
-ParticleBg.TileSize = UDim2.new(0, 200, 0, 200)
-ParticleBg.ZIndex = 10
-ParticleBg.ClipsDescendants = true
-Instance.new("UICorner", ParticleBg).CornerRadius = UDim.new(0, 10)
+-- PARTÍCULAS (ESTRELLAS)
+local StarContainer = Instance.new("Frame", MainFrame)
+StarContainer.Size = UDim2.new(1, 0, 1, 0)
+StarContainer.BackgroundTransparency = 1
+StarContainer.ClipsDescendants = true
+StarContainer.ZIndex = 10
+Instance.new("UICorner", StarContainer).CornerRadius = UDim.new(0, 10)
+
+local StarColor = Color3.fromRGB(0, 150, 255)
+local StarTransparency = 0.5
+
+local function CreateStar()
+    local star = Instance.new("ImageLabel", StarContainer)
+    star.Size = UDim2.new(0, math.random(3, 8), 0, math.random(3, 8))
+    star.Position = UDim2.new(math.random(0, 100)/100, 0, 1, 0)
+    star.BackgroundTransparency = 1
+    star.Image = "rbxassetid://11395780588"
+    star.ImageColor3 = StarColor
+    star.ImageTransparency = StarTransparency
+    star.ZIndex = 10
+    local tween = TweenService:Create(star, TweenInfo.new(math.random(2, 5), Enum.EasingStyle.Linear), {Position = UDim2.new(star.Position.X.Scale, 0, -0.1, 0)})
+    tween:Play()
+    tween.Completed:Connect(function() star:Destroy() end)
+end
 
 task.spawn(function()
-    while true do
-        ParticleBg.Position = UDim2.new(0, 0, 0, 0)
-        TweenService:Create(ParticleBg, TweenInfo.new(15, Enum.EasingStyle.Linear), {Position = UDim2.new(0, 0, -1, 0)}):Play()
-        task.wait(15)
+    while task.wait(0.1) do
+        if MainFrame.Visible then CreateStar() end
     end
 end)
 
@@ -155,38 +181,41 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
-ToggleBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = true; ToggleBtn.Visible = false
-end)
+ToggleBtn.MouseButton1Click:Connect(function() MainFrame.Visible = true ToggleBtn.Visible = false end)
 
 -- ==========================================
--- VARIABLES DEL JUEGO (MM2)
+-- ⚙️ VARIABLES Y LÓGICA (MM2)
 -- ==========================================
 local ESP_Color = Color3.fromRGB(255, 255, 255)
 local ESP_Rainbow = false
 local maxDistance = 500
-local BoxesEnabled, NamesEnabled, HealthEnabled, TracersEnabled, RoleESPEnabled = false, false, false, false, false
+local BoxesEnabled, NamesEnabled, HealthEnabled, TracersEnabled, RoleESPEnabled, GunESPEnabled = false, false, false, false, false, false
+local OnlyMurder, OnlySheriff = false, false
 local AimbotEnabled, KillAllEnabled, AutoGrabEnabled = false, false, false
 local SpeedHack, FlyHack, Noclip, InfJump = false, false, false, false
 
--- FUNCIÓN PARA DETECTAR ROLES EN MM2
+-- 🎨 COLORES POR ROL (Dos colores: Relleno y Contorno)
+local RoleColors = {
+    Murder = {Fill = Color3.fromRGB(255, 0, 0), Outline = Color3.fromRGB(0, 0, 0)},
+    Sheriff = {Fill = Color3.fromRGB(0, 150, 255), Outline = Color3.fromRGB(255, 255, 255)},
+    Innocent = {Fill = Color3.fromRGB(255, 255, 255), Outline = Color3.fromRGB(0, 0, 0)}
+}
+
 local function getRole(plr)
     if not plr.Character then return "Innocent" end
-    -- Revisar manos
     for _, t in pairs(plr.Character:GetChildren()) do
         if t:IsA("Tool") then
             local n = t.Name:lower()
-            if n:find("knife") then return "Murderer" end
+            if n:find("knife") or n:find("katana") then return "Murder" end
             if n:find("gun") or n:find("revolver") then return "Sheriff" end
         end
     end
-    -- Revisar mochila
     local bp = plr:FindFirstChild("Backpack")
     if bp then
         for _, t in pairs(bp:GetChildren()) do
             if t:IsA("Tool") then
                 local n = t.Name:lower()
-                if n:find("knife") then return "Murderer" end
+                if n:find("knife") or n:find("katana") then return "Murder" end
                 if n:find("gun") or n:find("revolver") then return "Sheriff" end
             end
         end
@@ -197,14 +226,9 @@ end
 local function getValidHead(char)
     local head = char:FindFirstChild("Head")
     if not head then return nil end
-    local params = RaycastParams.new()
-    params.FilterType = Enum.RaycastFilterType.Exclude
-    params.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
-    local result = workspace:Raycast(Camera.CFrame.Position, (head.Position - Camera.CFrame.Position).Unit * 1000, params)
-    return (result == nil or result.Instance:IsDescendantOf(char)) and head or nil
+    return head
 end
 
--- MOTOR DEL JUEGO
 local Drawings = {}
 local function CreateDrawing(class, props)
     if not Drawing then return nil end
@@ -215,8 +239,8 @@ end
 
 local function createDrawings(plr)
     Drawings[plr] = {
-        Box = CreateDrawing("Square", {Thickness = 1, Color = Theme.Accent, Filled = false, Visible = false}),
-        Tracer = CreateDrawing("Line", {Thickness = 1.5, Color = Theme.Accent, Visible = false}),
+        Box = CreateDrawing("Square", {Thickness = 2, Color = Theme.Accent, Filled = false, Visible = false}),
+        Tracer = CreateDrawing("Line", {Thickness = 2, Color = Theme.Accent, Visible = false}),
         Name = CreateDrawing("Text", {Size = 14, Center = true, Outline = true, Visible = false}),
         HealthBg = CreateDrawing("Square", {Filled = true, Color = Color3.new(0,0,0), Visible = false}),
         Health = CreateDrawing("Square", {Filled = true, Color = Color3.fromRGB(0, 255, 0), Visible = false})
@@ -227,12 +251,37 @@ Players.PlayerAdded:Connect(createDrawings)
 
 local activeTargetPos = nil 
 
+-- 🔄 LOOP PRINCIPAL (ESP, GUN ESP, AIMBOT)
 RunService.RenderStepped:Connect(function()
     local rainbowColor = Color3.fromHSV((tick() % 5) / 5, 1, 1)
     local screenCenter = Camera.ViewportSize / 2
     
     local bestHead = nil
     local shortestDist = 9e9
+
+    -- CHAM DE ARMAS (Gun ESP)
+    if GunESPEnabled then
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("Tool") and (obj.Name:lower():find("gun") or obj.Name:lower():find("knife") or obj.Name:lower():find("revolver")) then
+                if not obj:FindFirstChild("GunHighlight") then
+                    local h = Instance.new("Highlight")
+                    h.Name = "GunHighlight"
+                    h.Adornee = obj
+                    h.FillColor = Color3.fromRGB(0, 255, 0) -- Verde neón para que resalte
+                    h.FillTransparency = 0.3
+                    h.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    h.Parent = obj
+                end
+            end
+        end
+    else
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("Tool") then
+                local h = obj:FindFirstChild("GunHighlight")
+                if h then h:Destroy() end
+            end
+        end
+    end
 
     for _, plr in pairs(Players:GetPlayers()) do
         local draw = Drawings[plr]
@@ -245,15 +294,23 @@ RunService.RenderStepped:Connect(function()
             
             if head and torso and humanoid and humanoid.Health > 0 then
                 local role = getRole(plr)
+                local shouldDraw = true
                 
-                -- COLORES POR ROL
-                local roleColor = ESP_Color
+                -- FILTROS DE ROL
+                if OnlyMurder and role ~= "Murder" then shouldDraw = false end
+                if OnlySheriff and role ~= "Sheriff" then shouldDraw = false end
+
+                -- COLORES DUALES
+                local fillColor = ESP_Color
+                local outlineColor = Theme.BG
+                
                 if RoleESPEnabled then
-                    if role == "Murderer" then roleColor = Color3.fromRGB(255, 0, 0)
-                    elseif role == "Sheriff" then roleColor = Color3.fromRGB(0, 150, 255)
-                    else roleColor = Color3.fromRGB(0, 0, 0) end
+                    if role == "Murder" then fillColor = RoleColors.Murder.Fill; outlineColor = RoleColors.Murder.Outline
+                    elseif role == "Sheriff" then fillColor = RoleColors.Sheriff.Fill; outlineColor = RoleColors.Sheriff.Outline
+                    else fillColor = RoleColors.Innocent.Fill; outlineColor = RoleColors.Innocent.Outline end
                 elseif ESP_Rainbow then
-                    roleColor = rainbowColor
+                    fillColor = rainbowColor
+                    outlineColor = rainbowColor
                 end
 
                 local distFromMe = (head.Position - Camera.CFrame.Position).Magnitude
@@ -261,24 +318,24 @@ RunService.RenderStepped:Connect(function()
                 local torsoPos, torsoOnScreen = Camera:WorldToViewportPoint(torso.Position)
                 local fovDist = (Vector2.new(headPos.X, headPos.Y) - screenCenter).Magnitude
 
-                if onScreen and torsoOnScreen and distFromMe <= maxDistance then
+                if shouldDraw and onScreen and torsoOnScreen and distFromMe <= maxDistance then
                     local height = math.abs(torsoPos.Y - headPos.Y) * 1.5
                     local width = height / 2
                     
                     draw.Box.Visible = BoxesEnabled
                     draw.Box.Size = Vector2.new(width, height)
                     draw.Box.Position = Vector2.new(headPos.X - width/2, headPos.Y - height/4)
-                    draw.Box.Color = roleColor
+                    draw.Box.Color = fillColor
                     
                     draw.Name.Visible = NamesEnabled
                     draw.Name.Text = plr.Name .. " [" .. role .. "]"
                     draw.Name.Position = Vector2.new(headPos.X, headPos.Y - height/2 - 16)
-                    draw.Name.Color = roleColor
+                    draw.Name.Color = fillColor
                     
                     draw.Tracer.Visible = TracersEnabled
                     draw.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, 0)
                     draw.Tracer.To = Vector2.new(torsoPos.X, torsoPos.Y)
-                    draw.Tracer.Color = roleColor
+                    draw.Tracer.Color = fillColor
 
                     draw.Health.Visible = HealthEnabled
                     draw.HealthBg.Visible = HealthEnabled
@@ -295,12 +352,14 @@ RunService.RenderStepped:Connect(function()
                 end
 
                 -- CHAMS
-                highlight.Enabled = (RoleESPEnabled or ESP_Rainbow)
-                highlight.FillColor = roleColor
+                highlight.Enabled = (RoleESPEnabled or ESP_Rainbow) and shouldDraw
+                highlight.FillColor = fillColor
+                highlight.OutlineColor = outlineColor
                 highlight.FillTransparency = 0.5
+                highlight.OutlineTransparency = 0
 
-                -- AIMBOT (SOLO AL MURDER)
-                if AimbotEnabled and role == "Murderer" and onScreen and distFromMe <= maxDistance then
+                -- AIMBOT
+                if AimbotEnabled and role == "Murder" and onScreen and distFromMe <= maxDistance then
                     if fovDist < shortestDist then
                         local valid = getValidHead(char)
                         if valid then shortestDist = fovDist; bestHead = valid end
@@ -315,7 +374,7 @@ RunService.RenderStepped:Connect(function()
     activeTargetPos = bestHead and bestHead.Position or nil
 end)
 
--- SILENT AIM HOOK
+-- AIMBOT HOOK
 local old; old = hookmetamethod(game, "__index", newcclosure(function(self, idx)
     if AimbotEnabled and activeTargetPos and not checkcaller() and idx == "ViewportSize" and self == Camera then
         local pos, on = Camera:WorldToViewportPoint(activeTargetPos)
@@ -324,11 +383,10 @@ local old; old = hookmetamethod(game, "__index", newcclosure(function(self, idx)
     return old(self, idx)
 end))
 
--- KILL ALL Y AUTO GRAB (LOOP LENTO)
+-- KILL ALL Y AUTO GRAB
 task.spawn(function()
     while task.wait(0.1) do
         if LocalPlayer.Character then
-            -- Auto Grab
             if AutoGrabEnabled then
                 local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                 if myRoot then
@@ -336,36 +394,24 @@ task.spawn(function()
                         if obj:IsA("Tool") and (obj.Name:lower():find("knife") or obj.Name:lower():find("gun") or obj.Name:lower():find("revolver")) then
                             local handle = obj:FindFirstChild("Handle")
                             if handle and (handle.Position - myRoot.Position).Magnitude <= 15 then
-                                pcall(function()
-                                    if firetouchinterest then
-                                        firetouchinterest(handle, myRoot, 0)
-                                        firetouchinterest(handle, myRoot, 1)
-                                    end
-                                end)
+                                pcall(function() if firetouchinterest then firetouchinterest(handle, myRoot, 0) firetouchinterest(handle, myRoot, 1) end end)
                             end
                         end
                     end
                 end
             end
-
-            -- Kill All
             if KillAllEnabled then
                 local knife = LocalPlayer.Character:FindFirstChild("Knife")
                 if knife then
                     for _, plr in pairs(Players:GetPlayers()) do
-                        if plr ~= LocalPlayer and plr.Character and getRole(plr) ~= "Murderer" then
+                        if plr ~= LocalPlayer and plr.Character and getRole(plr) ~= "Murder" then
                             local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
                             local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                             if hrp and myRoot and (hrp.Position - myRoot.Position).Magnitude <= 20 then
                                 pcall(function() knife:Activate() end)
                                 for _, part in pairs(plr.Character:GetDescendants()) do
                                     if part:IsA("BasePart") then
-                                        pcall(function()
-                                            if firetouchinterest then
-                                                firetouchinterest(part, part, 0)
-                                                firetouchinterest(part, part, 1)
-                                            end
-                                        end)
+                                        pcall(function() if firetouchinterest then firetouchinterest(part, part, 0) firetouchinterest(part, part, 1) end end)
                                     end
                                 end
                             end
@@ -377,7 +423,7 @@ task.spawn(function()
     end
 end)
 
--- INFINITE JUMP & MOVEMENT
+-- MOVIMIENTO
 UIS.JumpRequest:Connect(function()
     if InfJump then
         local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -397,7 +443,9 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- COMPONENTES DE LA UI
+-- ==========================================
+-- 🧱 COMPONENTES DE LA UI
+-- ==========================================
 local function CreateCheckbox(parent, text, default, callback)
     local btn = Instance.new("TextButton", parent)
     btn.Size = UDim2.new(1, 0, 0, 30)
@@ -488,8 +536,7 @@ local function CreateSlider(parent, text, min, max, default, callback)
     
     bar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            sliding = true
-            updateValue(input.Position.X)
+            sliding = true; updateValue(input.Position.X)
         end
     end)
     UIS.InputEnded:Connect(function(input)
@@ -530,16 +577,15 @@ local function CreateColorPicker(parent, text, defaultColor, callback)
     Instance.new("UICorner", colorBox).CornerRadius = UDim.new(1, 0)
     
     btn.MouseButton1Click:Connect(function()
-        local r = math.random(0, 255)
-        local g = math.random(0, 255)
-        local b = math.random(0, 255)
-        local newColor = Color3.fromRGB(r, g, b)
+        local newColor = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
         colorBox.BackgroundColor3 = newColor
         if callback then callback(newColor) end
     end)
 end
 
--- CONSTRUCCIÓN DEL MENÚ
+-- ==========================================
+-- 📑 CONSTRUCCIÓN DEL MENÚ
+-- ==========================================
 local function BuildMenu()
     local Sidebar = Instance.new("Frame", MainFrame)
     Sidebar.Size = UDim2.new(0, 50, 1, -55)
@@ -591,12 +637,14 @@ local function BuildMenu()
     -- ESP
     local ESPPage = CreateTabBtn("rbxassetid://13571270194", "ESP")
     CreateCheckbox(ESPPage, Texts[Language].ESP.RoleESP, false, function(s) RoleESPEnabled = s end)
+    CreateCheckbox(ESPPage, Texts[Language].ESP.GunESP, false, function(s) GunESPEnabled = s end)
+    CreateCheckbox(ESPPage, Texts[Language].ESP.OnlyMurder, false, function(s) OnlyMurder = s if s then OnlySheriff = false end end)
+    CreateCheckbox(ESPPage, Texts[Language].ESP.OnlySheriff, false, function(s) OnlySheriff = s if s then OnlyMurder = false end end)
     CreateCheckbox(ESPPage, Texts[Language].ESP.Boxes, false, function(s) BoxesEnabled = s end)
     CreateCheckbox(ESPPage, Texts[Language].ESP.Tracers, false, function(s) TracersEnabled = s end)
     CreateCheckbox(ESPPage, Texts[Language].ESP.Names, false, function(s) NamesEnabled = s end)
     CreateCheckbox(ESPPage, Texts[Language].ESP.Health, false, function(s) HealthEnabled = s end)
     CreateCheckbox(ESPPage, Texts[Language].ESP.Rainbow, false, function(s) ESP_Rainbow = s end)
-    CreateColorPicker(ESPPage, Texts[Language].ESP.Color, ESP_Color, function(c) ESP_Color = c end)
 
     -- COMBAT
     local CombatPage = CreateTabBtn("rbxassetid://80964454894155", "Combat")
@@ -635,21 +683,27 @@ local function BuildMenu()
     -- WORLD
     local WorldPage = CreateTabBtn("rbxassetid://13492318225", "World")
     CreateCheckbox(WorldPage, Texts[Language].World.Fullbright, false, function(s) 
-        Lighting.Brightness = s and 2 or 1 
-        Lighting.ClockTime = s and 14 or 12 
-        Lighting.GlobalShadows = not s 
+        Lighting.Brightness = s and 2 or 1; Lighting.ClockTime = s and 14 or 12; Lighting.GlobalShadows = not s 
     end)
     CreateCheckbox(WorldPage, Texts[Language].World.RemoveTex, false, function(s)
         if s then
             for _, v in pairs(workspace:GetDescendants()) do
                 if v:IsA("Texture") or v:IsA("Decal") then v:Destroy() end
-            end        end
+            end
+        end
     end)
 
     -- SETTINGS
     local SettingsPage = CreateTabBtn("rbxassetid://13492318225", "Settings")
-    CreateColorPicker(SettingsPage, Texts[Language].Settings.ParticleColor, Color3.fromRGB(150, 0, 255), function(c) ParticleBg.ImageColor3 = c end)
-    CreateSlider(SettingsPage, Texts[Language].Settings.ParticleTrans, 0, 0.9, 0.5, function(v) ParticleBg.ImageTransparency = v end)
+    CreateColorPicker(SettingsPage, Texts[Language].Settings.ParticleColor, StarColor, function(c) StarColor = c end)
+    CreateSlider(SettingsPage, Texts[Language].Settings.ParticleTrans, 0, 0.9, 0.5, function(v) StarTransparency = v end)
+
+    CreateColorPicker(SettingsPage, "Murder " .. Texts[Language].Settings.Fill, RoleColors.Murder.Fill, function(c) RoleColors.Murder.Fill = c end)
+    CreateColorPicker(SettingsPage, "Murder " .. Texts[Language].Settings.Outline, RoleColors.Murder.Outline, function(c) RoleColors.Murder.Outline = c end)
+    CreateColorPicker(SettingsPage, "Sheriff " .. Texts[Language].Settings.Fill, RoleColors.Sheriff.Fill, function(c) RoleColors.Sheriff.Fill = c end)
+    CreateColorPicker(SettingsPage, "Sheriff " .. Texts[Language].Settings.Outline, RoleColors.Sheriff.Outline, function(c) RoleColors.Sheriff.Outline = c end)
+    CreateColorPicker(SettingsPage, "Innocent " .. Texts[Language].Settings.Fill, RoleColors.Innocent.Fill, function(c) RoleColors.Innocent.Fill = c end)
+    CreateColorPicker(SettingsPage, "Innocent " .. Texts[Language].Settings.Outline, RoleColors.Innocent.Outline, function(c) RoleColors.Innocent.Outline = c end)
 
     -- CREDITS
     local CreditsPage = CreateTabBtn("rbxassetid://13492318225", "Credits")
@@ -671,9 +725,7 @@ local function BuildMenu()
     copyBtn.Font = Enum.Font.BuilderSansBold
     copyBtn.ZIndex = 13
     Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0, 6)
-    copyBtn.MouseButton1Click:Connect(function()
-        setclipboard("urieldev") 
-    end)
+    copyBtn.MouseButton1Click:Connect(function() setclipboard("urieldev") end)
 
     SwitchPage("ESP")
 end
@@ -715,15 +767,9 @@ BtnEN.Font = Enum.Font.BuilderSansBold
 Instance.new("UICorner", BtnEN).CornerRadius = UDim.new(0, 6)
 
 BtnES.MouseButton1Click:Connect(function()
-    Language = "ES"
-    LangGui:Destroy()
-    ToggleBtn.Visible = true
-    BuildMenu()
+    Language = "ES"; LangGui:Destroy(); ToggleBtn.Visible = true; BuildMenu()
 end)
 
 BtnEN.MouseButton1Click:Connect(function()
-    Language = "EN"
-    LangGui:Destroy()
-    ToggleBtn.Visible = true
-    BuildMenu()
+    Language = "EN"; LangGui:Destroy(); ToggleBtn.Visible = true; BuildMenu()
 end)
