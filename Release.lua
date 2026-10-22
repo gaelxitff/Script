@@ -1,5 +1,5 @@
 -- ==========================================
--- 👑 URIEL DEV | MURDER MYSTERY 2 (ULTIMATE)
+-- 👑 URIEL DEV | MURDER MYSTERY 2 (FIXED)
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -36,13 +36,11 @@ local Texts = {
 local Theme = { BG = Color3.fromRGB(15, 15, 20), Card = Color3.fromRGB(25, 25, 32), Border = Color3.fromRGB(50, 50, 65), Accent = Color3.fromRGB(0, 150, 255), Text = Color3.fromRGB(255, 255, 255), Red = Color3.fromRGB(255, 60, 60) }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "UrielDev_MM2_Ultimate"
+ScreenGui.Name = "UrielDev_MM2_Fixed"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
--- ==========================================
--- 🔘 BOTÓN FLOTANTE CON BORDES
--- ==========================================
+-- BOTÓN FLOTANTE
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 210, 0, 50)
 ToggleBtn.Position = UDim2.new(0.5, -105, 0, 20)
@@ -57,20 +55,12 @@ ToggleBtn.ZIndex = 100
 ToggleBtn.Visible = false
 ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
-
 local TStroke = Instance.new("UIStroke", ToggleBtn)
 TStroke.Color = Theme.Accent
 TStroke.Thickness = 3
 
--- Animación del botón
-ToggleBtn.MouseButton1Down:Connect(function()
-    TweenService:Create(ToggleBtn, TweenInfo.new(0.1), {Size = UDim2.new(0, 200, 0, 45)}):Play()
-    TweenService:Create(TStroke, TweenInfo.new(0.1), {Thickness = 5}):Play()
-end)
-ToggleBtn.MouseButton1Up:Connect(function()
-    TweenService:Create(ToggleBtn, TweenInfo.new(0.1), {Size = UDim2.new(0, 210, 0, 50)}):Play()
-    TweenService:Create(TStroke, TweenInfo.new(0.1), {Thickness = 3}):Play()
-end)
+ToggleBtn.MouseButton1Down:Connect(function() TweenService:Create(ToggleBtn, TweenInfo.new(0.1), {Size = UDim2.new(0, 200, 0, 45)}):Play() TweenService:Create(TStroke, TweenInfo.new(0.1), {Thickness = 5}):Play() end)
+ToggleBtn.MouseButton1Up:Connect(function() TweenService:Create(ToggleBtn, TweenInfo.new(0.1), {Size = UDim2.new(0, 210, 0, 50)}):Play() TweenService:Create(TStroke, TweenInfo.new(0.1), {Thickness = 3}):Play() end)
 
 local dragToggle, startToggle, posToggle
 ToggleBtn.InputBegan:Connect(function(input)
@@ -88,12 +78,10 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
--- ==========================================
--- 🖥️ VENTANA PRINCIPAL
--- ==========================================
+-- VENTANA PRINCIPAL (MÁS GRANDE)
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 430, 0, 360)
-MainFrame.Position = UDim2.new(0.5, -215, 0.5, -180)
+MainFrame.Size = UDim2.new(0, 440, 0, 400) -- Más alto para que quepa todo
+MainFrame.Position = UDim2.new(0.5, -220, 0.5, -200)
 MainFrame.BackgroundColor3 = Theme.BG
 MainFrame.BackgroundTransparency = 0.3
 MainFrame.BorderSizePixel = 0
@@ -105,7 +93,7 @@ local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Color = Theme.Accent
 MainStroke.Thickness = 1.5
 
--- PARTÍCULAS (ESTRELLAS)
+-- ESTRELLAS (PARTÍCULAS)
 local StarContainer = Instance.new("Frame", MainFrame)
 StarContainer.Size = UDim2.new(1, 0, 1, 0)
 StarContainer.BackgroundTransparency = 1
@@ -184,7 +172,7 @@ end)
 ToggleBtn.MouseButton1Click:Connect(function() MainFrame.Visible = true ToggleBtn.Visible = false end)
 
 -- ==========================================
--- ⚙️ VARIABLES Y LÓGICA (MM2)
+-- VARIABLES DEL JUEGO Y COLORES POR ROL
 -- ==========================================
 local ESP_Color = Color3.fromRGB(255, 255, 255)
 local ESP_Rainbow = false
@@ -194,7 +182,6 @@ local OnlyMurder, OnlySheriff = false, false
 local AimbotEnabled, KillAllEnabled, AutoGrabEnabled = false, false, false
 local SpeedHack, FlyHack, Noclip, InfJump = false, false, false, false
 
--- 🎨 COLORES POR ROL (Dos colores: Relleno y Contorno)
 local RoleColors = {
     Murder = {Fill = Color3.fromRGB(255, 0, 0), Outline = Color3.fromRGB(0, 0, 0)},
     Sheriff = {Fill = Color3.fromRGB(0, 150, 255), Outline = Color3.fromRGB(255, 255, 255)},
@@ -251,7 +238,7 @@ Players.PlayerAdded:Connect(createDrawings)
 
 local activeTargetPos = nil 
 
--- 🔄 LOOP PRINCIPAL (ESP, GUN ESP, AIMBOT)
+-- 🔄 LOOP PRINCIPAL
 RunService.RenderStepped:Connect(function()
     local rainbowColor = Color3.fromHSV((tick() % 5) / 5, 1, 1)
     local screenCenter = Camera.ViewportSize / 2
@@ -259,7 +246,7 @@ RunService.RenderStepped:Connect(function()
     local bestHead = nil
     local shortestDist = 9e9
 
-    -- CHAM DE ARMAS (Gun ESP)
+    -- CHAM DE ARMAS (Busca en TODO el mapa)
     if GunESPEnabled then
         for _, obj in pairs(workspace:GetDescendants()) do
             if obj:IsA("Tool") and (obj.Name:lower():find("gun") or obj.Name:lower():find("knife") or obj.Name:lower():find("revolver")) then
@@ -267,9 +254,10 @@ RunService.RenderStepped:Connect(function()
                     local h = Instance.new("Highlight")
                     h.Name = "GunHighlight"
                     h.Adornee = obj
-                    h.FillColor = Color3.fromRGB(0, 255, 0) -- Verde neón para que resalte
-                    h.FillTransparency = 0.3
+                    h.FillColor = Color3.fromRGB(0, 255, 0) 
+                    h.FillTransparency = 0.2
                     h.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- Para verlo a través de paredes
                     h.Parent = obj
                 end
             end
@@ -296,11 +284,9 @@ RunService.RenderStepped:Connect(function()
                 local role = getRole(plr)
                 local shouldDraw = true
                 
-                -- FILTROS DE ROL
                 if OnlyMurder and role ~= "Murder" then shouldDraw = false end
                 if OnlySheriff and role ~= "Sheriff" then shouldDraw = false end
 
-                -- COLORES DUALES
                 local fillColor = ESP_Color
                 local outlineColor = Theme.BG
                 
@@ -351,14 +337,13 @@ RunService.RenderStepped:Connect(function()
                     draw.Tracer.Visible = false; draw.Health.Visible = false; draw.HealthBg.Visible = false
                 end
 
-                -- CHAMS
                 highlight.Enabled = (RoleESPEnabled or ESP_Rainbow) and shouldDraw
                 highlight.FillColor = fillColor
                 highlight.OutlineColor = outlineColor
                 highlight.FillTransparency = 0.5
                 highlight.OutlineTransparency = 0
 
-                -- AIMBOT
+                -- AIMBOT (LOCK DE CÁMARA - MÁS CONFIABLE)
                 if AimbotEnabled and role == "Murder" and onScreen and distFromMe <= maxDistance then
                     if fovDist < shortestDist then
                         local valid = getValidHead(char)
@@ -374,14 +359,14 @@ RunService.RenderStepped:Connect(function()
     activeTargetPos = bestHead and bestHead.Position or nil
 end)
 
--- AIMBOT HOOK
-local old; old = hookmetamethod(game, "__index", newcclosure(function(self, idx)
-    if AimbotEnabled and activeTargetPos and not checkcaller() and idx == "ViewportSize" and self == Camera then
-        local pos, on = Camera:WorldToViewportPoint(activeTargetPos)
-        if on then return Vector2.new(pos.X * 2, pos.Y * 2) end
+-- AIMBOT LOCK (Mueve la cámara directamente)
+RunService.RenderStepped:Connect(function()
+    if AimbotEnabled and activeTargetPos then
+        local currentCFrame = Camera.CFrame
+        local targetCFrame = CFrame.new(currentCFrame.Position, activeTargetPos)
+        Camera.CFrame = currentCFrame:Lerp(targetCFrame, 0.15) -- Suavidad del aimbot
     end
-    return old(self, idx)
-end))
+end)
 
 -- KILL ALL Y AUTO GRAB
 task.spawn(function()
@@ -443,9 +428,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- ==========================================
--- 🧱 COMPONENTES DE LA UI
--- ==========================================
+-- COMPONENTES DE LA UI
 local function CreateCheckbox(parent, text, default, callback)
     local btn = Instance.new("TextButton", parent)
     btn.Size = UDim2.new(1, 0, 0, 30)
@@ -583,9 +566,7 @@ local function CreateColorPicker(parent, text, defaultColor, callback)
     end)
 end
 
--- ==========================================
--- 📑 CONSTRUCCIÓN DEL MENÚ
--- ==========================================
+-- CONSTRUCCIÓN DEL MENÚ
 local function BuildMenu()
     local Sidebar = Instance.new("Frame", MainFrame)
     Sidebar.Size = UDim2.new(0, 50, 1, -55)
@@ -606,7 +587,7 @@ local function BuildMenu()
         local page = Instance.new("ScrollingFrame", ContentHost)
         page.Size = UDim2.new(1, 0, 1, 0)
         page.BackgroundTransparency = 1
-        page.ScrollBarThickness = 2
+        page.ScrollBarThickness = 4
         page.AutomaticCanvasSize = Enum.AutomaticSize.Y
         page.Visible = false
         page.ZIndex = 12
