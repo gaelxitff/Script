@@ -1,5 +1,5 @@
 -- ==========================================
--- 👑 URIEL DEV | RIVALS (ULTIMATE EDITION)
+-- 👑 URIEL DEV | RIVALS (MASTER EDITION)
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -10,6 +10,36 @@ local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
+-- ==========================================
+-- 🌎 SISTEMA DE IDIOMAS
+-- ==========================================
+local Language = "ES"
+local Texts = {
+    ES = {
+        Title = "URIEL DEV",
+        Sub = "RIVALS HUB",
+        Tabs = {ESP = "ESP", Combat = "Combate", Player = "Jugador", Visual = "Visuales", Credits = "Créditos"},
+        ESP = {Chams = "Chams (Resaltar)", Boxes = "Cajas (Box)", Tracers = "Líneas (Tracers)", Names = "Nombres", Health = "Barra de Vida", Rainbow = "Modo Arcoíris", Color = "Color del ESP"},
+        Combat = {Aimbot = "Aimbot (Silent)", SoftLock = "Soft Lock (FOV)", ShowFOV = "Mostrar Círculo FOV", FOVSize = "Tamaño FOV", MaxDist = "Distancia Máxima", Hitbox = "Expandir Hitbox (Cabeza)"},
+        Player = {Speed = "Speed Hack", Noclip = "Atravesar Paredes", Fly = "Volar (Fly)"},
+        Visual = {Fullbright = "Fullbright (Iluminación)", ParticleColor = "Color de Partículas", RemoveTex = "Quitar Texturas"},
+        Credits = {Title = "Creado por Uriel Dev", Desc = "Gracias por usar este Hub.\nÚnete a mi comunidad para más scripts.", Btn = "Copiar Discord"}
+    },
+    EN = {
+        Title = "URIEL DEV",
+        Sub = "RIVALS HUB",
+        Tabs = {ESP = "ESP", Combat = "Combat", Player = "Player", Visual = "Visuals", Credits = "Credits"},
+        ESP = {Chams = "Chams", Boxes = "Boxes", Tracers = "Tracers", Names = "Names", Health = "Health Bar", Rainbow = "Rainbow Mode", Color = "ESP Color"},
+        Combat = {Aimbot = "Aimbot (Silent)", SoftLock = "Soft Lock (FOV)", ShowFOV = "Show FOV Circle", FOVSize = "FOV Size", MaxDist = "Max Distance", Hitbox = "Hitbox Expander"},
+        Player = {Speed = "Speed Hack", Noclip = "Noclip", Fly = "Fly"},
+        Visual = {Fullbright = "Fullbright", ParticleColor = "Particle Color", RemoveTex = "Remove Textures"},
+        Credits = {Title = "Created by Uriel Dev", Desc = "Thanks for using this Hub.\nJoin my community for more scripts.", Btn = "Copy Discord"}
+    }
+}
+
+-- ==========================================
+-- 🎨 DISEÑO
+-- ==========================================
 local Theme = {
     BG = Color3.fromRGB(15, 15, 20),
     Card = Color3.fromRGB(25, 25, 32),
@@ -21,31 +51,13 @@ local Theme = {
 }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "UrielDev_Ultimate"
+ScreenGui.Name = "UrielDev_Master"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
 -- ==========================================
--- ✨ PARTÍCULAS DE FONDO Y BOTÓN FLOTANTE
+-- ✨ BOTÓN FLOTANTE
 -- ==========================================
-local ParticleBg = Instance.new("ImageLabel", ScreenGui)
-ParticleBg.Size = UDim2.new(1, 0, 1, 0)
-ParticleBg.BackgroundTransparency = 1
-ParticleBg.Image = "rbxassetid://243660364"
-ParticleBg.ImageTransparency = 0.7
-ParticleBg.ImageColor3 = Color3.fromRGB(150, 0, 255) 
-ParticleBg.ScaleType = Enum.ScaleType.Tile
-ParticleBg.TileSize = UDim2.new(0, 200, 0, 200)
-ParticleBg.ZIndex = 1
-
-task.spawn(function()
-    while true do
-        ParticleBg.Position = UDim2.new(0, 0, 0, 0)
-        TweenService:Create(ParticleBg, TweenInfo.new(15, Enum.EasingStyle.Linear), {Position = UDim2.new(0, 0, -1, 0)}):Play()
-        task.wait(15)
-    end
-end)
-
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 200, 0, 45)
 ToggleBtn.Position = UDim2.new(0.5, -100, 0, 20)
@@ -55,6 +67,7 @@ ToggleBtn.TextColor3 = Theme.Text
 ToggleBtn.Font = Enum.Font.FredokaOne
 ToggleBtn.TextSize = 16
 ToggleBtn.ZIndex = 100
+ToggleBtn.Visible = false
 ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 local TStroke = Instance.new("UIStroke", ToggleBtn)
@@ -85,7 +98,7 @@ local MainFrame = Instance.new("CanvasGroup")
 MainFrame.Size = UDim2.new(0, 420, 0, 340)
 MainFrame.Position = UDim2.new(0.5, -210, 0.5, -170)
 MainFrame.BackgroundColor3 = Theme.BG
-MainFrame.BackgroundTransparency = 0.05
+MainFrame.BackgroundTransparency = 0.1
 MainFrame.BorderSizePixel = 0
 MainFrame.GroupTransparency = 1
 MainFrame.Visible = false
@@ -94,6 +107,25 @@ Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Color = Theme.Accent
 MainStroke.Thickness = 1.5
+
+-- PARTÍCULAS DE FONDO (DENTRO DEL MENÚ)
+local ParticleBg = Instance.new("ImageLabel", MainFrame)
+ParticleBg.Size = UDim2.new(1, 0, 1, 0)
+ParticleBg.BackgroundTransparency = 1
+ParticleBg.Image = "rbxassetid://243660364"
+ParticleBg.ImageTransparency = 0.8
+ParticleBg.ImageColor3 = Color3.fromRGB(150, 0, 255)
+ParticleBg.ScaleType = Enum.ScaleType.Tile
+ParticleBg.TileSize = UDim2.new(0, 200, 0, 200)
+ParticleBg.ZIndex = 0
+
+task.spawn(function()
+    while true do
+        ParticleBg.Position = UDim2.new(0, 0, 0, 0)
+        TweenService:Create(ParticleBg, TweenInfo.new(15, Enum.EasingStyle.Linear), {Position = UDim2.new(0, 0, -1, 0)}):Play()
+        task.wait(15)
+    end
+end)
 
 local Header = Instance.new("Frame", MainFrame)
 Header.Size = UDim2.new(1, 0, 0, 40)
@@ -104,7 +136,7 @@ local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(1, -80, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "URIEL DEV | ULTIMATE"
+Title.Text = Texts[Language].Title
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.FredokaOne
 Title.TextSize = 16
@@ -147,54 +179,6 @@ ToggleBtn.MouseButton1Click:Connect(function()
     }):Play()
 end)
 
--- BARRA LATERAL Y CONTENIDO
-local Sidebar = Instance.new("Frame", MainFrame)
-Sidebar.Size = UDim2.new(0, 50, 1, -55)
-Sidebar.Position = UDim2.new(0, 10, 0, 50)
-Sidebar.BackgroundColor3 = Theme.Card
-Sidebar.BackgroundTransparency = 0.2
-Sidebar.ZIndex = 2
-Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 8)
-
-local ContentHost = Instance.new("Frame", MainFrame)
-ContentHost.Size = UDim2.new(1, -85, 1, -55)
-ContentHost.Position = UDim2.new(0, 75, 0, 50)
-ContentHost.BackgroundTransparency = 1
-ContentHost.ZIndex = 2
-
-local Pages = {}
-local function CreatePage(name)
-    local page = Instance.new("ScrollingFrame", ContentHost)
-    page.Size = UDim2.new(1, 0, 1, 0)
-    page.BackgroundTransparency = 1
-    page.ScrollBarThickness = 2
-    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    page.Visible = false
-    page.ZIndex = 2
-    local layout = Instance.new("UIListLayout", page)
-    layout.Padding = UDim.new(0, 5)
-    Pages[name] = page
-    return page
-end
-
-local function SwitchPage(pageName)
-    for name, page in pairs(Pages) do page.Visible = (name == pageName) end
-end
-
-local function CreateTabBtn(iconId, pageName)
-    local btn = Instance.new("ImageButton", Sidebar)
-    btn.Size = UDim2.new(0, 32, 0, 32)
-    btn.Position = UDim2.new(0, 9, 0, 9 + (#Sidebar:GetChildren() * 40))
-    btn.BackgroundColor3 = Theme.BG
-    btn.BackgroundTransparency = 0.5
-    btn.Image = iconId
-    btn.ImageColor3 = Theme.Accent
-    btn.ZIndex = 2
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
-    btn.MouseButton1Click:Connect(function() SwitchPage(pageName) end)
-    return CreatePage(pageName)
-end
-
 -- ==========================================
 -- ⚙️ VARIABLES DEL JUEGO
 -- ==========================================
@@ -227,7 +211,7 @@ local function getValidHead(char)
 end
 
 -- ==========================================
--- 🔥 DIBUJOS Y MOTOR PRINCIPAL
+-- 🔥 MOTOR DEL JUEGO
 -- ==========================================
 local Drawings = {}
 local function CreateDrawing(class, props)
@@ -286,7 +270,6 @@ RunService.RenderStepped:Connect(function()
             local highlight = char:FindFirstChild("Highlight") or Instance.new("Highlight", char)
             
             if head and torso and humanoid then
-                -- Hitbox Expander
                 if HitboxEnabled then
                     head.Size = Vector3.new(10, 10, 10)
                     head.Transparency = 0.5
@@ -381,7 +364,7 @@ RunService.Heartbeat:Connect(function()
 end)
 
 -- ==========================================
--- 🧱 COMPONENTES DE LA UI (CHECKBOXES, SLIDERS, COLORES)
+-- 🧱 COMPONENTES DE LA UI
 -- ==========================================
 local function CreateCheckbox(parent, text, default, callback)
     local btn = Instance.new("TextButton", parent)
@@ -520,68 +503,190 @@ local function CreateColorPicker(parent, text, defaultColor, callback)
 end
 
 -- ==========================================
--- 📑 CONSTRUCCIÓN DE LAS PESTAÑAS (MUCHAS OPCIONES)
+-- 📑 CONSTRUCCIÓN DEL MENÚ
 -- ==========================================
--- Tab ESP
-local ESPPage = CreateTabBtn("rbxassetid://13571270194", "ESP")
-CreateCheckbox(ESPPage, "Chams (Resaltar)", false, function(s) ChamsEnabled = s end)
-CreateCheckbox(ESPPage, "Boxes (Cajas)", false, function(s) BoxesEnabled = s end)
-CreateCheckbox(ESPPage, "Tracers (Líneas)", false, function(s) TracersEnabled = s end)
-CreateCheckbox(ESPPage, "Names (Nombres)", false, function(s) NamesEnabled = s end)
-CreateCheckbox(ESPPage, "Health (Vida)", false, function(s) HealthEnabled = s end)
-CreateCheckbox(ESPPage, "Modo Arcoíris", false, function(s) ESP_Rainbow = s end)
-CreateColorPicker(ESPPage, "Color del ESP", ESP_Color, function(c) ESP_Color = c end)
+local function BuildMenu()
+    local Sidebar = Instance.new("Frame", MainFrame)
+    Sidebar.Size = UDim2.new(0, 50, 1, -55)
+    Sidebar.Position = UDim2.new(0, 10, 0, 50)
+    Sidebar.BackgroundColor3 = Theme.Card
+    Sidebar.BackgroundTransparency = 0.2
+    Sidebar.ZIndex = 2
+    Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 8)
 
--- Tab Combat
-local CombatPage = CreateTabBtn("rbxassetid://80964454894155", "Combat")
-CreateCheckbox(CombatPage, "Aimbot (Silent)", false, function(s) AimbotEnabled = s end)
-CreateCheckbox(CombatPage, "Soft Lock (FOV)", false, function(s) SoftLockEnabled = s end)
-CreateCheckbox(CombatPage, "Mostrar FOV Circle", false, function(s) fovEnabled = s end)
-CreateSlider(CombatPage, "FOV Size", 1, 10, 3, function(v) calculatedRadius = v * 60 end)
-CreateSlider(CombatPage, "Max Distance", 100, 2000, 500, function(v) maxDistance = v end)
-CreateCheckbox(CombatPage, "Hitbox Expander (Cabeza)", false, function(s) HitboxEnabled = s end)
+    local ContentHost = Instance.new("Frame", MainFrame)
+    ContentHost.Size = UDim2.new(1, -85, 1, -55)
+    ContentHost.Position = UDim2.new(0, 75, 0, 50)
+    ContentHost.BackgroundTransparency = 1
+    ContentHost.ZIndex = 2
 
--- Tab Player
-local PlayerPage = CreateTabBtn("rbxassetid://13492318225", "Player")
-CreateCheckbox(PlayerPage, "Speed Hack", false, function(s) SpeedHack = s end)
-CreateCheckbox(PlayerPage, "Noclip", false, function(s) Noclip = s end)
-CreateCheckbox(PlayerPage, "Volar (Fly)", false, function(s) 
-    FlyHack = s
-    if s then
-        task.spawn(function()
-            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                local bv = Instance.new("BodyVelocity", hrp)
-                bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-                while FlyHack do
-                    local move = Vector3.zero
-                    if UIS:IsKeyDown(Enum.KeyCode.W) then move += Camera.CFrame.LookVector end
-                    if UIS:IsKeyDown(Enum.KeyCode.S) then move -= Camera.CFrame.LookVector end
-                    if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
-                    bv.Velocity = move * 60
-                    task.wait()
+    local Pages = {}
+    local function CreatePage(name)
+        local page = Instance.new("ScrollingFrame", ContentHost)
+        page.Size = UDim2.new(1, 0, 1, 0)
+        page.BackgroundTransparency = 1
+        page.ScrollBarThickness = 2
+        page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        page.Visible = false
+        page.ZIndex = 2
+        local layout = Instance.new("UIListLayout", page)
+        layout.Padding = UDim.new(0, 5)
+        Pages[name] = page
+        return page
+    end
+
+    local function SwitchPage(pageName)
+        for name, page in pairs(Pages) do page.Visible = (name == pageName) end
+    end
+
+    local function CreateTabBtn(iconId, pageName)
+        local btn = Instance.new("ImageButton", Sidebar)
+        btn.Size = UDim2.new(0, 32, 0, 32)
+        btn.Position = UDim2.new(0, 9, 0, 9 + (#Sidebar:GetChildren() * 40))
+        btn.BackgroundColor3 = Theme.BG
+        btn.BackgroundTransparency = 0.5
+        btn.Image = iconId
+        btn.ImageColor3 = Theme.Accent
+        btn.ZIndex = 2
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+        btn.MouseButton1Click:Connect(function() SwitchPage(pageName) end)
+        return CreatePage(pageName)
+    end
+
+    -- TAB ESP
+    local ESPPage = CreateTabBtn("rbxassetid://13571270194", "ESP")
+    CreateCheckbox(ESPPage, Texts[Language].ESP.Chams, false, function(s) ChamsEnabled = s end)
+    CreateCheckbox(ESPPage, Texts[Language].ESP.Boxes, false, function(s) BoxesEnabled = s end)
+    CreateCheckbox(ESPPage, Texts[Language].ESP.Tracers, false, function(s) TracersEnabled = s end)
+    CreateCheckbox(ESPPage, Texts[Language].ESP.Names, false, function(s) NamesEnabled = s end)
+    CreateCheckbox(ESPPage, Texts[Language].ESP.Health, false, function(s) HealthEnabled = s end)
+    CreateCheckbox(ESPPage, Texts[Language].ESP.Rainbow, false, function(s) ESP_Rainbow = s end)
+    CreateColorPicker(ESPPage, Texts[Language].ESP.Color, ESP_Color, function(c) ESP_Color = c end)
+
+    -- TAB COMBAT
+    local CombatPage = CreateTabBtn("rbxassetid://80964454894155", "Combat")
+    CreateCheckbox(CombatPage, Texts[Language].Combat.Aimbot, false, function(s) AimbotEnabled = s end)
+    CreateCheckbox(CombatPage, Texts[Language].Combat.SoftLock, false, function(s) SoftLockEnabled = s end)
+    CreateCheckbox(CombatPage, Texts[Language].Combat.ShowFOV, false, function(s) fovEnabled = s end)
+    CreateSlider(CombatPage, Texts[Language].Combat.FOVSize, 1, 10, 3, function(v) calculatedRadius = v * 60 end)
+    CreateSlider(CombatPage, Texts[Language].Combat.MaxDist, 100, 2000, 500, function(v) maxDistance = v end)
+    CreateCheckbox(CombatPage, Texts[Language].Combat.Hitbox, false, function(s) HitboxEnabled = s end)
+
+    -- TAB PLAYER
+    local PlayerPage = CreateTabBtn("rbxassetid://13492318225", "Player")
+    CreateCheckbox(PlayerPage, Texts[Language].Player.Speed, false, function(s) SpeedHack = s end)
+    CreateCheckbox(PlayerPage, Texts[Language].Player.Noclip, false, function(s) Noclip = s end)
+    CreateCheckbox(PlayerPage, Texts[Language].Player.Fly, false, function(s) 
+        FlyHack = s
+        if s then
+            task.spawn(function()
+                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local bv = Instance.new("BodyVelocity", hrp)
+                    bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+                    while FlyHack do
+                        local move = Vector3.zero
+                        if UIS:IsKeyDown(Enum.KeyCode.W) then move += Camera.CFrame.LookVector end
+                        if UIS:IsKeyDown(Enum.KeyCode.S) then move -= Camera.CFrame.LookVector end
+                        if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
+                        bv.Velocity = move * 60
+                        task.wait()
+                    end
+                    bv:Destroy()
                 end
-                bv:Destroy()
-            end
-        end)
-    end
-end)
-
--- Tab Visuals / Extras
-local VisualsPage = CreateTabBtn("rbxassetid://13492318225", "Visuals")
-CreateCheckbox(VisualsPage, "Fullbright", false, function(s) 
-    Lighting.Brightness = s and 2 or 1 
-    Lighting.ClockTime = s and 14 or 12 
-    Lighting.GlobalShadows = not s 
-end)
-CreateColorPicker(VisualsPage, "Color de Partículas", Color3.fromRGB(150, 0, 255), function(c) ParticleBg.ImageColor3 = c end)
-CreateCheckbox(VisualsPage, "Quitar Texturas", false, function(s)
-    if s then
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("Texture") or v:IsA("Decal") then v:Destroy() end
+            end)
         end
-    end
+    end)
+
+    -- TAB VISUALS
+    local VisualsPage = CreateTabBtn("rbxassetid://13492318225", "Visuals")
+    CreateCheckbox(VisualsPage, Texts[Language].Visual.Fullbright, false, function(s) 
+        Lighting.Brightness = s and 2 or 1 
+        Lighting.ClockTime = s and 14 or 12 
+        Lighting.GlobalShadows = not s 
+    end)
+    CreateColorPicker(VisualsPage, Texts[Language].Visual.ParticleColor, Color3.fromRGB(150, 0, 255), function(c) ParticleBg.ImageColor3 = c end)
+    CreateCheckbox(VisualsPage, Texts[Language].Visual.RemoveTex, false, function(s)
+        if s then
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v:IsA("Texture") or v:IsA("Decal") then v:Destroy() end
+            end
+        end
+    end)
+
+    -- TAB CREDITS
+    local CreditsPage = CreateTabBtn("rbxassetid://13492318225", "Credits")
+    local creditLabel = Instance.new("TextLabel", CreditsPage)
+    creditLabel.Size = UDim2.new(1, 0, 0, 60)
+    creditLabel.BackgroundTransparency = 1
+    creditLabel.Text = Texts[Language].Credits.Title .. "\n" .. Texts[Language].Credits.Desc
+    creditLabel.TextColor3 = Theme.Text
+    creditLabel.Font = Enum.Font.BuilderSansBold
+    creditLabel.TextSize = 12
+    creditLabel.TextWrapped = true
+
+    local copyBtn = Instance.new("TextButton", CreditsPage)
+    copyBtn.Size = UDim2.new(1, 0, 0, 30)
+    copyBtn.BackgroundColor3 = Theme.Accent
+    copyBtn.Text = Texts[Language].Credits.Btn
+    copyBtn.TextColor3 = Theme.Text
+    copyBtn.Font = Enum.Font.BuilderSansBold
+    Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0, 6)
+    copyBtn.MouseButton1Click:Connect(function()
+        setclipboard("urieldev") -- Cambia "urieldev" por tu discord real
+    end)
+
+    SwitchPage("ESP")
+end
+
+-- ==========================================
+-- 🌎 SELECTOR DE IDIOMA INICIAL
+-- ==========================================
+local LangGui = Instance.new("ScreenGui", CoreGui)
+local LangFrame = Instance.new("Frame", LangGui)
+LangFrame.Size = UDim2.new(0, 250, 0, 150)
+LangFrame.Position = UDim2.new(0.5, -125, 0.5, -75)
+LangFrame.BackgroundColor3 = Theme.BG
+Instance.new("UICorner", LangFrame).CornerRadius = UDim.new(0, 10)
+local LStroke = Instance.new("UIStroke", LangFrame)
+LStroke.Color = Theme.Accent
+
+local LTitle = Instance.new("TextLabel", LangFrame)
+LTitle.Size = UDim2.new(1, 0, 0, 40)
+LTitle.BackgroundTransparency = 1
+LTitle.Text = "Select Language / Selecciona Idioma"
+LTitle.TextColor3 = Theme.Text
+LTitle.Font = Enum.Font.BuilderSansBold
+LTitle.Parent = LangFrame
+
+local BtnES = Instance.new("TextButton", LangFrame)
+BtnES.Size = UDim2.new(0.4, 0, 0, 35)
+BtnES.Position = UDim2.new(0.05, 0, 0, 60)
+BtnES.BackgroundColor3 = Theme.Card
+BtnES.Text = "Español"
+BtnES.TextColor3 = Theme.Text
+BtnES.Font = Enum.Font.BuilderSansBold
+Instance.new("UICorner", BtnES).CornerRadius = UDim.new(0, 6)
+
+local BtnEN = Instance.new("TextButton", LangFrame)
+BtnEN.Size = UDim2.new(0.4, 0, 0, 35)
+BtnEN.Position = UDim2.new(0.55, 0, 0, 60)
+BtnEN.BackgroundColor3 = Theme.Card
+BtnEN.Text = "English"
+BtnEN.TextColor3 = Theme.Text
+BtnEN.Font = Enum.Font.BuilderSansBold
+Instance.new("UICorner", BtnEN).CornerRadius = UDim.new(0, 6)
+
+BtnES.MouseButton1Click:Connect(function()
+    Language = "ES"
+    LangGui:Destroy()
+    ToggleBtn.Visible = true
+    BuildMenu()
 end)
 
--- INICIAR EN ESP
-SwitchPage("ESP")
+BtnEN.MouseButton1Click:Connect(function()
+    Language = "EN"
+    LangGui:Destroy()
+    ToggleBtn.Visible = true
+    BuildMenu()
+end)
