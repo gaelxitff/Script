@@ -1,5 +1,5 @@
 -- ==========================================
--- 👑 URIEL DEV | MURDER MYSTERY 2 (PALETTE EDITION)
+-- 👑 URIEL DEV | MURDER MYSTERY 2 (FIXED)
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -10,58 +10,57 @@ local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
+-- SISTEMA DE IDIOMAS
 local Language = "ES"
 local Texts = {
     ES = {
         Title = "URIEL DEV | MM2",
-        ESP = {RoleESP = "Role ESP", GunESP = "Cham de Armas", OnlyMurder = "Solo Murder", Boxes = "Cajas (Box)", Tracers = "Líneas", Names = "Nombres", Health = "Barra de Vida", Rainbow = "Arcoíris"},
-        Combat = {Aimbot = "Aimbot al Murder", KillAll = "Kill All", AutoGrab = "Auto Recoger", MaxDist = "Distancia Máx"},
+        ESP = {RoleESP = "Role ESP (Colores)", GunESP = "Cham de Armas", OnlyMurder = "Solo ver Murder", OnlySheriff = "Solo ver Sheriff", Boxes = "Cajas (Box)", Tracers = "Líneas", Names = "Nombres", Health = "Barra de Vida", Rainbow = "Modo Arcoíris"},
+        Combat = {Aimbot = "Aimbot al Murder", KillAll = "Kill All", AutoGrab = "Auto Recoger Arma", MaxDist = "Distancia"},
         Player = {Speed = "Speed Hack", Noclip = "Noclip", Fly = "Volar", Jump = "Salto Infinito"},
-        Settings = {RoleColors = "Colores de Rol", Fill = "Relleno", Outline = "Contorno"},
-        Credits = {Title = "Creado por Uriel Dev", Btn = "Copiar Discord"}
+        World = {Fullbright = "Fullbright", RemoveTex = "Quitar Texturas"},
+        Settings = {ParticleColor = "Color de Estrellas", ParticleTrans = "Transparencia Estrellas", RoleColors = "Colores por Rol", Fill = "Relleno", Outline = "Contorno"},
+        Credits = {Title = "Creado por Uriel Dev", Desc = "Gracias por usar este Hub.", Btn = "Copiar Discord"}
     },
     EN = {
         Title = "URIEL DEV | MM2",
-        ESP = {RoleESP = "Role ESP", GunESP = "Gun ESP", OnlyMurder = "Only Murder", Boxes = "Boxes", Tracers = "Tracers", Names = "Names", Health = "Health Bar", Rainbow = "Rainbow"},
-        Combat = {Aimbot = "Aimbot Murder", KillAll = "Kill All", AutoGrab = "Auto Grab", MaxDist = "Max Dist"},
+        ESP = {RoleESP = "Role ESP (Colors)", GunESP = "Gun ESP", OnlyMurder = "Only Murder", OnlySheriff = "Only Sheriff", Boxes = "Boxes", Tracers = "Tracers", Names = "Names", Health = "Health Bar", Rainbow = "Rainbow Mode"},
+        Combat = {Aimbot = "Aimbot Murder", KillAll = "Kill All", AutoGrab = "Auto Grab Weapon", MaxDist = "Distance"},
         Player = {Speed = "Speed Hack", Noclip = "Noclip", Fly = "Fly", Jump = "Infinite Jump"},
-        Settings = {RoleColors = "Role Colors", Fill = "Fill", Outline = "Outline"},
-        Credits = {Title = "Created by Uriel Dev", Btn = "Copy Discord"}
+        World = {Fullbright = "Fullbright", RemoveTex = "Remove Textures"},
+        Settings = {ParticleColor = "Star Color", ParticleTrans = "Star Transparency", RoleColors = "Role Colors", Fill = "Fill", Outline = "Outline"},
+        Credits = {Title = "Created by Uriel Dev", Desc = "Thanks for using this Hub.", Btn = "Copy Discord"}
     }
 }
 
-local Theme = { 
-    BG = Color3.fromRGB(15, 15, 20), 
-    Panel = Color3.fromRGB(22, 22, 30), 
-    Border = Color3.fromRGB(45, 45, 60), 
-    Accent = Color3.fromRGB(0, 170, 255), 
-    Text = Color3.fromRGB(255, 255, 255), 
-    Muted = Color3.fromRGB(140, 140, 160), 
-    Red = Color3.fromRGB(255, 60, 60),
-    ToggleOff = Color3.fromRGB(35, 35, 45)
-}
+local Theme = { BG = Color3.fromRGB(15, 15, 20), Card = Color3.fromRGB(25, 25, 32), Border = Color3.fromRGB(50, 50, 65), Accent = Color3.fromRGB(0, 150, 255), Text = Color3.fromRGB(255, 255, 255), Red = Color3.fromRGB(255, 60, 60) }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "URIEL_DEV_PALETTE"
+ScreenGui.Name = "UrielDev_MM2_Fixed"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
 -- BOTÓN FLOTANTE
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 160, 0, 42)
-ToggleBtn.Position = UDim2.new(0.5, -80, 0, 20)
+ToggleBtn.Size = UDim2.new(0, 210, 0, 50)
+ToggleBtn.Position = UDim2.new(0.5, -105, 0, 20)
 ToggleBtn.BackgroundColor3 = Theme.BG
+ToggleBtn.BackgroundTransparency = 0.1
 ToggleBtn.Text = "URIEL DEV"
-ToggleBtn.TextColor3 = Theme.Accent
-ToggleBtn.Font = Enum.Font.BuilderSansBold
-ToggleBtn.TextSize = 14
+ToggleBtn.TextColor3 = Theme.Text
+ToggleBtn.Font = Enum.Font.FredokaOne
+ToggleBtn.TextSize = 18
+ToggleBtn.AutoButtonColor = false
 ToggleBtn.ZIndex = 100
 ToggleBtn.Visible = false
 ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 local TStroke = Instance.new("UIStroke", ToggleBtn)
 TStroke.Color = Theme.Accent
-TStroke.Thickness = 2
+TStroke.Thickness = 3
+
+ToggleBtn.MouseButton1Down:Connect(function() TweenService:Create(ToggleBtn, TweenInfo.new(0.1), {Size = UDim2.new(0, 200, 0, 45)}):Play() TweenService:Create(TStroke, TweenInfo.new(0.1), {Thickness = 5}):Play() end)
+ToggleBtn.MouseButton1Up:Connect(function() TweenService:Create(ToggleBtn, TweenInfo.new(0.1), {Size = UDim2.new(0, 210, 0, 50)}):Play() TweenService:Create(TStroke, TweenInfo.new(0.1), {Thickness = 3}):Play() end)
 
 local dragToggle, startToggle, posToggle
 ToggleBtn.InputBegan:Connect(function(input)
@@ -79,48 +78,79 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
--- VENTANA PRINCIPAL
+-- VENTANA PRINCIPAL (MÁS GRANDE)
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 460, 0, 340)
-MainFrame.Position = UDim2.new(0.5, -230, 0.5, -170)
+MainFrame.Size = UDim2.new(0, 440, 0, 400) -- Más alto para que quepa todo
+MainFrame.Position = UDim2.new(0.5, -220, 0.5, -200)
 MainFrame.BackgroundColor3 = Theme.BG
+MainFrame.BackgroundTransparency = 0.3
 MainFrame.BorderSizePixel = 0
 MainFrame.Visible = false
 MainFrame.ZIndex = 10
 MainFrame.Parent = ScreenGui
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 local MainStroke = Instance.new("UIStroke", MainFrame)
-MainStroke.Color = Theme.Border
+MainStroke.Color = Theme.Accent
 MainStroke.Thickness = 1.5
 
+-- ESTRELLAS (PARTÍCULAS)
+local StarContainer = Instance.new("Frame", MainFrame)
+StarContainer.Size = UDim2.new(1, 0, 1, 0)
+StarContainer.BackgroundTransparency = 1
+StarContainer.ClipsDescendants = true
+StarContainer.ZIndex = 10
+Instance.new("UICorner", StarContainer).CornerRadius = UDim.new(0, 10)
+
+local StarColor = Color3.fromRGB(0, 150, 255)
+local StarTransparency = 0.5
+
+local function CreateStar()
+    local star = Instance.new("ImageLabel", StarContainer)
+    star.Size = UDim2.new(0, math.random(3, 8), 0, math.random(3, 8))
+    star.Position = UDim2.new(math.random(0, 100)/100, 0, 1, 0)
+    star.BackgroundTransparency = 1
+    star.Image = "rbxassetid://11395780588"
+    star.ImageColor3 = StarColor
+    star.ImageTransparency = StarTransparency
+    star.ZIndex = 10
+    local tween = TweenService:Create(star, TweenInfo.new(math.random(2, 5), Enum.EasingStyle.Linear), {Position = UDim2.new(star.Position.X.Scale, 0, -0.1, 0)})
+    tween:Play()
+    tween.Completed:Connect(function() star:Destroy() end)
+end
+
+task.spawn(function()
+    while task.wait(0.1) do
+        if MainFrame.Visible then CreateStar() end
+    end
+end)
+
+-- HEADER
 local Header = Instance.new("Frame", MainFrame)
-Header.Size = UDim2.new(1, 0, 0, 35)
-Header.BackgroundColor3 = Theme.Panel
-Header.BorderSizePixel = 0
+Header.Size = UDim2.new(1, 0, 0, 40)
+Header.BackgroundTransparency = 1
 Header.ZIndex = 11
-Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 8)
 
 local Title = Instance.new("TextLabel", Header)
-Title.Size = UDim2.new(1, -60, 1, 0)
+Title.Size = UDim2.new(1, -80, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
 Title.Text = Texts[Language].Title
 Title.TextColor3 = Theme.Accent
-Title.Font = Enum.Font.BuilderSansBold
-Title.TextSize = 14
+Title.Font = Enum.Font.FredokaOne
+Title.TextSize = 16
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.ZIndex = 12
 
 local CloseBtn = Instance.new("TextButton", Header)
 CloseBtn.Size = UDim2.new(0, 24, 0, 24)
 CloseBtn.Position = UDim2.new(1, -30, 0.5, -12)
-CloseBtn.BackgroundColor3 = Theme.Panel
+CloseBtn.BackgroundColor3 = Theme.Red
 CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Theme.Text
 CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize = 12
+CloseBtn.TextSize = 10
 CloseBtn.ZIndex = 12
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 5)
 CloseBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false ToggleBtn.Visible = true end)
 
 local dragging, dragStart, startPos
@@ -141,9 +171,14 @@ end)
 
 ToggleBtn.MouseButton1Click:Connect(function() MainFrame.Visible = true ToggleBtn.Visible = false end)
 
--- VARIABLES DEL JUEGO
+-- ==========================================
+-- VARIABLES DEL JUEGO Y COLORES POR ROL
+-- ==========================================
+local ESP_Color = Color3.fromRGB(255, 255, 255)
+local ESP_Rainbow = false
 local maxDistance = 500
-local BoxesEnabled, NamesEnabled, HealthEnabled, TracersEnabled, RoleESPEnabled, GunESPEnabled, OnlyMurder, ESP_Rainbow = false, false, false, false, false, false, false, false
+local BoxesEnabled, NamesEnabled, HealthEnabled, TracersEnabled, RoleESPEnabled, GunESPEnabled = false, false, false, false, false, false
+local OnlyMurder, OnlySheriff = false, false
 local AimbotEnabled, KillAllEnabled, AutoGrabEnabled = false, false, false
 local SpeedHack, FlyHack, Noclip, InfJump = false, false, false, false
 
@@ -158,8 +193,8 @@ local function getRole(plr)
     for _, t in pairs(plr.Character:GetChildren()) do
         if t:IsA("Tool") then
             local n = t.Name:lower()
-            if n:find("knife") then return "Murder" end
-            if n:find("gun") then return "Sheriff" end
+            if n:find("knife") or n:find("katana") then return "Murder" end
+            if n:find("gun") or n:find("revolver") then return "Sheriff" end
         end
     end
     local bp = plr:FindFirstChild("Backpack")
@@ -167,15 +202,20 @@ local function getRole(plr)
         for _, t in pairs(bp:GetChildren()) do
             if t:IsA("Tool") then
                 local n = t.Name:lower()
-                if n:find("knife") then return "Murder" end
-                if n:find("gun") then return "Sheriff" end
+                if n:find("knife") or n:find("katana") then return "Murder" end
+                if n:find("gun") or n:find("revolver") then return "Sheriff" end
             end
         end
     end
     return "Innocent"
 end
 
--- DRAWINGS
+local function getValidHead(char)
+    local head = char:FindFirstChild("Head")
+    if not head then return nil end
+    return head
+end
+
 local Drawings = {}
 local function CreateDrawing(class, props)
     if not Drawing then return nil end
@@ -186,9 +226,9 @@ end
 
 local function createDrawings(plr)
     Drawings[plr] = {
-        Box = CreateDrawing("Square", {Thickness = 1.5, Color = Theme.Accent, Filled = false, Visible = false}),
-        Tracer = CreateDrawing("Line", {Thickness = 1.5, Color = Theme.Accent, Visible = false}),
-        Name = CreateDrawing("Text", {Size = 13, Center = true, Outline = true, Visible = false}),
+        Box = CreateDrawing("Square", {Thickness = 2, Color = Theme.Accent, Filled = false, Visible = false}),
+        Tracer = CreateDrawing("Line", {Thickness = 2, Color = Theme.Accent, Visible = false}),
+        Name = CreateDrawing("Text", {Size = 14, Center = true, Outline = true, Visible = false}),
         HealthBg = CreateDrawing("Square", {Filled = true, Color = Color3.new(0,0,0), Visible = false}),
         Health = CreateDrawing("Square", {Filled = true, Color = Color3.fromRGB(0, 255, 0), Visible = false})
     }
@@ -196,25 +236,28 @@ end
 for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then createDrawings(p) end end
 Players.PlayerAdded:Connect(createDrawings)
 
-local activeTarget = nil
+local activeTargetPos = nil 
 
--- LOOP ESP Y AIMBOT
+-- 🔄 LOOP PRINCIPAL
 RunService.RenderStepped:Connect(function()
     local rainbowColor = Color3.fromHSV((tick() % 5) / 5, 1, 1)
     local screenCenter = Camera.ViewportSize / 2
+    
     local bestHead = nil
     local shortestDist = 9e9
 
+    -- CHAM DE ARMAS (Busca en TODO el mapa)
     if GunESPEnabled then
         for _, obj in pairs(workspace:GetDescendants()) do
-            if obj:IsA("Tool") and (obj.Name:lower():find("gun") or obj.Name:lower():find("knife")) then
+            if obj:IsA("Tool") and (obj.Name:lower():find("gun") or obj.Name:lower():find("knife") or obj.Name:lower():find("revolver")) then
                 if not obj:FindFirstChild("GunHighlight") then
                     local h = Instance.new("Highlight")
                     h.Name = "GunHighlight"
                     h.Adornee = obj
-                    h.FillColor = Color3.fromRGB(0, 255, 0)
+                    h.FillColor = Color3.fromRGB(0, 255, 0) 
                     h.FillTransparency = 0.2
-                    h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                    h.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- Para verlo a través de paredes
                     h.Parent = obj
                 end
             end
@@ -236,19 +279,24 @@ RunService.RenderStepped:Connect(function()
             local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("HumanoidRootPart")
             local humanoid = char:FindFirstChildOfClass("Humanoid")
             local highlight = char:FindFirstChild("Highlight") or Instance.new("Highlight", char)
-
+            
             if head and torso and humanoid and humanoid.Health > 0 then
                 local role = getRole(plr)
                 local shouldDraw = true
+                
                 if OnlyMurder and role ~= "Murder" then shouldDraw = false end
+                if OnlySheriff and role ~= "Sheriff" then shouldDraw = false end
 
-                local fillColor = ESP_Rainbow and rainbowColor or Color3.fromRGB(255,255,255)
+                local fillColor = ESP_Color
                 local outlineColor = Theme.BG
-
+                
                 if RoleESPEnabled then
                     if role == "Murder" then fillColor = RoleColors.Murder.Fill; outlineColor = RoleColors.Murder.Outline
                     elseif role == "Sheriff" then fillColor = RoleColors.Sheriff.Fill; outlineColor = RoleColors.Sheriff.Outline
                     else fillColor = RoleColors.Innocent.Fill; outlineColor = RoleColors.Innocent.Outline end
+                elseif ESP_Rainbow then
+                    fillColor = rainbowColor
+                    outlineColor = rainbowColor
                 end
 
                 local distFromMe = (head.Position - Camera.CFrame.Position).Magnitude
@@ -259,17 +307,17 @@ RunService.RenderStepped:Connect(function()
                 if shouldDraw and onScreen and torsoOnScreen and distFromMe <= maxDistance then
                     local height = math.abs(torsoPos.Y - headPos.Y) * 1.5
                     local width = height / 2
-
+                    
                     draw.Box.Visible = BoxesEnabled
                     draw.Box.Size = Vector2.new(width, height)
                     draw.Box.Position = Vector2.new(headPos.X - width/2, headPos.Y - height/4)
                     draw.Box.Color = fillColor
-
+                    
                     draw.Name.Visible = NamesEnabled
                     draw.Name.Text = plr.Name .. " [" .. role .. "]"
-                    draw.Name.Position = Vector2.new(headPos.X, headPos.Y - height/2 - 12)
+                    draw.Name.Position = Vector2.new(headPos.X, headPos.Y - height/2 - 16)
                     draw.Name.Color = fillColor
-
+                    
                     draw.Tracer.Visible = TracersEnabled
                     draw.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, 0)
                     draw.Tracer.To = Vector2.new(torsoPos.X, torsoPos.Y)
@@ -279,10 +327,10 @@ RunService.RenderStepped:Connect(function()
                     draw.HealthBg.Visible = HealthEnabled
                     if HealthEnabled then
                         local hpPct = humanoid.Health / humanoid.MaxHealth
-                        draw.Health.Size = Vector2.new(2, height * hpPct)
-                        draw.Health.Position = Vector2.new(headPos.X - width/2 - 4, headPos.Y + height/2 - (height * hpPct))
-                        draw.HealthBg.Size = Vector2.new(2, height)
-                        draw.HealthBg.Position = Vector2.new(headPos.X - width/2 - 4, headPos.Y - height/4)
+                        draw.Health.Size = Vector2.new(3, height * hpPct)
+                        draw.Health.Position = Vector2.new(headPos.X - width/2 - 6, headPos.Y + height/2 - (height * hpPct))
+                        draw.HealthBg.Size = Vector2.new(3, height)
+                        draw.HealthBg.Position = Vector2.new(headPos.X - width/2 - 6, headPos.Y - height/4)
                     end
                 else
                     draw.Box.Visible = false; draw.Name.Visible = false
@@ -293,11 +341,13 @@ RunService.RenderStepped:Connect(function()
                 highlight.FillColor = fillColor
                 highlight.OutlineColor = outlineColor
                 highlight.FillTransparency = 0.5
+                highlight.OutlineTransparency = 0
 
+                -- AIMBOT (LOCK DE CÁMARA - MÁS CONFIABLE)
                 if AimbotEnabled and role == "Murder" and onScreen and distFromMe <= maxDistance then
                     if fovDist < shortestDist then
-                        shortestDist = fovDist
-                        bestHead = head
+                        local valid = getValidHead(char)
+                        if valid then shortestDist = fovDist; bestHead = valid end
                     end
                 end
             end
@@ -306,17 +356,19 @@ RunService.RenderStepped:Connect(function()
             draw.Tracer.Visible = false; draw.Health.Visible = false; draw.HealthBg.Visible = false
         end
     end
-    activeTarget = bestHead
+    activeTargetPos = bestHead and bestHead.Position or nil
 end)
 
+-- AIMBOT LOCK (Mueve la cámara directamente)
 RunService.RenderStepped:Connect(function()
-    if AimbotEnabled and activeTarget and activeTarget.Parent then
+    if AimbotEnabled and activeTargetPos then
         local currentCFrame = Camera.CFrame
-        local targetCFrame = CFrame.new(currentCFrame.Position, activeTarget.Position)
-        Camera.CFrame = currentCFrame:Lerp(targetCFrame, 0.3) 
+        local targetCFrame = CFrame.new(currentCFrame.Position, activeTargetPos)
+        Camera.CFrame = currentCFrame:Lerp(targetCFrame, 0.15) -- Suavidad del aimbot
     end
 end)
 
+-- KILL ALL Y AUTO GRAB
 task.spawn(function()
     while task.wait(0.1) do
         if LocalPlayer.Character then
@@ -324,7 +376,7 @@ task.spawn(function()
                 local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                 if myRoot then
                     for _, obj in ipairs(workspace:GetDescendants()) do
-                        if obj:IsA("Tool") and (obj.Name:lower():find("knife") or obj.Name:lower():find("gun")) then
+                        if obj:IsA("Tool") and (obj.Name:lower():find("knife") or obj.Name:lower():find("gun") or obj.Name:lower():find("revolver")) then
                             local handle = obj:FindFirstChild("Handle")
                             if handle and (handle.Position - myRoot.Position).Magnitude <= 15 then
                                 pcall(function() if firetouchinterest then firetouchinterest(handle, myRoot, 0) firetouchinterest(handle, myRoot, 1) end end)
@@ -342,6 +394,11 @@ task.spawn(function()
                             local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                             if hrp and myRoot and (hrp.Position - myRoot.Position).Magnitude <= 20 then
                                 pcall(function() knife:Activate() end)
+                                for _, part in pairs(plr.Character:GetDescendants()) do
+                                    if part:IsA("BasePart") then
+                                        pcall(function() if firetouchinterest then firetouchinterest(part, part, 0) firetouchinterest(part, part, 1) end end)
+                                    end
+                                end
                             end
                         end
                     end
@@ -351,6 +408,7 @@ task.spawn(function()
     end
 end)
 
+-- MOVIMIENTO
 UIS.JumpRequest:Connect(function()
     if InfJump then
         local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -370,20 +428,37 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- ==========================================
--- FUNCIONES DE LA UI
--- ==========================================
-local function CreateToggle(parent, text, callback)
+-- COMPONENTES DE LA UI
+local function CreateCheckbox(parent, text, default, callback)
     local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1, 0, 0, 32)
-    btn.BackgroundColor3 = Theme.Panel
+    btn.Size = UDim2.new(1, 0, 0, 30)
+    btn.BackgroundColor3 = Theme.Card
+    btn.BackgroundTransparency = 0.5
     btn.Text = ""
     btn.ZIndex = 12
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    
+    local boxBg = Instance.new("Frame", btn)
+    boxBg.Size = UDim2.new(0, 16, 0, 16)
+    boxBg.Position = UDim2.new(0, 8, 0.5, -8)
+    boxBg.BackgroundColor3 = Theme.BG
+    boxBg.ZIndex = 13
+    Instance.new("UICorner", boxBg).CornerRadius = UDim.new(0, 3)
+    local boxStroke = Instance.new("UIStroke", boxBg)
+    boxStroke.Color = Theme.Border
+    
+    local check = Instance.new("ImageLabel", boxBg)
+    check.Size = UDim2.new(1, -4, 1, -4)
+    check.Position = UDim2.new(0, 2, 0, 2)
+    check.BackgroundTransparency = 1
+    check.Image = "rbxassetid://6031091004"
+    check.ImageColor3 = Theme.Accent
+    check.Visible = false
+    check.ZIndex = 14
+    
     local label = Instance.new("TextLabel", btn)
-    label.Size = UDim2.new(1, -110, 1, 0)
-    label.Position = UDim2.new(0, 8, 0, 0)
+    label.Size = UDim2.new(1, -40, 1, 0)
+    label.Position = UDim2.new(0, 32, 0, 0)
     label.Text = text
     label.TextColor3 = Theme.Text
     label.TextXAlignment = Enum.TextXAlignment.Left
@@ -391,46 +466,13 @@ local function CreateToggle(parent, text, callback)
     label.Font = Enum.Font.BuilderSansMedium
     label.TextSize = 11
     label.ZIndex = 13
-
-    local statusLabel = Instance.new("TextLabel", btn)
-    statusLabel.Size = UDim2.new(0, 65, 1, 0)
-    statusLabel.Position = UDim2.new(1, -100, 0, 0)
-    statusLabel.Text = "OFF"
-    statusLabel.TextColor3 = Theme.Muted
-    statusLabel.TextXAlignment = Enum.TextXAlignment.Right
-    statusLabel.BackgroundTransparency = 1
-    statusLabel.Font = Enum.Font.BuilderSansBold
-    statusLabel.TextSize = 10
-    statusLabel.ZIndex = 13
-
-    local switchBg = Instance.new("Frame", btn)
-    switchBg.Size = UDim2.new(0, 28, 0, 14)
-    switchBg.Position = UDim2.new(1, -30, 0.5, -7)
-    switchBg.BackgroundColor3 = Theme.ToggleOff
-    switchBg.ZIndex = 13
-    Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1, 0)
-
-    local switchThumb = Instance.new("Frame", switchBg)
-    switchThumb.Size = UDim2.new(0, 10, 0, 10)
-    switchThumb.Position = UDim.new(0, 2, 0.5, -5)
-    switchThumb.BackgroundColor3 = Theme.Muted
-    switchThumb.ZIndex = 14
-    Instance.new("UICorner", switchThumb).CornerRadius = UDim.new(1, 0)
-
-    local state = false
+    
+    local state = default
+    if state then check.Visible = true boxStroke.Color = Theme.Accent end
     btn.MouseButton1Click:Connect(function()
         state = not state
-        if state then
-            statusLabel.Text = "ACTIVADO"
-            statusLabel.TextColor3 = Theme.Accent
-            TweenService:Create(switchBg, TweenInfo.new(0.2), {BackgroundColor3 = Theme.Accent}):Play()
-            TweenService:Create(switchThumb, TweenInfo.new(0.2), {Position = UDim2.new(1, -12, 0.5, -5), BackgroundColor3 = Color3.new(1,1,1)}):Play()
-        else
-            statusLabel.Text = "OFF"
-            statusLabel.TextColor3 = Theme.Muted
-            TweenService:Create(switchBg, TweenInfo.new(0.2), {BackgroundColor3 = Theme.ToggleOff}):Play()
-            TweenService:Create(switchThumb, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, -5), BackgroundColor3 = Theme.Muted}):Play()
-        end
+        check.Visible = state
+        TweenService:Create(boxStroke, TweenInfo.new(0.2), {Color = state and Theme.Accent or Theme.Border}):Play()
         if callback then callback(state) end
     end)
     return btn
@@ -438,11 +480,12 @@ end
 
 local function CreateSlider(parent, text, min, max, default, callback)
     local wrap = Instance.new("Frame", parent)
-    wrap.Size = UDim2.new(1, 0, 0, 35)
+    wrap.Size = UDim2.new(1, 0, 0, 40)
     wrap.BackgroundTransparency = 1
     wrap.ZIndex = 12
+    
     local label = Instance.new("TextLabel", wrap)
-    label.Size = UDim2.new(1, 0, 0, 15)
+    label.Size = UDim2.new(1, 0, 0, 20)
     label.BackgroundTransparency = 1
     label.Text = text .. ": " .. tostring(default)
     label.TextColor3 = Theme.Text
@@ -450,18 +493,21 @@ local function CreateSlider(parent, text, min, max, default, callback)
     label.TextSize = 11
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.ZIndex = 13
+    
     local bar = Instance.new("TextButton", wrap)
-    bar.Size = UDim2.new(1, 0, 0, 6)
-    bar.Position = UDim2.new(0, 0, 0, 22)
-    bar.BackgroundColor3 = Theme.ToggleOff
+    bar.Size = UDim2.new(1, 0, 0, 8)
+    bar.Position = UDim2.new(0, 0, 0, 25)
+    bar.BackgroundColor3 = Theme.Border
     bar.Text = ""
     bar.ZIndex = 13
     Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
+    
     local fill = Instance.new("Frame", bar)
     fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
     fill.BackgroundColor3 = Theme.Accent
     fill.ZIndex = 14
     Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+    
     local sliding = false
     local function updateValue(x)
         local pct = math.clamp((x - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
@@ -470,6 +516,7 @@ local function CreateSlider(parent, text, min, max, default, callback)
         label.Text = text .. ": " .. tostring(val)
         if callback then callback(val) end
     end
+    
     bar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             sliding = true; updateValue(input.Position.X)
@@ -485,17 +532,17 @@ local function CreateSlider(parent, text, min, max, default, callback)
     end)
 end
 
--- NUEVO SISTEMA DE COLORES CON PALETA
 local function CreateColorPicker(parent, text, defaultColor, callback)
     local btn = Instance.new("TextButton", parent)
     btn.Size = UDim2.new(1, 0, 0, 30)
-    btn.BackgroundColor3 = Theme.Panel
+    btn.BackgroundColor3 = Theme.Card
+    btn.BackgroundTransparency = 0.5
     btn.Text = ""
     btn.ZIndex = 12
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     
     local label = Instance.new("TextLabel", btn)
-    label.Size = UDim2.new(1, -30, 1, 0)
+    label.Size = UDim2.new(1, -40, 1, 0)
     label.Position = UDim2.new(0, 8, 0, 0)
     label.Text = text
     label.TextColor3 = Theme.Text
@@ -506,110 +553,92 @@ local function CreateColorPicker(parent, text, defaultColor, callback)
     label.ZIndex = 13
     
     local colorBox = Instance.new("Frame", btn)
-    colorBox.Size = UDim2.new(0, 14, 0, 14)
-    colorBox.Position = UDim2.new(1, -22, 0.5, -7)
+    colorBox.Size = UDim2.new(0, 16, 0, 16)
+    colorBox.Position = UDim2.new(1, -24, 0.5, -8)
     colorBox.BackgroundColor3 = defaultColor
     colorBox.ZIndex = 13
     Instance.new("UICorner", colorBox).CornerRadius = UDim.new(1, 0)
     
-    -- El panel de la paleta (oculto por defecto)
-    local paletteFrame = Instance.new("Frame", MainFrame)
-    paletteFrame.Size = UDim2.new(0, 180, 0, 100)
-    paletteFrame.BackgroundColor3 = Theme.BG
-    paletteFrame.BorderSizePixel = 0
-    paletteFrame.Visible = false
-    paletteFrame.ZIndex = 50
-    Instance.new("UICorner", paletteFrame).CornerRadius = UDim.new(0, 6)
-    local pStroke = Instance.new("UIStroke", paletteFrame)
-    pStroke.Color = Theme.Border
-    
-    local grid = Instance.new("UIGridLayout", paletteFrame)
-    grid.CellSize = UDim2.new(0, 25, 0, 25)
-    grid.CellPadding = UDim2.new(0, 5, 0, 5)
-    grid.SortOrder = Enum.SortOrder.LayoutOrder
-    
-    -- 12 Colores de la paleta
-    local colors = {
-        Color3.fromRGB(255, 0, 0), Color3.fromRGB(0, 255, 0), Color3.fromRGB(0, 0, 255),
-        Color3.fromRGB(255, 255, 0), Color3.fromRGB(255, 0, 255), Color3.fromRGB(0, 255, 255),
-        Color3.fromRGB(255, 150, 0), Color3.fromRGB(150, 0, 255), Color3.fromRGB(255, 255, 255),
-        Color3.fromRGB(0, 0, 0), Color3.fromRGB(150, 150, 150), Color3.fromRGB(100, 50, 0)
-    }
-    
-    for i, color in ipairs(colors) do
-        local cBtn = Instance.new("TextButton", paletteFrame)
-        cBtn.BackgroundColor3 = color
-        cBtn.Text = ""
-        cBtn.ZIndex = 51
-        Instance.new("UICorner", cBtn).CornerRadius = UDim.new(0, 4)
-        cBtn.MouseButton1Click:Connect(function()
-            colorBox.BackgroundColor3 = color
-            if callback then callback(color) end
-            paletteFrame.Visible = false
-        end)
-    end
-
     btn.MouseButton1Click:Connect(function()
-        if paletteFrame.Visible then
-            paletteFrame.Visible = false
-        else
-            -- Posicionar la paleta justo al lado del botón
-            local pos = btn.AbsolutePosition
-            paletteFrame.Position = UDim2.new(0, pos.X - 100, 0, pos.Y + 35)
-            paletteFrame.Visible = true
-        end
+        local newColor = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+        colorBox.BackgroundColor3 = newColor
+        if callback then callback(newColor) end
     end)
 end
 
--- CONSTRUCCIÓN DEL MENÚ (UNA COLUMNA)
+-- CONSTRUCCIÓN DEL MENÚ
 local function BuildMenu()
-    local Scroll = Instance.new("ScrollingFrame", MainFrame)
-    Scroll.Size = UDim2.new(1, -20, 1, -50)
-    Scroll.Position = UDim2.new(0, 10, 0, 45)
-    Scroll.BackgroundTransparency = 1
-    Scroll.ScrollBarThickness = 3
-    Scroll.CanvasSize = UDim2.new(0, 0, 0, 800)
-    Scroll.ZIndex = 11
+    local Sidebar = Instance.new("Frame", MainFrame)
+    Sidebar.Size = UDim2.new(0, 50, 1, -55)
+    Sidebar.Position = UDim2.new(0, 10, 0, 50)
+    Sidebar.BackgroundColor3 = Theme.Card
+    Sidebar.BackgroundTransparency = 0.4
+    Sidebar.ZIndex = 11
+    Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 8)
 
-    local currentY = 0
-    local function AddToggle(text, cb)
-        local t = CreateToggle(Scroll, text, cb)
-        t.Position = UDim2.new(0, 0, 0, currentY)
-        currentY = currentY + 38
-    end
-    
-    local function AddSlider(text, min, max, def, cb)
-        local s = CreateSlider(Scroll, text, min, max, def, cb)
-        s.Position = UDim2.new(0, 0, 0, currentY)
-        currentY = currentY + 45
+    local ContentHost = Instance.new("Frame", MainFrame)
+    ContentHost.Size = UDim2.new(1, -85, 1, -55)
+    ContentHost.Position = UDim2.new(0, 75, 0, 50)
+    ContentHost.BackgroundTransparency = 1
+    ContentHost.ZIndex = 11
+
+    local Pages = {}
+    local function CreatePage(name)
+        local page = Instance.new("ScrollingFrame", ContentHost)
+        page.Size = UDim2.new(1, 0, 1, 0)
+        page.BackgroundTransparency = 1
+        page.ScrollBarThickness = 4
+        page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        page.Visible = false
+        page.ZIndex = 12
+        local layout = Instance.new("UIListLayout", page)
+        layout.Padding = UDim.new(0, 5)
+        Pages[name] = page
+        return page
     end
 
-    local function AddColor(text, col, cb)
-        local c = CreateColorPicker(Scroll, text, col, cb)
-        c.Position = UDim2.new(0, 0, 0, currentY)
-        currentY = currentY + 35
+    local function SwitchPage(pageName)
+        for name, page in pairs(Pages) do page.Visible = (name == pageName) end
+    end
+
+    local function CreateTabBtn(iconId, pageName)
+        local btn = Instance.new("ImageButton", Sidebar)
+        btn.Size = UDim2.new(0, 32, 0, 32)
+        btn.Position = UDim2.new(0, 9, 0, 9 + (#Sidebar:GetChildren() * 40))
+        btn.BackgroundColor3 = Theme.BG
+        btn.BackgroundTransparency = 0.5
+        btn.Image = iconId
+        btn.ImageColor3 = Theme.Accent
+        btn.ZIndex = 11
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+        btn.MouseButton1Click:Connect(function() SwitchPage(pageName) end)
+        return CreatePage(pageName)
     end
 
     -- ESP
-    AddToggle(Texts[Language].ESP.RoleESP, function(s) RoleESPEnabled = s end)
-    AddToggle(Texts[Language].ESP.GunESP, function(s) GunESPEnabled = s end)
-    AddToggle(Texts[Language].ESP.OnlyMurder, function(s) OnlyMurder = s end)
-    AddToggle(Texts[Language].ESP.Boxes, function(s) BoxesEnabled = s end)
-    AddToggle(Texts[Language].ESP.Tracers, function(s) TracersEnabled = s end)
-    AddToggle(Texts[Language].ESP.Names, function(s) NamesEnabled = s end)
-    AddToggle(Texts[Language].ESP.Health, function(s) HealthEnabled = s end)
-    AddToggle(Texts[Language].ESP.Rainbow, function(s) ESP_Rainbow = s end)
+    local ESPPage = CreateTabBtn("rbxassetid://13571270194", "ESP")
+    CreateCheckbox(ESPPage, Texts[Language].ESP.RoleESP, false, function(s) RoleESPEnabled = s end)
+    CreateCheckbox(ESPPage, Texts[Language].ESP.GunESP, false, function(s) GunESPEnabled = s end)
+    CreateCheckbox(ESPPage, Texts[Language].ESP.OnlyMurder, false, function(s) OnlyMurder = s if s then OnlySheriff = false end end)
+    CreateCheckbox(ESPPage, Texts[Language].ESP.OnlySheriff, false, function(s) OnlySheriff = s if s then OnlyMurder = false end end)
+    CreateCheckbox(ESPPage, Texts[Language].ESP.Boxes, false, function(s) BoxesEnabled = s end)
+    CreateCheckbox(ESPPage, Texts[Language].ESP.Tracers, false, function(s) TracersEnabled = s end)
+    CreateCheckbox(ESPPage, Texts[Language].ESP.Names, false, function(s) NamesEnabled = s end)
+    CreateCheckbox(ESPPage, Texts[Language].ESP.Health, false, function(s) HealthEnabled = s end)
+    CreateCheckbox(ESPPage, Texts[Language].ESP.Rainbow, false, function(s) ESP_Rainbow = s end)
 
     -- COMBAT
-    AddToggle(Texts[Language].Combat.Aimbot, function(s) AimbotEnabled = s end)
-    AddToggle(Texts[Language].Combat.KillAll, function(s) KillAllEnabled = s end)
-    AddToggle(Texts[Language].Combat.AutoGrab, function(s) AutoGrabEnabled = s end)
-    AddSlider(Texts[Language].Combat.MaxDist, 100, 2000, 500, function(v) maxDistance = v end)
+    local CombatPage = CreateTabBtn("rbxassetid://80964454894155", "Combat")
+    CreateCheckbox(CombatPage, Texts[Language].Combat.Aimbot, false, function(s) AimbotEnabled = s end)
+    CreateCheckbox(CombatPage, Texts[Language].Combat.KillAll, false, function(s) KillAllEnabled = s end)
+    CreateCheckbox(CombatPage, Texts[Language].Combat.AutoGrab, false, function(s) AutoGrabEnabled = s end)
+    CreateSlider(CombatPage, Texts[Language].Combat.MaxDist, 100, 2000, 500, function(v) maxDistance = v end)
 
     -- PLAYER
-    AddToggle(Texts[Language].Player.Speed, function(s) SpeedHack = s end)
-    AddToggle(Texts[Language].Player.Noclip, function(s) Noclip = s end)
-    AddToggle(Texts[Language].Player.Fly, function(s) 
+    local PlayerPage = CreateTabBtn("rbxassetid://13492318225", "Player")
+    CreateCheckbox(PlayerPage, Texts[Language].Player.Speed, false, function(s) SpeedHack = s end)
+    CreateCheckbox(PlayerPage, Texts[Language].Player.Noclip, false, function(s) Noclip = s end)
+    CreateCheckbox(PlayerPage, Texts[Language].Player.Fly, false, function(s) 
         FlyHack = s
         if s then
             task.spawn(function()
@@ -630,70 +659,98 @@ local function BuildMenu()
             end)
         end
     end)
-    AddToggle(Texts[Language].Player.Jump, function(s) InfJump = s end)
+    CreateCheckbox(PlayerPage, Texts[Language].Player.Jump, false, function(s) InfJump = s end)
 
-    -- SETTINGS (COLORES)
-    AddColor("Murder Fill", RoleColors.Murder.Fill, function(c) RoleColors.Murder.Fill = c end)
-    AddColor("Murder Outline", RoleColors.Murder.Outline, function(c) RoleColors.Murder.Outline = c end)
-    AddColor("Sheriff Fill", RoleColors.Sheriff.Fill, function(c) RoleColors.Sheriff.Fill = c end)
-    AddColor("Sheriff Outline", RoleColors.Sheriff.Outline, function(c) RoleColors.Sheriff.Outline = c end)
-    AddColor("Innocent Fill", RoleColors.Innocent.Fill, function(c) RoleColors.Innocent.Fill = c end)
-    AddColor("Innocent Outline", RoleColors.Innocent.Outline, function(c) RoleColors.Innocent.Outline = c end)
-    
-    Scroll.CanvasSize = UDim2.new(0, 0, 0, currentY + 10)
+    -- WORLD
+    local WorldPage = CreateTabBtn("rbxassetid://13492318225", "World")
+    CreateCheckbox(WorldPage, Texts[Language].World.Fullbright, false, function(s) 
+        Lighting.Brightness = s and 2 or 1; Lighting.ClockTime = s and 14 or 12; Lighting.GlobalShadows = not s 
+    end)
+    CreateCheckbox(WorldPage, Texts[Language].World.RemoveTex, false, function(s)
+        if s then
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v:IsA("Texture") or v:IsA("Decal") then v:Destroy() end
+            end
+        end
+    end)
+
+    -- SETTINGS
+    local SettingsPage = CreateTabBtn("rbxassetid://13492318225", "Settings")
+    CreateColorPicker(SettingsPage, Texts[Language].Settings.ParticleColor, StarColor, function(c) StarColor = c end)
+    CreateSlider(SettingsPage, Texts[Language].Settings.ParticleTrans, 0, 0.9, 0.5, function(v) StarTransparency = v end)
+
+    CreateColorPicker(SettingsPage, "Murder " .. Texts[Language].Settings.Fill, RoleColors.Murder.Fill, function(c) RoleColors.Murder.Fill = c end)
+    CreateColorPicker(SettingsPage, "Murder " .. Texts[Language].Settings.Outline, RoleColors.Murder.Outline, function(c) RoleColors.Murder.Outline = c end)
+    CreateColorPicker(SettingsPage, "Sheriff " .. Texts[Language].Settings.Fill, RoleColors.Sheriff.Fill, function(c) RoleColors.Sheriff.Fill = c end)
+    CreateColorPicker(SettingsPage, "Sheriff " .. Texts[Language].Settings.Outline, RoleColors.Sheriff.Outline, function(c) RoleColors.Sheriff.Outline = c end)
+    CreateColorPicker(SettingsPage, "Innocent " .. Texts[Language].Settings.Fill, RoleColors.Innocent.Fill, function(c) RoleColors.Innocent.Fill = c end)
+    CreateColorPicker(SettingsPage, "Innocent " .. Texts[Language].Settings.Outline, RoleColors.Innocent.Outline, function(c) RoleColors.Innocent.Outline = c end)
+
+    -- CREDITS
+    local CreditsPage = CreateTabBtn("rbxassetid://13492318225", "Credits")
+    local creditLabel = Instance.new("TextLabel", CreditsPage)
+    creditLabel.Size = UDim2.new(1, 0, 0, 60)
+    creditLabel.BackgroundTransparency = 1
+    creditLabel.Text = Texts[Language].Credits.Title .. "\n" .. Texts[Language].Credits.Desc
+    creditLabel.TextColor3 = Theme.Text
+    creditLabel.Font = Enum.Font.BuilderSansBold
+    creditLabel.TextSize = 12
+    creditLabel.TextWrapped = true
+    creditLabel.ZIndex = 13
+
+    local copyBtn = Instance.new("TextButton", CreditsPage)
+    copyBtn.Size = UDim2.new(1, 0, 0, 30)
+    copyBtn.BackgroundColor3 = Theme.Accent
+    copyBtn.Text = Texts[Language].Credits.Btn
+    copyBtn.TextColor3 = Theme.Text
+    copyBtn.Font = Enum.Font.BuilderSansBold
+    copyBtn.ZIndex = 13
+    Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0, 6)
+    copyBtn.MouseButton1Click:Connect(function() setclipboard("urieldev") end)
+
+    SwitchPage("ESP")
 end
 
--- SELECTOR DE IDIOMA INICIAL
+-- SELECTOR DE IDIOMA
 local LangGui = Instance.new("ScreenGui", CoreGui)
 local LangFrame = Instance.new("Frame", LangGui)
-LangFrame.Size = UDim2.new(0, 220, 0, 130)
-LangFrame.Position = UDim2.new(0.5, -110, 0.5, -65)
+LangFrame.Size = UDim2.new(0, 250, 0, 150)
+LangFrame.Position = UDim2.new(0.5, -125, 0.5, -75)
 LangFrame.BackgroundColor3 = Theme.BG
 Instance.new("UICorner", LangFrame).CornerRadius = UDim.new(0, 10)
 local LStroke = Instance.new("UIStroke", LangFrame)
 LStroke.Color = Theme.Accent
 
 local LTitle = Instance.new("TextLabel", LangFrame)
-LTitle.Size = UDim2.new(1, 0, 0, 30)
+LTitle.Size = UDim2.new(1, 0, 0, 40)
 LTitle.BackgroundTransparency = 1
-LTitle.Text = "Select / Selecciona Idioma"
+LTitle.Text = "Select Language / Selecciona Idioma"
 LTitle.TextColor3 = Theme.Text
 LTitle.Font = Enum.Font.BuilderSansBold
-LTitle.TextSize = 11
 LTitle.Parent = LangFrame
 
 local BtnES = Instance.new("TextButton", LangFrame)
-BtnES.Size = UDim2.new(0.4, 0, 0, 30)
-BtnES.Position = UDim2.new(0.05, 0, 0, 50)
-BtnES.BackgroundColor3 = Theme.Panel
+BtnES.Size = UDim2.new(0.4, 0, 0, 35)
+BtnES.Position = UDim2.new(0.05, 0, 0, 60)
+BtnES.BackgroundColor3 = Theme.Card
 BtnES.Text = "Español"
 BtnES.TextColor3 = Theme.Text
 BtnES.Font = Enum.Font.BuilderSansBold
-BtnES.TextSize = 11
 Instance.new("UICorner", BtnES).CornerRadius = UDim.new(0, 6)
 
 local BtnEN = Instance.new("TextButton", LangFrame)
-BtnEN.Size = UDim2.new(0.4, 0, 0, 30)
-BtnEN.Position = UDim2.new(0.55, 0, 0, 50)
-BtnEN.BackgroundColor3 = Theme.Panel
+BtnEN.Size = UDim2.new(0.4, 0, 0, 35)
+BtnEN.Position = UDim2.new(0.55, 0, 0, 60)
+BtnEN.BackgroundColor3 = Theme.Card
 BtnEN.Text = "English"
 BtnEN.TextColor3 = Theme.Text
 BtnEN.Font = Enum.Font.BuilderSansBold
-BtnEN.TextSize = 11
 Instance.new("UICorner", BtnEN).CornerRadius = UDim.new(0, 6)
 
 BtnES.MouseButton1Click:Connect(function()
-    Language = "ES"
-    LangGui:Destroy()
-    ToggleBtn.Visible = true
-    MainFrame.Visible = true
-    BuildMenu()
+    Language = "ES"; LangGui:Destroy(); ToggleBtn.Visible = true; BuildMenu()
 end)
 
 BtnEN.MouseButton1Click:Connect(function()
-    Language = "EN"
-    LangGui:Destroy()
-    ToggleBtn.Visible = true
-    MainFrame.Visible = true
-    BuildMenu()
+    Language = "EN"; LangGui:Destroy(); ToggleBtn.Visible = true; BuildMenu()
 end)
