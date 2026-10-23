@@ -1,34 +1,35 @@
--- URIEL DEV | MM2 (DRAKE STYLE - CLEAN)
+-- ==========================================
+-- 👑 URIEL DEV | MURDER MYSTERY 2 (LOCK AIMBOT)
+-- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
-local Lighting = game:GetService("Lighting")
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 local Theme = { 
-    BG = Color3.fromRGB(20, 20, 25), 
-    Sidebar = Color3.fromRGB(15, 15, 18), 
-    Panel = Color3.fromRGB(30, 30, 38), 
-    Border = Color3.fromRGB(55, 55, 70), 
+    BG = Color3.fromRGB(15, 15, 20), 
+    Sidebar = Color3.fromRGB(10, 10, 14), 
+    Panel = Color3.fromRGB(22, 22, 30), 
+    Border = Color3.fromRGB(45, 45, 60), 
     Accent = Color3.fromRGB(0, 170, 255), 
     Text = Color3.fromRGB(255, 255, 255), 
     Muted = Color3.fromRGB(140, 140, 160), 
     Red = Color3.fromRGB(255, 60, 60),
-    ToggleOff = Color3.fromRGB(45, 45, 55)
+    ToggleOff = Color3.fromRGB(35, 35, 45)
 }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "URIEL_DEV_MM2"
+ScreenGui.Name = "URIEL_DEV_FINAL"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
 -- BOTÓN FLOTANTE
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 150, 0, 40)
-ToggleBtn.Position = UDim2.new(0.5, -75, 0, 20)
+ToggleBtn.Size = UDim2.new(0, 160, 0, 42)
+ToggleBtn.Position = UDim2.new(0.5, -80, 0, 20)
 ToggleBtn.BackgroundColor3 = Theme.BG
 ToggleBtn.Text = "URIEL DEV"
 ToggleBtn.TextColor3 = Theme.Accent
@@ -93,7 +94,7 @@ Title.ZIndex = 12
 local CloseBtn = Instance.new("TextButton", Header)
 CloseBtn.Size = UDim2.new(0, 24, 0, 24)
 CloseBtn.Position = UDim2.new(1, -30, 0.5, -12)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+CloseBtn.BackgroundColor3 = Theme.Panel
 CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Theme.Text
 CloseBtn.Font = Enum.Font.GothamBold
@@ -121,7 +122,6 @@ end)
 ToggleBtn.MouseButton1Click:Connect(function() MainFrame.Visible = true ToggleBtn.Visible = false end)
 
 -- VARIABLES DEL JUEGO
-local ESP_Color = Color3.fromRGB(255, 255, 255)
 local maxDistance = 500
 local BoxesEnabled, NamesEnabled, HealthEnabled, TracersEnabled, RoleESPEnabled, GunESPEnabled, OnlyMurder = false, false, false, false, false, false, false
 local AimbotEnabled, KillAllEnabled, AutoGrabEnabled = false, false, false
@@ -176,7 +176,7 @@ end
 for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then createDrawings(p) end end
 Players.PlayerAdded:Connect(createDrawings)
 
-local activeTargetPos = nil 
+local activeTarget = nil -- Guardamos el objeto Head del Murder
 
 -- LOOP ESP Y AIMBOT
 RunService.RenderStepped:Connect(function()
@@ -221,7 +221,7 @@ RunService.RenderStepped:Connect(function()
                 local shouldDraw = true
                 if OnlyMurder and role ~= "Murder" then shouldDraw = false end
 
-                local fillColor = ESP_Color
+                local fillColor = Color3.fromRGB(255,255,255)
                 local outlineColor = Theme.BG
 
                 if RoleESPEnabled then
@@ -273,6 +273,7 @@ RunService.RenderStepped:Connect(function()
                 highlight.OutlineColor = outlineColor
                 highlight.FillTransparency = 0.5
 
+                -- LÓGICA DEL AIMBOT
                 if AimbotEnabled and role == "Murder" and onScreen and distFromMe <= maxDistance then
                     if fovDist < shortestDist then
                         shortestDist = fovDist
@@ -285,17 +286,20 @@ RunService.RenderStepped:Connect(function()
             draw.Tracer.Visible = false; draw.Health.Visible = false; draw.HealthBg.Visible = false
         end
     end
-    activeTargetPos = bestHead and bestHead.Position or nil
+    activeTarget = bestHead
 end)
 
+-- LOCK AIMBOT (Sigue al Murder)
 RunService.RenderStepped:Connect(function()
-    if AimbotEnabled and activeTargetPos then
+    if AimbotEnabled and activeTarget and activeTarget.Parent then
         local currentCFrame = Camera.CFrame
-        local targetCFrame = CFrame.new(currentCFrame.Position, activeTargetPos)
-        Camera.CFrame = currentCFrame:Lerp(targetCFrame, 0.2)
+        local targetCFrame = CFrame.new(currentCFrame.Position, activeTarget.Position)
+        -- 0.3 es la velocidad de seguimiento, entre más alto más pegado va
+        Camera.CFrame = currentCFrame:Lerp(targetCFrame, 0.3) 
     end
 end)
 
+-- KILL ALL / AUTO GRAB
 task.spawn(function()
     while task.wait(0.1) do
         if LocalPlayer.Character then
@@ -330,6 +334,7 @@ task.spawn(function()
     end
 end)
 
+-- MOVIMIENTO
 UIS.JumpRequest:Connect(function()
     if InfJump then
         local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -349,7 +354,9 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- UI
+-- ==========================================
+-- DISEÑO DE LA UI
+-- ==========================================
 local Sidebar = Instance.new("Frame", MainFrame)
 Sidebar.Size = UDim2.new(0, 40, 1, -35)
 Sidebar.Position = UDim2.new(0, 0, 0, 35)
@@ -394,7 +401,7 @@ local PreviewInfo = Instance.new("TextLabel", RightCol)
 PreviewInfo.Size = UDim2.new(1, -10, 1, -35)
 PreviewInfo.Position = UDim2.new(0, 5, 0, 30)
 PreviewInfo.BackgroundTransparency = 1
-PreviewInfo.Text = "Esperando objetivo..."
+PreviewInfo.Text = "Selecciona una opción..."
 PreviewInfo.TextColor3 = Theme.Text
 PreviewInfo.Font = Enum.Font.BuilderSansMedium
 PreviewInfo.TextSize = 12
@@ -402,7 +409,7 @@ PreviewInfo.TextWrapped = true
 PreviewInfo.TextYAlignment = Enum.TextYAlignment.Top
 PreviewInfo.ZIndex = 13
 
-local function CreateToggle(parent, text, default, callback)
+local function CreateToggle(parent, text, callback)
     local btn = Instance.new("TextButton", parent)
     btn.Size = UDim2.new(1, 0, 0, 30)
     btn.BackgroundColor3 = Theme.Panel
@@ -435,7 +442,7 @@ local function CreateToggle(parent, text, default, callback)
     switchThumb.ZIndex = 14
     Instance.new("UICorner", switchThumb).CornerRadius = UDim.new(1, 0)
 
-    local state = default
+    local state = false
     btn.MouseButton1Click:Connect(function()
         state = not state
         TweenService:Create(switchBg, TweenInfo.new(0.2), {BackgroundColor3 = state and Theme.Accent or Theme.ToggleOff}):Play()
@@ -443,6 +450,9 @@ local function CreateToggle(parent, text, default, callback)
             Position = state and UDim2.new(1, -12, 0.5, -5) or UDim2.new(0, 2, 0.5, -5),
             BackgroundColor3 = state and Theme.Text or Theme.Muted
         }):Play()
+        
+        PreviewInfo.Text = text .. ": " .. (state and "ACTIVADO" or "DESACTIVADO")
+        
         if callback then callback(state) end
     end)
     return btn
@@ -484,6 +494,7 @@ local function CreateSlider(parent, text, min, max, default, callback)
         fill.Size = UDim2.new(pct, 0, 1, 0)
         local val = math.floor(min + (max - min) * pct)
         label.Text = text .. ": " .. tostring(val)
+        PreviewInfo.Text = text .. ": " .. tostring(val)
         if callback then callback(val) end
     end
 
@@ -499,39 +510,6 @@ local function CreateSlider(parent, text, min, max, default, callback)
         if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             updateValue(input.Position.X)
         end
-    end)
-end
-
-local function CreateColorPicker(parent, text, defaultColor, callback)
-    local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1, 0, 0, 30)
-    btn.BackgroundColor3 = Theme.Panel
-    btn.Text = ""
-    btn.ZIndex = 12
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-
-    local label = Instance.new("TextLabel", btn)
-    label.Size = UDim2.new(1, -30, 1, 0)
-    label.Position = UDim2.new(0, 8, 0, 0)
-    label.Text = text
-    label.TextColor3 = Theme.Text
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.BackgroundTransparency = 1
-    label.Font = Enum.Font.BuilderSansMedium
-    label.TextSize = 11
-    label.ZIndex = 13
-
-    local colorBox = Instance.new("Frame", btn)
-    colorBox.Size = UDim2.new(0, 14, 0, 14)
-    colorBox.Position = UDim2.new(1, -22, 0.5, -7)
-    colorBox.BackgroundColor3 = defaultColor
-    colorBox.ZIndex = 13
-    Instance.new("UICorner", colorBox).CornerRadius = UDim.new(1, 0)
-
-    btn.MouseButton1Click:Connect(function()
-        local newColor = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
-        colorBox.BackgroundColor3 = newColor
-        if callback then callback(newColor) end
     end)
 end
 
@@ -567,29 +545,30 @@ local function CreateTab(iconId, tabName)
         for name, b in pairs(Tabs) do
             TweenService:Create(b, TweenInfo.new(0.2), {ImageColor3 = name == tabName and Theme.Accent or Theme.Muted}):Play()
         end
+        PreviewInfo.Text = "Pestaña: " .. tabName
     end)
     return page
 end
 
 local ESPPage = CreateTab("rbxassetid://13571270194", "ESP")
-CreateToggle(ESPPage, "Role ESP", false, function(s) RoleESPEnabled = s end)
-CreateToggle(ESPPage, "Gun ESP", false, function(s) GunESPEnabled = s end)
-CreateToggle(ESPPage, "Solo Murder", false, function(s) OnlyMurder = s end)
-CreateToggle(ESPPage, "Boxes", false, function(s) BoxesEnabled = s end)
-CreateToggle(ESPPage, "Tracers", false, function(s) TracersEnabled = s end)
-CreateToggle(ESPPage, "Names", false, function(s) NamesEnabled = s end)
-CreateToggle(ESPPage, "Health", false, function(s) HealthEnabled = s end)
+CreateToggle(ESPPage, "Role ESP", function(s) RoleESPEnabled = s end)
+CreateToggle(ESPPage, "Gun ESP", function(s) GunESPEnabled = s end)
+CreateToggle(ESPPage, "Solo Murder", function(s) OnlyMurder = s end)
+CreateToggle(ESPPage, "Boxes", function(s) BoxesEnabled = s end)
+CreateToggle(ESPPage, "Tracers", function(s) TracersEnabled = s end)
+CreateToggle(ESPPage, "Names", function(s) NamesEnabled = s end)
+CreateToggle(ESPPage, "Health", function(s) HealthEnabled = s end)
 
 local CombatPage = CreateTab("rbxassetid://80964454894155", "Combat")
-CreateToggle(CombatPage, "Aimbot", false, function(s) AimbotEnabled = s end)
-CreateToggle(CombatPage, "Kill All", false, function(s) KillAllEnabled = s end)
-CreateToggle(CombatPage, "Auto Grab", false, function(s) AutoGrabEnabled = s end)
+CreateToggle(CombatPage, "Aimbot", function(s) AimbotEnabled = s end)
+CreateToggle(CombatPage, "Kill All", function(s) KillAllEnabled = s end)
+CreateToggle(CombatPage, "Auto Grab", function(s) AutoGrabEnabled = s end)
 CreateSlider(CombatPage, "Max Dist", 100, 2000, 500, function(v) maxDistance = v end)
 
 local PlayerPage = CreateTab("rbxassetid://13492318225", "Player")
-CreateToggle(PlayerPage, "Speed", false, function(s) SpeedHack = s end)
-CreateToggle(PlayerPage, "Noclip", false, function(s) Noclip = s end)
-CreateToggle(PlayerPage, "Fly", false, function(s) 
+CreateToggle(PlayerPage, "Speed", function(s) SpeedHack = s end)
+CreateToggle(PlayerPage, "Noclip", function(s) Noclip = s end)
+CreateToggle(PlayerPage, "Fly", function(s) 
     FlyHack = s
     if s then
         task.spawn(function()
@@ -610,15 +589,7 @@ CreateToggle(PlayerPage, "Fly", false, function(s)
         end)
     end
 end)
-CreateToggle(PlayerPage, "Infinite Jump", false, function(s) InfJump = s end)
-
-local SettingsPage = CreateTab("rbxassetid://13492318225", "Settings")
-CreateColorPicker(SettingsPage, "Murder Fill", RoleColors.Murder.Fill, function(c) RoleColors.Murder.Fill = c end)
-CreateColorPicker(SettingsPage, "Murder Outline", RoleColors.Murder.Outline, function(c) RoleColors.Murder.Outline = c end)
-CreateColorPicker(SettingsPage, "Sheriff Fill", RoleColors.Sheriff.Fill, function(c) RoleColors.Sheriff.Fill = c end)
-CreateColorPicker(SettingsPage, "Sheriff Outline", RoleColors.Sheriff.Outline, function(c) RoleColors.Sheriff.Outline = c end)
-CreateColorPicker(SettingsPage, "Innocent Fill", RoleColors.Innocent.Fill, function(c) RoleColors.Innocent.Fill = c end)
-CreateColorPicker(SettingsPage, "Innocent Outline", RoleColors.Innocent.Outline, function(c) RoleColors.Innocent.Outline = c end)
+CreateToggle(PlayerPage, "Infinite Jump", function(s) InfJump = s end)
 
 Pages["ESP"].Visible = true
 Tabs["ESP"].ImageColor3 = Theme.Accent
