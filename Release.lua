@@ -215,7 +215,7 @@ RunService.RenderStepped:Connect(function()
             local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("HumanoidRootPart")
             local humanoid = char:FindFirstChildOfClass("Humanoid")
             local highlight = char:FindFirstChild("Highlight") or Instance.new("Highlight", char)
-            
+
             if head and torso and humanoid and humanoid.Health > 0 then
                 local role = getRole(plr)
                 local shouldDraw = true
@@ -223,7 +223,7 @@ RunService.RenderStepped:Connect(function()
 
                 local fillColor = ESP_Color
                 local outlineColor = Theme.BG
-                
+
                 if RoleESPEnabled then
                     if role == "Murder" then fillColor = RoleColors.Murder.Fill; outlineColor = RoleColors.Murder.Outline
                     elseif role == "Sheriff" then fillColor = RoleColors.Sheriff.Fill; outlineColor = RoleColors.Sheriff.Outline
@@ -238,17 +238,17 @@ RunService.RenderStepped:Connect(function()
                 if shouldDraw and onScreen and torsoOnScreen and distFromMe <= maxDistance then
                     local height = math.abs(torsoPos.Y - headPos.Y) * 1.5
                     local width = height / 2
-                    
+
                     draw.Box.Visible = BoxesEnabled
                     draw.Box.Size = Vector2.new(width, height)
                     draw.Box.Position = Vector2.new(headPos.X - width/2, headPos.Y - height/4)
                     draw.Box.Color = fillColor
-                    
+
                     draw.Name.Visible = NamesEnabled
                     draw.Name.Text = plr.Name .. " [" .. role .. "]"
                     draw.Name.Position = Vector2.new(headPos.X, headPos.Y - height/2 - 12)
                     draw.Name.Color = fillColor
-                    
+
                     draw.Tracer.Visible = TracersEnabled
                     draw.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, 0)
                     draw.Tracer.To = Vector2.new(torsoPos.X, torsoPos.Y)
@@ -409,7 +409,7 @@ local function CreateToggle(parent, text, default, callback)
     btn.Text = ""
     btn.ZIndex = 12
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-    
+
     local label = Instance.new("TextLabel", btn)
     label.Size = UDim2.new(1, -45, 1, 0)
     label.Position = UDim2.new(0, 8, 0, 0)
@@ -420,21 +420,21 @@ local function CreateToggle(parent, text, default, callback)
     label.Font = Enum.Font.BuilderSansMedium
     label.TextSize = 11
     label.ZIndex = 13
-    
+
     local switchBg = Instance.new("Frame", btn)
     switchBg.Size = UDim2.new(0, 28, 0, 14)
     switchBg.Position = UDim2.new(1, -36, 0.5, -7)
     switchBg.BackgroundColor3 = Theme.ToggleOff
     switchBg.ZIndex = 13
     Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1, 0)
-    
+
     local switchThumb = Instance.new("Frame", switchBg)
     switchThumb.Size = UDim2.new(0, 10, 0, 10)
     switchThumb.Position = UDim.new(0, 2, 0.5, -5)
     switchThumb.BackgroundColor3 = Theme.Muted
     switchThumb.ZIndex = 14
     Instance.new("UICorner", switchThumb).CornerRadius = UDim.new(1, 0)
-    
+
     local state = default
     btn.MouseButton1Click:Connect(function()
         state = not state
@@ -453,7 +453,7 @@ local function CreateSlider(parent, text, min, max, default, callback)
     wrap.Size = UDim2.new(1, 0, 0, 35)
     wrap.BackgroundTransparency = 1
     wrap.ZIndex = 12
-    
+
     local label = Instance.new("TextLabel", wrap)
     label.Size = UDim2.new(1, 0, 0, 15)
     label.BackgroundTransparency = 1
@@ -463,7 +463,7 @@ local function CreateSlider(parent, text, min, max, default, callback)
     label.TextSize = 11
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.ZIndex = 13
-    
+
     local bar = Instance.new("TextButton", wrap)
     bar.Size = UDim2.new(1, 0, 0, 6)
     bar.Position = UDim2.new(0, 0, 0, 22)
@@ -471,13 +471,13 @@ local function CreateSlider(parent, text, min, max, default, callback)
     bar.Text = ""
     bar.ZIndex = 13
     Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
-    
+
     local fill = Instance.new("Frame", bar)
     fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
     fill.BackgroundColor3 = Theme.Accent
     fill.ZIndex = 14
     Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
-    
+
     local sliding = false
     local function updateValue(x)
         local pct = math.clamp((x - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
@@ -486,7 +486,7 @@ local function CreateSlider(parent, text, min, max, default, callback)
         label.Text = text .. ": " .. tostring(val)
         if callback then callback(val) end
     end
-    
+
     bar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             sliding = true; updateValue(input.Position.X)
@@ -509,7 +509,7 @@ local function CreateColorPicker(parent, text, defaultColor, callback)
     btn.Text = ""
     btn.ZIndex = 12
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-    
+
     local label = Instance.new("TextLabel", btn)
     label.Size = UDim2.new(1, -30, 1, 0)
     label.Position = UDim2.new(0, 8, 0, 0)
@@ -520,14 +520,14 @@ local function CreateColorPicker(parent, text, defaultColor, callback)
     label.Font = Enum.Font.BuilderSansMedium
     label.TextSize = 11
     label.ZIndex = 13
-    
+
     local colorBox = Instance.new("Frame", btn)
     colorBox.Size = UDim2.new(0, 14, 0, 14)
     colorBox.Position = UDim2.new(1, -22, 0.5, -7)
     colorBox.BackgroundColor3 = defaultColor
     colorBox.ZIndex = 13
     Instance.new("UICorner", colorBox).CornerRadius = UDim.new(1, 0)
-    
+
     btn.MouseButton1Click:Connect(function()
         local newColor = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
         colorBox.BackgroundColor3 = newColor
@@ -548,7 +548,7 @@ local function CreateTab(iconId, tabName)
     btn.ImageColor3 = Theme.Muted
     btn.ZIndex = 12
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-    
+
     local page = Instance.new("ScrollingFrame", LeftCol)
     page.Size = UDim2.new(1, 0, 1, 0)
     page.BackgroundTransparency = 1
@@ -558,10 +558,10 @@ local function CreateTab(iconId, tabName)
     page.ZIndex = 13
     local layout = Instance.new("UIListLayout", page)
     layout.Padding = UDim.new(0, 5)
-    
+
     Pages[tabName] = page
     Tabs[tabName] = btn
-    
+
     btn.MouseButton1Click:Connect(function()
         for name, p in pairs(Pages) do p.Visible = (name == tabName) end
         for name, b in pairs(Tabs) do
