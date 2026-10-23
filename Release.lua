@@ -1,5 +1,5 @@
 -- ==========================================
--- 👑 URIEL DEV | MURDER MYSTERY 2 (LOCK AIMBOT)
+-- 👑 URIEL DEV | MURDER MYSTERY 2 (SWITCH EDITION)
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -22,7 +22,7 @@ local Theme = {
 }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "URIEL_DEV_FINAL"
+ScreenGui.Name = "URIEL_DEV_SWITCH"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
@@ -176,9 +176,9 @@ end
 for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then createDrawings(p) end end
 Players.PlayerAdded:Connect(createDrawings)
 
-local activeTarget = nil -- Guardamos el objeto Head del Murder
+local activeTarget = nil
 
--- LOOP ESP Y AIMBOT
+-- LOOP PRINCIPAL
 RunService.RenderStepped:Connect(function()
     local screenCenter = Camera.ViewportSize / 2
     local bestHead = nil
@@ -273,7 +273,6 @@ RunService.RenderStepped:Connect(function()
                 highlight.OutlineColor = outlineColor
                 highlight.FillTransparency = 0.5
 
-                -- LÓGICA DEL AIMBOT
                 if AimbotEnabled and role == "Murder" and onScreen and distFromMe <= maxDistance then
                     if fovDist < shortestDist then
                         shortestDist = fovDist
@@ -289,17 +288,14 @@ RunService.RenderStepped:Connect(function()
     activeTarget = bestHead
 end)
 
--- LOCK AIMBOT (Sigue al Murder)
 RunService.RenderStepped:Connect(function()
     if AimbotEnabled and activeTarget and activeTarget.Parent then
         local currentCFrame = Camera.CFrame
         local targetCFrame = CFrame.new(currentCFrame.Position, activeTarget.Position)
-        -- 0.3 es la velocidad de seguimiento, entre más alto más pegado va
         Camera.CFrame = currentCFrame:Lerp(targetCFrame, 0.3) 
     end
 end)
 
--- KILL ALL / AUTO GRAB
 task.spawn(function()
     while task.wait(0.1) do
         if LocalPlayer.Character then
@@ -334,7 +330,6 @@ task.spawn(function()
     end
 end)
 
--- MOVIMIENTO
 UIS.JumpRequest:Connect(function()
     if InfJump then
         local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -355,7 +350,7 @@ RunService.Heartbeat:Connect(function()
 end)
 
 -- ==========================================
--- DISEÑO DE LA UI
+-- DISEÑO DE LA UI CON SWITCHES Y TEXTO
 -- ==========================================
 local Sidebar = Instance.new("Frame", MainFrame)
 Sidebar.Size = UDim2.new(0, 40, 1, -35)
@@ -375,9 +370,8 @@ LeftCol.Size = UDim2.new(0.5, -5, 1, 0)
 LeftCol.Position = UDim2.new(0, 5, 0, 5)
 LeftCol.BackgroundTransparency = 1
 LeftCol.ScrollBarThickness = 2
-LeftCol.AutomaticCanvasSize = Enum.AutomaticSize.Y
 LeftCol.ZIndex = 12
-Instance.new("UIListLayout", LeftCol).Padding = UDim.new(0, 5)
+LeftCol.CanvasSize = UDim2.new(0, 0, 0, 500) 
 
 local RightCol = Instance.new("Frame", ContentHost)
 RightCol.Size = UDim2.new(0.5, -5, 1, -10)
@@ -409,16 +403,19 @@ PreviewInfo.TextWrapped = true
 PreviewInfo.TextYAlignment = Enum.TextYAlignment.Top
 PreviewInfo.ZIndex = 13
 
+local currentY = 0
 local function CreateToggle(parent, text, callback)
     local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1, 0, 0, 30)
+    btn.Size = UDim2.new(1, 0, 0, 32)
+    btn.Position = UDim2.new(0, 0, 0, currentY)
     btn.BackgroundColor3 = Theme.Panel
     btn.Text = ""
     btn.ZIndex = 12
+    currentY = currentY + 38
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
 
     local label = Instance.new("TextLabel", btn)
-    label.Size = UDim2.new(1, -45, 1, 0)
+    label.Size = UDim2.new(1, -120, 1, 0)
     label.Position = UDim2.new(0, 8, 0, 0)
     label.Text = text
     label.TextColor3 = Theme.Text
@@ -428,9 +425,21 @@ local function CreateToggle(parent, text, callback)
     label.TextSize = 11
     label.ZIndex = 13
 
+    -- Texto de Estado
+    local statusLabel = Instance.new("TextLabel", btn)
+    statusLabel.Size = UDim2.new(0, 60, 1, 0)
+    statusLabel.Position = UDim2.new(1, -95, 0, 0)
+    statusLabel.Text = "OFF"
+    statusLabel.TextColor3 = Theme.Muted
+    statusLabel.TextXAlignment = Enum.TextXAlignment.Right
+    statusLabel.BackgroundTransparency = 1
+    statusLabel.Font = Enum.Font.BuilderSansBold
+    statusLabel.TextSize = 10
+    statusLabel.ZIndex = 13
+
     local switchBg = Instance.new("Frame", btn)
     switchBg.Size = UDim2.new(0, 28, 0, 14)
-    switchBg.Position = UDim2.new(1, -36, 0.5, -7)
+    switchBg.Position = UDim2.new(1, -30, 0.5, -7)
     switchBg.BackgroundColor3 = Theme.ToggleOff
     switchBg.ZIndex = 13
     Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1, 0)
@@ -445,14 +454,25 @@ local function CreateToggle(parent, text, callback)
     local state = false
     btn.MouseButton1Click:Connect(function()
         state = not state
-        TweenService:Create(switchBg, TweenInfo.new(0.2), {BackgroundColor3 = state and Theme.Accent or Theme.ToggleOff}):Play()
-        TweenService:Create(switchThumb, TweenInfo.new(0.2), {
-            Position = state and UDim2.new(1, -12, 0.5, -5) or UDim2.new(0, 2, 0.5, -5),
-            BackgroundColor3 = state and Theme.Text or Theme.Muted
-        }):Play()
+        if state then
+            statusLabel.Text = "ACTIVADO"
+            statusLabel.TextColor3 = Theme.Accent
+            TweenService:Create(switchBg, TweenInfo.new(0.2), {BackgroundColor3 = Theme.Accent}):Play()
+            TweenService:Create(switchThumb, TweenInfo.new(0.2), {
+                Position = UDim2.new(1, -12, 0.5, -5),
+                BackgroundColor3 = Theme.Text
+            }):Play()
+        else
+            statusLabel.Text = "OFF"
+            statusLabel.TextColor3 = Theme.Muted
+            TweenService:Create(switchBg, TweenInfo.new(0.2), {BackgroundColor3 = Theme.ToggleOff}):Play()
+            TweenService:Create(switchThumb, TweenInfo.new(0.2), {
+                Position = UDim2.new(0, 2, 0.5, -5),
+                BackgroundColor3 = Theme.Muted
+            }):Play()
+        end
         
         PreviewInfo.Text = text .. ": " .. (state and "ACTIVADO" or "DESACTIVADO")
-        
         if callback then callback(state) end
     end)
     return btn
@@ -461,8 +481,10 @@ end
 local function CreateSlider(parent, text, min, max, default, callback)
     local wrap = Instance.new("Frame", parent)
     wrap.Size = UDim2.new(1, 0, 0, 35)
+    wrap.Position = UDim2.new(0, 0, 0, currentY)
     wrap.BackgroundTransparency = 1
     wrap.ZIndex = 12
+    currentY = currentY + 40
 
     local label = Instance.new("TextLabel", wrap)
     label.Size = UDim2.new(1, 0, 0, 15)
@@ -513,10 +535,17 @@ local function CreateSlider(parent, text, min, max, default, callback)
     end)
 end
 
+local function ClearLeftCol()
+    for _, v in pairs(LeftCol:GetChildren()) do
+        if v:IsA("TextButton") or v:IsA("Frame") then v:Destroy() end
+    end
+    currentY = 0
+end
+
 local Pages = {}
 local Tabs = {}
 
-local function CreateTab(iconId, tabName)
+local function CreateTab(iconId, tabName, buildFunction)
     local btn = Instance.new("ImageButton", Sidebar)
     btn.Size = UDim2.new(0, 30, 0, 30)
     btn.Position = UDim2.new(0, 5, 0, 5 + (#Sidebar:GetChildren() * 35))
@@ -527,69 +556,65 @@ local function CreateTab(iconId, tabName)
     btn.ZIndex = 12
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
 
-    local page = Instance.new("ScrollingFrame", LeftCol)
-    page.Size = UDim2.new(1, 0, 1, 0)
-    page.BackgroundTransparency = 1
-    page.ScrollBarThickness = 2
-    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    page.Visible = false
-    page.ZIndex = 13
-    local layout = Instance.new("UIListLayout", page)
-    layout.Padding = UDim.new(0, 5)
-
-    Pages[tabName] = page
+    Pages[tabName] = buildFunction
     Tabs[tabName] = btn
 
     btn.MouseButton1Click:Connect(function()
-        for name, p in pairs(Pages) do p.Visible = (name == tabName) end
+        ClearLeftCol()
         for name, b in pairs(Tabs) do
             TweenService:Create(b, TweenInfo.new(0.2), {ImageColor3 = name == tabName and Theme.Accent or Theme.Muted}):Play()
         end
+        buildFunction()
         PreviewInfo.Text = "Pestaña: " .. tabName
     end)
-    return page
+    return btn
 end
 
-local ESPPage = CreateTab("rbxassetid://13571270194", "ESP")
-CreateToggle(ESPPage, "Role ESP", function(s) RoleESPEnabled = s end)
-CreateToggle(ESPPage, "Gun ESP", function(s) GunESPEnabled = s end)
-CreateToggle(ESPPage, "Solo Murder", function(s) OnlyMurder = s end)
-CreateToggle(ESPPage, "Boxes", function(s) BoxesEnabled = s end)
-CreateToggle(ESPPage, "Tracers", function(s) TracersEnabled = s end)
-CreateToggle(ESPPage, "Names", function(s) NamesEnabled = s end)
-CreateToggle(ESPPage, "Health", function(s) HealthEnabled = s end)
-
-local CombatPage = CreateTab("rbxassetid://80964454894155", "Combat")
-CreateToggle(CombatPage, "Aimbot", function(s) AimbotEnabled = s end)
-CreateToggle(CombatPage, "Kill All", function(s) KillAllEnabled = s end)
-CreateToggle(CombatPage, "Auto Grab", function(s) AutoGrabEnabled = s end)
-CreateSlider(CombatPage, "Max Dist", 100, 2000, 500, function(v) maxDistance = v end)
-
-local PlayerPage = CreateTab("rbxassetid://13492318225", "Player")
-CreateToggle(PlayerPage, "Speed", function(s) SpeedHack = s end)
-CreateToggle(PlayerPage, "Noclip", function(s) Noclip = s end)
-CreateToggle(PlayerPage, "Fly", function(s) 
-    FlyHack = s
-    if s then
-        task.spawn(function()
-            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                local bv = Instance.new("BodyVelocity", hrp)
-                bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-                while FlyHack do
-                    local move = Vector3.zero
-                    if UIS:IsKeyDown(Enum.KeyCode.W) then move += Camera.CFrame.LookVector end
-                    if UIS:IsKeyDown(Enum.KeyCode.S) then move -= Camera.CFrame.LookVector end
-                    if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
-                    bv.Velocity = move * 60
-                    task.wait()
-                end
-                bv:Destroy()
-            end
-        end)
-    end
+local ESPTab = CreateTab("rbxassetid://13571270194", "ESP", function()
+    CreateToggle(LeftCol, "Role ESP", function(s) RoleESPEnabled = s end)
+    CreateToggle(LeftCol, "Gun ESP", function(s) GunESPEnabled = s end)
+    CreateToggle(LeftCol, "Solo Murder", function(s) OnlyMurder = s end)
+    CreateToggle(LeftCol, "Boxes", function(s) BoxesEnabled = s end)
+    CreateToggle(LeftCol, "Tracers", function(s) TracersEnabled = s end)
+    CreateToggle(LeftCol, "Names", function(s) NamesEnabled = s end)
+    CreateToggle(LeftCol, "Health", function(s) HealthEnabled = s end)
 end)
-CreateToggle(PlayerPage, "Infinite Jump", function(s) InfJump = s end)
 
-Pages["ESP"].Visible = true
+local CombatTab = CreateTab("rbxassetid://80964454894155", "Combat", function()
+    CreateToggle(LeftCol, "Aimbot", function(s) AimbotEnabled = s end)
+    CreateToggle(LeftCol, "Kill All", function(s) KillAllEnabled = s end)
+    CreateToggle(LeftCol, "Auto Grab", function(s) AutoGrabEnabled = s end)
+    CreateSlider(LeftCol, "Max Dist", 100, 2000, 500, function(v) maxDistance = v end)
+end)
+
+local PlayerTab = CreateTab("rbxassetid://13492318225", "Player", function()
+    CreateToggle(LeftCol, "Speed", function(s) SpeedHack = s end)
+    CreateToggle(LeftCol, "Noclip", function(s) Noclip = s end)
+    CreateToggle(LeftCol, "Fly", function(s) 
+        FlyHack = s
+        if s then
+            task.spawn(function()
+                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local bv = Instance.new("BodyVelocity", hrp)
+                    bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+                    while FlyHack do
+                        local move = Vector3.zero
+                        if UIS:IsKeyDown(Enum.KeyCode.W) then move += Camera.CFrame.LookVector end
+                        if UIS:IsKeyDown(Enum.KeyCode.S) then move -= Camera.CFrame.LookVector end
+                        if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
+                        bv.Velocity = move * 60
+                        task.wait()
+                    end
+                    bv:Destroy()
+                end
+            end)
+        end
+    end)
+    CreateToggle(LeftCol, "Infinite Jump", function(s) InfJump = s end)
+end)
+
+ClearLeftCol()
+Pages["ESP"]()
 Tabs["ESP"].ImageColor3 = Theme.Accent
+PreviewInfo.Text = "Pestaña: ESP"
