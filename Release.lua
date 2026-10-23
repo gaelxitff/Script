@@ -1,17 +1,37 @@
 -- ==========================================
--- 👑 URIEL DEV | MURDER MYSTERY 2 (SWITCH EDITION)
+-- 👑 URIEL DEV | MURDER MYSTERY 2 (PALETTE EDITION)
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
+local Language = "ES"
+local Texts = {
+    ES = {
+        Title = "URIEL DEV | MM2",
+        ESP = {RoleESP = "Role ESP", GunESP = "Cham de Armas", OnlyMurder = "Solo Murder", Boxes = "Cajas (Box)", Tracers = "Líneas", Names = "Nombres", Health = "Barra de Vida", Rainbow = "Arcoíris"},
+        Combat = {Aimbot = "Aimbot al Murder", KillAll = "Kill All", AutoGrab = "Auto Recoger", MaxDist = "Distancia Máx"},
+        Player = {Speed = "Speed Hack", Noclip = "Noclip", Fly = "Volar", Jump = "Salto Infinito"},
+        Settings = {RoleColors = "Colores de Rol", Fill = "Relleno", Outline = "Contorno"},
+        Credits = {Title = "Creado por Uriel Dev", Btn = "Copiar Discord"}
+    },
+    EN = {
+        Title = "URIEL DEV | MM2",
+        ESP = {RoleESP = "Role ESP", GunESP = "Gun ESP", OnlyMurder = "Only Murder", Boxes = "Boxes", Tracers = "Tracers", Names = "Names", Health = "Health Bar", Rainbow = "Rainbow"},
+        Combat = {Aimbot = "Aimbot Murder", KillAll = "Kill All", AutoGrab = "Auto Grab", MaxDist = "Max Dist"},
+        Player = {Speed = "Speed Hack", Noclip = "Noclip", Fly = "Fly", Jump = "Infinite Jump"},
+        Settings = {RoleColors = "Role Colors", Fill = "Fill", Outline = "Outline"},
+        Credits = {Title = "Created by Uriel Dev", Btn = "Copy Discord"}
+    }
+}
+
 local Theme = { 
     BG = Color3.fromRGB(15, 15, 20), 
-    Sidebar = Color3.fromRGB(10, 10, 14), 
     Panel = Color3.fromRGB(22, 22, 30), 
     Border = Color3.fromRGB(45, 45, 60), 
     Accent = Color3.fromRGB(0, 170, 255), 
@@ -22,7 +42,7 @@ local Theme = {
 }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "URIEL_DEV_SWITCH"
+ScreenGui.Name = "URIEL_DEV_PALETTE"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
@@ -36,7 +56,7 @@ ToggleBtn.TextColor3 = Theme.Accent
 ToggleBtn.Font = Enum.Font.BuilderSansBold
 ToggleBtn.TextSize = 14
 ToggleBtn.ZIndex = 100
-ToggleBtn.Visible = true
+ToggleBtn.Visible = false
 ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 local TStroke = Instance.new("UIStroke", ToggleBtn)
@@ -61,8 +81,8 @@ end)
 
 -- VENTANA PRINCIPAL
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 480, 0, 280)
-MainFrame.Position = UDim2.new(0.5, -240, 0.5, -140)
+MainFrame.Size = UDim2.new(0, 460, 0, 340)
+MainFrame.Position = UDim2.new(0.5, -230, 0.5, -170)
 MainFrame.BackgroundColor3 = Theme.BG
 MainFrame.BorderSizePixel = 0
 MainFrame.Visible = false
@@ -75,7 +95,7 @@ MainStroke.Thickness = 1.5
 
 local Header = Instance.new("Frame", MainFrame)
 Header.Size = UDim2.new(1, 0, 0, 35)
-Header.BackgroundColor3 = Theme.Sidebar
+Header.BackgroundColor3 = Theme.Panel
 Header.BorderSizePixel = 0
 Header.ZIndex = 11
 Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 8)
@@ -84,7 +104,7 @@ local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(1, -60, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "URIEL DEV | MM2"
+Title.Text = Texts[Language].Title
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.BuilderSansBold
 Title.TextSize = 14
@@ -123,7 +143,7 @@ ToggleBtn.MouseButton1Click:Connect(function() MainFrame.Visible = true ToggleBt
 
 -- VARIABLES DEL JUEGO
 local maxDistance = 500
-local BoxesEnabled, NamesEnabled, HealthEnabled, TracersEnabled, RoleESPEnabled, GunESPEnabled, OnlyMurder = false, false, false, false, false, false, false
+local BoxesEnabled, NamesEnabled, HealthEnabled, TracersEnabled, RoleESPEnabled, GunESPEnabled, OnlyMurder, ESP_Rainbow = false, false, false, false, false, false, false, false
 local AimbotEnabled, KillAllEnabled, AutoGrabEnabled = false, false, false
 local SpeedHack, FlyHack, Noclip, InfJump = false, false, false, false
 
@@ -178,8 +198,9 @@ Players.PlayerAdded:Connect(createDrawings)
 
 local activeTarget = nil
 
--- LOOP PRINCIPAL
+-- LOOP ESP Y AIMBOT
 RunService.RenderStepped:Connect(function()
+    local rainbowColor = Color3.fromHSV((tick() % 5) / 5, 1, 1)
     local screenCenter = Camera.ViewportSize / 2
     local bestHead = nil
     local shortestDist = 9e9
@@ -221,7 +242,7 @@ RunService.RenderStepped:Connect(function()
                 local shouldDraw = true
                 if OnlyMurder and role ~= "Murder" then shouldDraw = false end
 
-                local fillColor = Color3.fromRGB(255,255,255)
+                local fillColor = ESP_Rainbow and rainbowColor or Color3.fromRGB(255,255,255)
                 local outlineColor = Theme.BG
 
                 if RoleESPEnabled then
@@ -268,7 +289,7 @@ RunService.RenderStepped:Connect(function()
                     draw.Tracer.Visible = false; draw.Health.Visible = false; draw.HealthBg.Visible = false
                 end
 
-                highlight.Enabled = (RoleESPEnabled) and shouldDraw
+                highlight.Enabled = (RoleESPEnabled or ESP_Rainbow) and shouldDraw
                 highlight.FillColor = fillColor
                 highlight.OutlineColor = outlineColor
                 highlight.FillTransparency = 0.5
@@ -350,72 +371,18 @@ RunService.Heartbeat:Connect(function()
 end)
 
 -- ==========================================
--- DISEÑO DE LA UI CON SWITCHES Y TEXTO
+-- FUNCIONES DE LA UI
 -- ==========================================
-local Sidebar = Instance.new("Frame", MainFrame)
-Sidebar.Size = UDim2.new(0, 40, 1, -35)
-Sidebar.Position = UDim2.new(0, 0, 0, 35)
-Sidebar.BackgroundColor3 = Theme.Sidebar
-Sidebar.BorderSizePixel = 0
-Sidebar.ZIndex = 11
-
-local ContentHost = Instance.new("Frame", MainFrame)
-ContentHost.Size = UDim2.new(1, -40, 1, -35)
-ContentHost.Position = UDim2.new(0, 40, 0, 35)
-ContentHost.BackgroundTransparency = 1
-ContentHost.ZIndex = 11
-
-local LeftCol = Instance.new("ScrollingFrame", ContentHost)
-LeftCol.Size = UDim2.new(0.5, -5, 1, 0)
-LeftCol.Position = UDim2.new(0, 5, 0, 5)
-LeftCol.BackgroundTransparency = 1
-LeftCol.ScrollBarThickness = 2
-LeftCol.ZIndex = 12
-LeftCol.CanvasSize = UDim2.new(0, 0, 0, 500) 
-
-local RightCol = Instance.new("Frame", ContentHost)
-RightCol.Size = UDim2.new(0.5, -5, 1, -10)
-RightCol.Position = UDim2.new(0.5, 0, 0, 5)
-RightCol.BackgroundColor3 = Theme.Panel
-RightCol.ZIndex = 12
-Instance.new("UICorner", RightCol).CornerRadius = UDim.new(0, 6)
-Instance.new("UIStroke", RightCol).Color = Theme.Border
-
-local PreviewTitle = Instance.new("TextLabel", RightCol)
-PreviewTitle.Size = UDim2.new(1, 0, 0, 25)
-PreviewTitle.Position = UDim2.new(0, 0, 0, 5)
-PreviewTitle.BackgroundTransparency = 1
-PreviewTitle.Text = "VISTA PREVIA"
-PreviewTitle.TextColor3 = Theme.Accent
-PreviewTitle.Font = Enum.Font.BuilderSansBold
-PreviewTitle.TextSize = 11
-PreviewTitle.ZIndex = 13
-
-local PreviewInfo = Instance.new("TextLabel", RightCol)
-PreviewInfo.Size = UDim2.new(1, -10, 1, -35)
-PreviewInfo.Position = UDim2.new(0, 5, 0, 30)
-PreviewInfo.BackgroundTransparency = 1
-PreviewInfo.Text = "Selecciona una opción..."
-PreviewInfo.TextColor3 = Theme.Text
-PreviewInfo.Font = Enum.Font.BuilderSansMedium
-PreviewInfo.TextSize = 12
-PreviewInfo.TextWrapped = true
-PreviewInfo.TextYAlignment = Enum.TextYAlignment.Top
-PreviewInfo.ZIndex = 13
-
-local currentY = 0
 local function CreateToggle(parent, text, callback)
     local btn = Instance.new("TextButton", parent)
     btn.Size = UDim2.new(1, 0, 0, 32)
-    btn.Position = UDim2.new(0, 0, 0, currentY)
     btn.BackgroundColor3 = Theme.Panel
     btn.Text = ""
     btn.ZIndex = 12
-    currentY = currentY + 38
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
 
     local label = Instance.new("TextLabel", btn)
-    label.Size = UDim2.new(1, -120, 1, 0)
+    label.Size = UDim2.new(1, -110, 1, 0)
     label.Position = UDim2.new(0, 8, 0, 0)
     label.Text = text
     label.TextColor3 = Theme.Text
@@ -425,10 +392,9 @@ local function CreateToggle(parent, text, callback)
     label.TextSize = 11
     label.ZIndex = 13
 
-    -- Texto de Estado
     local statusLabel = Instance.new("TextLabel", btn)
-    statusLabel.Size = UDim2.new(0, 60, 1, 0)
-    statusLabel.Position = UDim2.new(1, -95, 0, 0)
+    statusLabel.Size = UDim2.new(0, 65, 1, 0)
+    statusLabel.Position = UDim2.new(1, -100, 0, 0)
     statusLabel.Text = "OFF"
     statusLabel.TextColor3 = Theme.Muted
     statusLabel.TextXAlignment = Enum.TextXAlignment.Right
@@ -458,21 +424,13 @@ local function CreateToggle(parent, text, callback)
             statusLabel.Text = "ACTIVADO"
             statusLabel.TextColor3 = Theme.Accent
             TweenService:Create(switchBg, TweenInfo.new(0.2), {BackgroundColor3 = Theme.Accent}):Play()
-            TweenService:Create(switchThumb, TweenInfo.new(0.2), {
-                Position = UDim2.new(1, -12, 0.5, -5),
-                BackgroundColor3 = Theme.Text
-            }):Play()
+            TweenService:Create(switchThumb, TweenInfo.new(0.2), {Position = UDim2.new(1, -12, 0.5, -5), BackgroundColor3 = Color3.new(1,1,1)}):Play()
         else
             statusLabel.Text = "OFF"
             statusLabel.TextColor3 = Theme.Muted
             TweenService:Create(switchBg, TweenInfo.new(0.2), {BackgroundColor3 = Theme.ToggleOff}):Play()
-            TweenService:Create(switchThumb, TweenInfo.new(0.2), {
-                Position = UDim2.new(0, 2, 0.5, -5),
-                BackgroundColor3 = Theme.Muted
-            }):Play()
+            TweenService:Create(switchThumb, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, -5), BackgroundColor3 = Theme.Muted}):Play()
         end
-        
-        PreviewInfo.Text = text .. ": " .. (state and "ACTIVADO" or "DESACTIVADO")
         if callback then callback(state) end
     end)
     return btn
@@ -481,11 +439,8 @@ end
 local function CreateSlider(parent, text, min, max, default, callback)
     local wrap = Instance.new("Frame", parent)
     wrap.Size = UDim2.new(1, 0, 0, 35)
-    wrap.Position = UDim2.new(0, 0, 0, currentY)
     wrap.BackgroundTransparency = 1
     wrap.ZIndex = 12
-    currentY = currentY + 40
-
     local label = Instance.new("TextLabel", wrap)
     label.Size = UDim2.new(1, 0, 0, 15)
     label.BackgroundTransparency = 1
@@ -495,7 +450,6 @@ local function CreateSlider(parent, text, min, max, default, callback)
     label.TextSize = 11
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.ZIndex = 13
-
     local bar = Instance.new("TextButton", wrap)
     bar.Size = UDim2.new(1, 0, 0, 6)
     bar.Position = UDim2.new(0, 0, 0, 22)
@@ -503,23 +457,19 @@ local function CreateSlider(parent, text, min, max, default, callback)
     bar.Text = ""
     bar.ZIndex = 13
     Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
-
     local fill = Instance.new("Frame", bar)
     fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
     fill.BackgroundColor3 = Theme.Accent
     fill.ZIndex = 14
     Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
-
     local sliding = false
     local function updateValue(x)
         local pct = math.clamp((x - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
         fill.Size = UDim2.new(pct, 0, 1, 0)
         local val = math.floor(min + (max - min) * pct)
         label.Text = text .. ": " .. tostring(val)
-        PreviewInfo.Text = text .. ": " .. tostring(val)
         if callback then callback(val) end
     end
-
     bar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             sliding = true; updateValue(input.Position.X)
@@ -535,62 +485,131 @@ local function CreateSlider(parent, text, min, max, default, callback)
     end)
 end
 
-local function ClearLeftCol()
-    for _, v in pairs(LeftCol:GetChildren()) do
-        if v:IsA("TextButton") or v:IsA("Frame") then v:Destroy() end
-    end
-    currentY = 0
-end
-
-local Pages = {}
-local Tabs = {}
-
-local function CreateTab(iconId, tabName, buildFunction)
-    local btn = Instance.new("ImageButton", Sidebar)
-    btn.Size = UDim2.new(0, 30, 0, 30)
-    btn.Position = UDim2.new(0, 5, 0, 5 + (#Sidebar:GetChildren() * 35))
-    btn.BackgroundColor3 = Theme.BG
-    btn.BackgroundTransparency = 0.5
-    btn.Image = iconId
-    btn.ImageColor3 = Theme.Muted
+-- NUEVO SISTEMA DE COLORES CON PALETA
+local function CreateColorPicker(parent, text, defaultColor, callback)
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(1, 0, 0, 30)
+    btn.BackgroundColor3 = Theme.Panel
+    btn.Text = ""
     btn.ZIndex = 12
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-
-    Pages[tabName] = buildFunction
-    Tabs[tabName] = btn
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+    
+    local label = Instance.new("TextLabel", btn)
+    label.Size = UDim2.new(1, -30, 1, 0)
+    label.Position = UDim2.new(0, 8, 0, 0)
+    label.Text = text
+    label.TextColor3 = Theme.Text
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.BuilderSansMedium
+    label.TextSize = 11
+    label.ZIndex = 13
+    
+    local colorBox = Instance.new("Frame", btn)
+    colorBox.Size = UDim2.new(0, 14, 0, 14)
+    colorBox.Position = UDim2.new(1, -22, 0.5, -7)
+    colorBox.BackgroundColor3 = defaultColor
+    colorBox.ZIndex = 13
+    Instance.new("UICorner", colorBox).CornerRadius = UDim.new(1, 0)
+    
+    -- El panel de la paleta (oculto por defecto)
+    local paletteFrame = Instance.new("Frame", MainFrame)
+    paletteFrame.Size = UDim2.new(0, 180, 0, 100)
+    paletteFrame.BackgroundColor3 = Theme.BG
+    paletteFrame.BorderSizePixel = 0
+    paletteFrame.Visible = false
+    paletteFrame.ZIndex = 50
+    Instance.new("UICorner", paletteFrame).CornerRadius = UDim.new(0, 6)
+    local pStroke = Instance.new("UIStroke", paletteFrame)
+    pStroke.Color = Theme.Border
+    
+    local grid = Instance.new("UIGridLayout", paletteFrame)
+    grid.CellSize = UDim2.new(0, 25, 0, 25)
+    grid.CellPadding = UDim2.new(0, 5, 0, 5)
+    grid.SortOrder = Enum.SortOrder.LayoutOrder
+    
+    -- 12 Colores de la paleta
+    local colors = {
+        Color3.fromRGB(255, 0, 0), Color3.fromRGB(0, 255, 0), Color3.fromRGB(0, 0, 255),
+        Color3.fromRGB(255, 255, 0), Color3.fromRGB(255, 0, 255), Color3.fromRGB(0, 255, 255),
+        Color3.fromRGB(255, 150, 0), Color3.fromRGB(150, 0, 255), Color3.fromRGB(255, 255, 255),
+        Color3.fromRGB(0, 0, 0), Color3.fromRGB(150, 150, 150), Color3.fromRGB(100, 50, 0)
+    }
+    
+    for i, color in ipairs(colors) do
+        local cBtn = Instance.new("TextButton", paletteFrame)
+        cBtn.BackgroundColor3 = color
+        cBtn.Text = ""
+        cBtn.ZIndex = 51
+        Instance.new("UICorner", cBtn).CornerRadius = UDim.new(0, 4)
+        cBtn.MouseButton1Click:Connect(function()
+            colorBox.BackgroundColor3 = color
+            if callback then callback(color) end
+            paletteFrame.Visible = false
+        end)
+    end
 
     btn.MouseButton1Click:Connect(function()
-        ClearLeftCol()
-        for name, b in pairs(Tabs) do
-            TweenService:Create(b, TweenInfo.new(0.2), {ImageColor3 = name == tabName and Theme.Accent or Theme.Muted}):Play()
+        if paletteFrame.Visible then
+            paletteFrame.Visible = false
+        else
+            -- Posicionar la paleta justo al lado del botón
+            local pos = btn.AbsolutePosition
+            paletteFrame.Position = UDim2.new(0, pos.X - 100, 0, pos.Y + 35)
+            paletteFrame.Visible = true
         end
-        buildFunction()
-        PreviewInfo.Text = "Pestaña: " .. tabName
     end)
-    return btn
 end
 
-local ESPTab = CreateTab("rbxassetid://13571270194", "ESP", function()
-    CreateToggle(LeftCol, "Role ESP", function(s) RoleESPEnabled = s end)
-    CreateToggle(LeftCol, "Gun ESP", function(s) GunESPEnabled = s end)
-    CreateToggle(LeftCol, "Solo Murder", function(s) OnlyMurder = s end)
-    CreateToggle(LeftCol, "Boxes", function(s) BoxesEnabled = s end)
-    CreateToggle(LeftCol, "Tracers", function(s) TracersEnabled = s end)
-    CreateToggle(LeftCol, "Names", function(s) NamesEnabled = s end)
-    CreateToggle(LeftCol, "Health", function(s) HealthEnabled = s end)
-end)
+-- CONSTRUCCIÓN DEL MENÚ (UNA COLUMNA)
+local function BuildMenu()
+    local Scroll = Instance.new("ScrollingFrame", MainFrame)
+    Scroll.Size = UDim2.new(1, -20, 1, -50)
+    Scroll.Position = UDim2.new(0, 10, 0, 45)
+    Scroll.BackgroundTransparency = 1
+    Scroll.ScrollBarThickness = 3
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, 800)
+    Scroll.ZIndex = 11
 
-local CombatTab = CreateTab("rbxassetid://80964454894155", "Combat", function()
-    CreateToggle(LeftCol, "Aimbot", function(s) AimbotEnabled = s end)
-    CreateToggle(LeftCol, "Kill All", function(s) KillAllEnabled = s end)
-    CreateToggle(LeftCol, "Auto Grab", function(s) AutoGrabEnabled = s end)
-    CreateSlider(LeftCol, "Max Dist", 100, 2000, 500, function(v) maxDistance = v end)
-end)
+    local currentY = 0
+    local function AddToggle(text, cb)
+        local t = CreateToggle(Scroll, text, cb)
+        t.Position = UDim2.new(0, 0, 0, currentY)
+        currentY = currentY + 38
+    end
+    
+    local function AddSlider(text, min, max, def, cb)
+        local s = CreateSlider(Scroll, text, min, max, def, cb)
+        s.Position = UDim2.new(0, 0, 0, currentY)
+        currentY = currentY + 45
+    end
 
-local PlayerTab = CreateTab("rbxassetid://13492318225", "Player", function()
-    CreateToggle(LeftCol, "Speed", function(s) SpeedHack = s end)
-    CreateToggle(LeftCol, "Noclip", function(s) Noclip = s end)
-    CreateToggle(LeftCol, "Fly", function(s) 
+    local function AddColor(text, col, cb)
+        local c = CreateColorPicker(Scroll, text, col, cb)
+        c.Position = UDim2.new(0, 0, 0, currentY)
+        currentY = currentY + 35
+    end
+
+    -- ESP
+    AddToggle(Texts[Language].ESP.RoleESP, function(s) RoleESPEnabled = s end)
+    AddToggle(Texts[Language].ESP.GunESP, function(s) GunESPEnabled = s end)
+    AddToggle(Texts[Language].ESP.OnlyMurder, function(s) OnlyMurder = s end)
+    AddToggle(Texts[Language].ESP.Boxes, function(s) BoxesEnabled = s end)
+    AddToggle(Texts[Language].ESP.Tracers, function(s) TracersEnabled = s end)
+    AddToggle(Texts[Language].ESP.Names, function(s) NamesEnabled = s end)
+    AddToggle(Texts[Language].ESP.Health, function(s) HealthEnabled = s end)
+    AddToggle(Texts[Language].ESP.Rainbow, function(s) ESP_Rainbow = s end)
+
+    -- COMBAT
+    AddToggle(Texts[Language].Combat.Aimbot, function(s) AimbotEnabled = s end)
+    AddToggle(Texts[Language].Combat.KillAll, function(s) KillAllEnabled = s end)
+    AddToggle(Texts[Language].Combat.AutoGrab, function(s) AutoGrabEnabled = s end)
+    AddSlider(Texts[Language].Combat.MaxDist, 100, 2000, 500, function(v) maxDistance = v end)
+
+    -- PLAYER
+    AddToggle(Texts[Language].Player.Speed, function(s) SpeedHack = s end)
+    AddToggle(Texts[Language].Player.Noclip, function(s) Noclip = s end)
+    AddToggle(Texts[Language].Player.Fly, function(s) 
         FlyHack = s
         if s then
             task.spawn(function()
@@ -611,10 +630,70 @@ local PlayerTab = CreateTab("rbxassetid://13492318225", "Player", function()
             end)
         end
     end)
-    CreateToggle(LeftCol, "Infinite Jump", function(s) InfJump = s end)
+    AddToggle(Texts[Language].Player.Jump, function(s) InfJump = s end)
+
+    -- SETTINGS (COLORES)
+    AddColor("Murder Fill", RoleColors.Murder.Fill, function(c) RoleColors.Murder.Fill = c end)
+    AddColor("Murder Outline", RoleColors.Murder.Outline, function(c) RoleColors.Murder.Outline = c end)
+    AddColor("Sheriff Fill", RoleColors.Sheriff.Fill, function(c) RoleColors.Sheriff.Fill = c end)
+    AddColor("Sheriff Outline", RoleColors.Sheriff.Outline, function(c) RoleColors.Sheriff.Outline = c end)
+    AddColor("Innocent Fill", RoleColors.Innocent.Fill, function(c) RoleColors.Innocent.Fill = c end)
+    AddColor("Innocent Outline", RoleColors.Innocent.Outline, function(c) RoleColors.Innocent.Outline = c end)
+    
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, currentY + 10)
+end
+
+-- SELECTOR DE IDIOMA INICIAL
+local LangGui = Instance.new("ScreenGui", CoreGui)
+local LangFrame = Instance.new("Frame", LangGui)
+LangFrame.Size = UDim2.new(0, 220, 0, 130)
+LangFrame.Position = UDim2.new(0.5, -110, 0.5, -65)
+LangFrame.BackgroundColor3 = Theme.BG
+Instance.new("UICorner", LangFrame).CornerRadius = UDim.new(0, 10)
+local LStroke = Instance.new("UIStroke", LangFrame)
+LStroke.Color = Theme.Accent
+
+local LTitle = Instance.new("TextLabel", LangFrame)
+LTitle.Size = UDim2.new(1, 0, 0, 30)
+LTitle.BackgroundTransparency = 1
+LTitle.Text = "Select / Selecciona Idioma"
+LTitle.TextColor3 = Theme.Text
+LTitle.Font = Enum.Font.BuilderSansBold
+LTitle.TextSize = 11
+LTitle.Parent = LangFrame
+
+local BtnES = Instance.new("TextButton", LangFrame)
+BtnES.Size = UDim2.new(0.4, 0, 0, 30)
+BtnES.Position = UDim2.new(0.05, 0, 0, 50)
+BtnES.BackgroundColor3 = Theme.Panel
+BtnES.Text = "Español"
+BtnES.TextColor3 = Theme.Text
+BtnES.Font = Enum.Font.BuilderSansBold
+BtnES.TextSize = 11
+Instance.new("UICorner", BtnES).CornerRadius = UDim.new(0, 6)
+
+local BtnEN = Instance.new("TextButton", LangFrame)
+BtnEN.Size = UDim2.new(0.4, 0, 0, 30)
+BtnEN.Position = UDim2.new(0.55, 0, 0, 50)
+BtnEN.BackgroundColor3 = Theme.Panel
+BtnEN.Text = "English"
+BtnEN.TextColor3 = Theme.Text
+BtnEN.Font = Enum.Font.BuilderSansBold
+BtnEN.TextSize = 11
+Instance.new("UICorner", BtnEN).CornerRadius = UDim.new(0, 6)
+
+BtnES.MouseButton1Click:Connect(function()
+    Language = "ES"
+    LangGui:Destroy()
+    ToggleBtn.Visible = true
+    MainFrame.Visible = true
+    BuildMenu()
 end)
 
-ClearLeftCol()
-Pages["ESP"]()
-Tabs["ESP"].ImageColor3 = Theme.Accent
-PreviewInfo.Text = "Pestaña: ESP"
+BtnEN.MouseButton1Click:Connect(function()
+    Language = "EN"
+    LangGui:Destroy()
+    ToggleBtn.Visible = true
+    MainFrame.Visible = true
+    BuildMenu()
+end)
