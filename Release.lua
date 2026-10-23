@@ -1,6 +1,4 @@
--- ==========================================
--- 👑 URIEL DEV | MM2 (DRAKE MODZ STYLE)
--- ==========================================
+-- URIEL DEV | MM2 (DRAKE STYLE - CLEAN)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
@@ -9,29 +7,6 @@ local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
-
--- IDIOMAS
-local Language = "ES"
-local Texts = {
-    ES = {
-        Title = "URIEL DEV | MM2",
-        Tabs = {ESP = "Visual / ESP", Combat = "Combat", Player = "Player", Settings = "Ajustes", Credits = "Créditos"},
-        ESP = {RoleESP = "Role ESP (Resaltar)", GunESP = "Cham de Armas", Boxes = "Cajas", Tracers = "Líneas", Names = "Nombres", Health = "Barra de Vida", OnlyMurder = "Solo ver Murder"},
-        Combat = {Aimbot = "Aimbot al Murder", KillAll = "Kill All", AutoGrab = "Auto Recoger", MaxDist = "Distancia Máx"},
-        Player = {Speed = "Velocidad", Noclip = "Noclip", Fly = "Volar", Jump = "Salto Infinito"},
-        Settings = {Colors = "Colores de Rol", Fill = "Relleno", Outline = "Contorno"},
-        Credits = {Title = "Creado por URIEL DEV", Btn = "Copiar Discord de URIEL DEV"}
-    },
-    EN = {
-        Title = "URIEL DEV | MM2",
-        Tabs = {ESP = "Visual / ESP", Combat = "Combat", Player = "Player", Settings = "Settings", Credits = "Credits"},
-        ESP = {RoleESP = "Role ESP", GunESP = "Gun ESP", Boxes = "Boxes", Tracers = "Tracers", Names = "Names", Health = "Health Bar", OnlyMurder = "Only Murder"},
-        Combat = {Aimbot = "Aimbot Murder", KillAll = "Kill All", AutoGrab = "Auto Grab", MaxDist = "Max Dist"},
-        Player = {Speed = "Speed", Noclip = "Noclip", Fly = "Fly", Jump = "Infinite Jump"},
-        Settings = {Colors = "Role Colors", Fill = "Fill", Outline = "Outline"},
-        Credits = {Title = "Created by URIEL DEV", Btn = "Copy URIEL DEV Discord"}
-    }
-}
 
 local Theme = { 
     BG = Color3.fromRGB(20, 20, 25), 
@@ -46,7 +21,7 @@ local Theme = {
 }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "URIEL_DEV_MM2" -- Nombre del script en el CoreGui
+ScreenGui.Name = "URIEL_DEV_MM2"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
@@ -55,12 +30,12 @@ local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 150, 0, 40)
 ToggleBtn.Position = UDim2.new(0.5, -75, 0, 20)
 ToggleBtn.BackgroundColor3 = Theme.BG
-ToggleBtn.Text = "URIEL DEV" -- Texto del botón flotante
+ToggleBtn.Text = "URIEL DEV"
 ToggleBtn.TextColor3 = Theme.Accent
 ToggleBtn.Font = Enum.Font.BuilderSansBold
 ToggleBtn.TextSize = 14
 ToggleBtn.ZIndex = 100
-ToggleBtn.Visible = false
+ToggleBtn.Visible = true
 ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 local TStroke = Instance.new("UIStroke", ToggleBtn)
@@ -83,7 +58,7 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
--- VENTANA PRINCIPAL (ESTILO DRAKE)
+-- VENTANA PRINCIPAL
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 480, 0, 280)
 MainFrame.Position = UDim2.new(0.5, -240, 0.5, -140)
@@ -97,7 +72,6 @@ local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Color = Theme.Border
 MainStroke.Thickness = 1.5
 
--- HEADER
 local Header = Instance.new("Frame", MainFrame)
 Header.Size = UDim2.new(1, 0, 0, 35)
 Header.BackgroundColor3 = Theme.Sidebar
@@ -109,7 +83,7 @@ local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(1, -60, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = Texts[Language].Title -- Título del menú
+Title.Text = "URIEL DEV | MM2"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.BuilderSansBold
 Title.TextSize = 14
@@ -146,9 +120,7 @@ end)
 
 ToggleBtn.MouseButton1Click:Connect(function() MainFrame.Visible = true ToggleBtn.Visible = false end)
 
--- ==========================================
--- VARIABLES DEL JUEGO (MM2)
--- ==========================================
+-- VARIABLES DEL JUEGO
 local ESP_Color = Color3.fromRGB(255, 255, 255)
 local maxDistance = 500
 local BoxesEnabled, NamesEnabled, HealthEnabled, TracersEnabled, RoleESPEnabled, GunESPEnabled, OnlyMurder = false, false, false, false, false, false, false
@@ -183,9 +155,7 @@ local function getRole(plr)
     return "Innocent"
 end
 
--- ==========================================
--- DRAWINGS (CAJAS, LÍNEAS, NOMBRES)
--- ==========================================
+-- DRAWINGS
 local Drawings = {}
 local function CreateDrawing(class, props)
     if not Drawing then return nil end
@@ -208,15 +178,12 @@ Players.PlayerAdded:Connect(createDrawings)
 
 local activeTargetPos = nil 
 
--- ==========================================
--- LOOP PRINCIPAL (ESP Y AIMBOT)
--- ==========================================
+-- LOOP ESP Y AIMBOT
 RunService.RenderStepped:Connect(function()
     local screenCenter = Camera.ViewportSize / 2
     local bestHead = nil
     local shortestDist = 9e9
 
-    -- GUN ESP
     if GunESPEnabled then
         for _, obj in pairs(workspace:GetDescendants()) do
             if obj:IsA("Tool") and (obj.Name:lower():find("gun") or obj.Name:lower():find("knife")) then
@@ -329,7 +296,6 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- KILL ALL / AUTO GRAB / MOVIMIENTO
 task.spawn(function()
     while task.wait(0.1) do
         if LocalPlayer.Character then
@@ -383,9 +349,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- ==========================================
--- DISEÑO DE LA UI (DRAKE STYLE)
--- ==========================================
+-- UI
 local Sidebar = Instance.new("Frame", MainFrame)
 Sidebar.Size = UDim2.new(0, 40, 1, -35)
 Sidebar.Position = UDim2.new(0, 0, 0, 35)
@@ -399,7 +363,6 @@ ContentHost.Position = UDim2.new(0, 40, 0, 35)
 ContentHost.BackgroundTransparency = 1
 ContentHost.ZIndex = 11
 
--- CONTENEDOR DE DOS COLUMNAS
 local LeftCol = Instance.new("ScrollingFrame", ContentHost)
 LeftCol.Size = UDim2.new(0.5, -5, 1, 0)
 LeftCol.Position = UDim2.new(0, 5, 0, 5)
@@ -439,7 +402,6 @@ PreviewInfo.TextWrapped = true
 PreviewInfo.TextYAlignment = Enum.TextYAlignment.Top
 PreviewInfo.ZIndex = 13
 
--- COMPONENTES DE LA UI
 local function CreateToggle(parent, text, default, callback)
     local btn = Instance.new("TextButton", parent)
     btn.Size = UDim2.new(1, 0, 0, 30)
@@ -573,7 +535,6 @@ local function CreateColorPicker(parent, text, defaultColor, callback)
     end)
 end
 
--- CREACIÓN DE LAS PESTAÑAS
 local Pages = {}
 local Tabs = {}
 
@@ -610,26 +571,25 @@ local function CreateTab(iconId, tabName)
     return page
 end
 
--- LLENAR LAS PESTAÑAS CON TUS OPCIONES
 local ESPPage = CreateTab("rbxassetid://13571270194", "ESP")
-CreateToggle(ESPPage, Texts[Language].ESP.RoleESP, false, function(s) RoleESPEnabled = s end)
-CreateToggle(ESPPage, Texts[Language].ESP.GunESP, false, function(s) GunESPEnabled = s end)
-CreateToggle(ESPPage, Texts[Language].ESP.OnlyMurder, false, function(s) OnlyMurder = s end)
-CreateToggle(ESPPage, Texts[Language].ESP.Boxes, false, function(s) BoxesEnabled = s end)
-CreateToggle(ESPPage, Texts[Language].ESP.Tracers, false, function(s) TracersEnabled = s end)
-CreateToggle(ESPPage, Texts[Language].ESP.Names, false, function(s) NamesEnabled = s end)
-CreateToggle(ESPPage, Texts[Language].ESP.Health, false, function(s) HealthEnabled = s end)
+CreateToggle(ESPPage, "Role ESP", false, function(s) RoleESPEnabled = s end)
+CreateToggle(ESPPage, "Gun ESP", false, function(s) GunESPEnabled = s end)
+CreateToggle(ESPPage, "Solo Murder", false, function(s) OnlyMurder = s end)
+CreateToggle(ESPPage, "Boxes", false, function(s) BoxesEnabled = s end)
+CreateToggle(ESPPage, "Tracers", false, function(s) TracersEnabled = s end)
+CreateToggle(ESPPage, "Names", false, function(s) NamesEnabled = s end)
+CreateToggle(ESPPage, "Health", false, function(s) HealthEnabled = s end)
 
 local CombatPage = CreateTab("rbxassetid://80964454894155", "Combat")
-CreateToggle(CombatPage, Texts[Language].Combat.Aimbot, false, function(s) AimbotEnabled = s end)
-CreateToggle(CombatPage, Texts[Language].Combat.KillAll, false, function(s) KillAllEnabled = s end)
-CreateToggle(CombatPage, Texts[Language].Combat.AutoGrab, false, function(s) AutoGrabEnabled = s end)
-CreateSlider(CombatPage, Texts[Language].Combat.MaxDist, 100, 2000, 500, function(v) maxDistance = v end)
+CreateToggle(CombatPage, "Aimbot", false, function(s) AimbotEnabled = s end)
+CreateToggle(CombatPage, "Kill All", false, function(s) KillAllEnabled = s end)
+CreateToggle(CombatPage, "Auto Grab", false, function(s) AutoGrabEnabled = s end)
+CreateSlider(CombatPage, "Max Dist", 100, 2000, 500, function(v) maxDistance = v end)
 
 local PlayerPage = CreateTab("rbxassetid://13492318225", "Player")
-CreateToggle(PlayerPage, Texts[Language].Player.Speed, false, function(s) SpeedHack = s end)
-CreateToggle(PlayerPage, Texts[Language].Player.Noclip, false, function(s) Noclip = s end)
-CreateToggle(PlayerPage, Texts[Language].Player.Fly, false, function(s) 
+CreateToggle(PlayerPage, "Speed", false, function(s) SpeedHack = s end)
+CreateToggle(PlayerPage, "Noclip", false, function(s) Noclip = s end)
+CreateToggle(PlayerPage, "Fly", false, function(s) 
     FlyHack = s
     if s then
         task.spawn(function()
@@ -650,62 +610,15 @@ CreateToggle(PlayerPage, Texts[Language].Player.Fly, false, function(s)
         end)
     end
 end)
-CreateToggle(PlayerPage, Texts[Language].Player.Jump, false, function(s) InfJump = s end)
+CreateToggle(PlayerPage, "Infinite Jump", false, function(s) InfJump = s end)
 
 local SettingsPage = CreateTab("rbxassetid://13492318225", "Settings")
-CreateColorPicker(SettingsPage, "Murder " .. Texts[Language].Settings.Fill, RoleColors.Murder.Fill, function(c) RoleColors.Murder.Fill = c end)
-CreateColorPicker(SettingsPage, "Murder " .. Texts[Language].Settings.Outline, RoleColors.Murder.Outline, function(c) RoleColors.Murder.Outline = c end)
-CreateColorPicker(SettingsPage, "Sheriff " .. Texts[Language].Settings.Fill, RoleColors.Sheriff.Fill, function(c) RoleColors.Sheriff.Fill = c end)
-CreateColorPicker(SettingsPage, "Sheriff " .. Texts[Language].Settings.Outline, RoleColors.Sheriff.Outline, function(c) RoleColors.Sheriff.Outline = c end)
-CreateColorPicker(SettingsPage, "Innocent " .. Texts[Language].Settings.Fill, RoleColors.Innocent.Fill, function(c) RoleColors.Innocent.Fill = c end)
-CreateColorPicker(SettingsPage, "Innocent " .. Texts[Language].Settings.Outline, RoleColors.Innocent.Outline, function(c) RoleColors.Innocent.Outline = c end)
+CreateColorPicker(SettingsPage, "Murder Fill", RoleColors.Murder.Fill, function(c) RoleColors.Murder.Fill = c end)
+CreateColorPicker(SettingsPage, "Murder Outline", RoleColors.Murder.Outline, function(c) RoleColors.Murder.Outline = c end)
+CreateColorPicker(SettingsPage, "Sheriff Fill", RoleColors.Sheriff.Fill, function(c) RoleColors.Sheriff.Fill = c end)
+CreateColorPicker(SettingsPage, "Sheriff Outline", RoleColors.Sheriff.Outline, function(c) RoleColors.Sheriff.Outline = c end)
+CreateColorPicker(SettingsPage, "Innocent Fill", RoleColors.Innocent.Fill, function(c) RoleColors.Innocent.Fill = c end)
+CreateColorPicker(SettingsPage, "Innocent Outline", RoleColors.Innocent.Outline, function(c) RoleColors.Innocent.Outline = c end)
 
--- INICIAR EN ESP
 Pages["ESP"].Visible = true
 Tabs["ESP"].ImageColor3 = Theme.Accent
-
--- SELECTOR DE IDIOMA
-local LangGui = Instance.new("ScreenGui", CoreGui)
-local LangFrame = Instance.new("Frame", LangGui)
-LangFrame.Size = UDim2.new(0, 220, 0, 130)
-LangFrame.Position = UDim2.new(0.5, -110, 0.5, -65)
-LangFrame.BackgroundColor3 = Theme.BG
-Instance.new("UICorner", LangFrame).CornerRadius = UDim.new(0, 8)
-local LStroke = Instance.new("UIStroke", LangFrame)
-LStroke.Color = Theme.Border
-
-local LTitle = Instance.new("TextLabel", LangFrame)
-LTitle.Size = UDim2.new(1, 0, 0, 30)
-LTitle.BackgroundTransparency = 1
-LTitle.Text = "Select / Selecciona Idioma"
-LTitle.TextColor3 = Theme.Text
-LTitle.Font = Enum.Font.BuilderSansBold
-LTitle.TextSize = 11
-LTitle.Parent = LangFrame
-
-local BtnES = Instance.new("TextButton", LangFrame)
-BtnES.Size = UDim2.new(0.4, 0, 0, 30)
-BtnES.Position = UDim2.new(0.05, 0, 0, 50)
-BtnES.BackgroundColor3 = Theme.Panel
-BtnES.Text = "Español"
-BtnES.TextColor3 = Theme.Text
-BtnES.Font = Enum.Font.BuilderSansBold
-BtnES.TextSize = 11
-Instance.new("UICorner", BtnES).CornerRadius = UDim.new(0, 4)
-
-local BtnEN = Instance.new("TextButton", LangFrame)
-BtnEN.Size = UDim2.new(0.4, 0, 0, 30)
-BtnEN.Position = UDim2.new(0.55, 0, 0, 50)
-BtnEN.BackgroundColor3 = Theme.Panel
-BtnEN.Text = "English"
-BtnEN.TextColor3 = Theme.Text
-BtnEN.Font = Enum.Font.BuilderSansBold
-BtnEN.TextSize = 11
-Instance.new("UICorner", BtnEN).CornerRadius = UDim.new(0, 4)
-
-BtnES.MouseButton1Click:Connect(function()
-    Language = "ES"; LangGui:Destroy(); ToggleBtn.Visible = true
-end)
-BtnEN.MouseButton1Click:Connect(function()
-    Language = "EN"; LangGui:Destroy(); ToggleBtn.Visible = true
-end)
