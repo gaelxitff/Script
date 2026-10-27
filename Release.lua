@@ -1,5 +1,5 @@
 -- ==========================================
--- 👑 GAEL SCRIPT | MURDER MYSTERY 2 (PREMIUM)
+-- 👑 GAEL SCRIPT | MM2 (ULTIMATE MOBILE)
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -11,15 +11,17 @@ local Camera = workspace.CurrentCamera
 
 local Theme = { 
     BG = Color3.fromRGB(12, 12, 16), 
-    Panel = Color3.fromRGB(22, 22, 28), 
-    Accent = Color3.fromRGB(0, 170, 255), -- Azul brillante
+    Sidebar = Color3.fromRGB(18, 18, 24),
+    Panel = Color3.fromRGB(25, 25, 32), 
+    Accent = Color3.fromRGB(0, 170, 255), 
     Text = Color3.fromRGB(255, 255, 255), 
     Muted = Color3.fromRGB(140, 140, 160), 
-    ToggleOff = Color3.fromRGB(35, 35, 45)
+    ToggleOff = Color3.fromRGB(35, 35, 45),
+    Red = Color3.fromRGB(255, 60, 60)
 }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "GaelScript_Premium"
+ScreenGui.Name = "GaelScript_Ultimate"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
@@ -27,23 +29,20 @@ ScreenGui.Parent = CoreGui
 -- BOTÓN FLOTANTE
 -- ==========================================
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 160, 0, 45)
-ToggleBtn.Position = UDim2.new(0.5, -80, 0, 20)
+ToggleBtn.Size = UDim2.new(0, 150, 0, 40)
+ToggleBtn.Position = UDim2.new(0.5, -75, 0, 20)
 ToggleBtn.BackgroundColor3 = Theme.BG
-ToggleBtn.BackgroundTransparency = 0.1
 ToggleBtn.Text = "Gael Script"
-ToggleBtn.TextColor3 = Theme.Text
+ToggleBtn.TextColor3 = Theme.Accent
 ToggleBtn.Font = Enum.Font.BuilderSansBold
-ToggleBtn.TextSize = 16
+ToggleBtn.TextSize = 15
 ToggleBtn.ZIndex = 100
-ToggleBtn.Visible = true
 ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 local TStroke = Instance.new("UIStroke", ToggleBtn)
 TStroke.Color = Theme.Accent
 TStroke.Thickness = 2
 
--- Arrastrar botón
 local dragToggle, startToggle, posToggle
 ToggleBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -61,23 +60,21 @@ UIS.InputChanged:Connect(function(input)
 end)
 
 -- ==========================================
--- VENTANA PRINCIPAL
+-- VENTANA PRINCIPAL (MÓVIL)
 -- ==========================================
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 460, 0, 340)
-MainFrame.Position = UDim2.new(0.5, -230, 0.5, -170)
+MainFrame.Size = UDim2.new(0, 380, 0, 320) 
+MainFrame.Position = UDim2.new(0.5, -190, 0.5, -160)
 MainFrame.BackgroundColor3 = Theme.BG
-MainFrame.BackgroundTransparency = 0.1
+MainFrame.BackgroundTransparency = 0.05
 MainFrame.BorderSizePixel = 0
 MainFrame.Visible = false
-MainFrame.ZIndex = 10
 MainFrame.Parent = ScreenGui
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
 local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Color = Theme.Accent
 MainStroke.Thickness = 1.5
 
--- Header
 local Header = Instance.new("Frame", MainFrame)
 Header.Size = UDim2.new(1, 0, 0, 40)
 Header.BackgroundTransparency = 1
@@ -97,7 +94,7 @@ Title.ZIndex = 12
 local CloseBtn = Instance.new("TextButton", Header)
 CloseBtn.Size = UDim2.new(0, 24, 0, 24)
 CloseBtn.Position = UDim2.new(1, -30, 0.5, -12)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+CloseBtn.BackgroundColor3 = Theme.Red
 CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Theme.Text
 CloseBtn.Font = Enum.Font.GothamBold
@@ -105,7 +102,6 @@ CloseBtn.TextSize = 12
 CloseBtn.ZIndex = 12
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
 
--- Arrastrar ventana
 local dragging, dragStart, startPos
 Header.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -122,17 +118,11 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
--- Lógica del botón para abrir/cerrar
 local isOpen = false
 local function ToggleMenu()
     isOpen = not isOpen
-    if isOpen then
-        MainFrame.Visible = true
-        ToggleBtn.Text = "Cerrar"
-    else
-        MainFrame.Visible = false
-        ToggleBtn.Text = "Gael Script"
-    end
+    MainFrame.Visible = isOpen
+    ToggleBtn.Text = isOpen and "Cerrar" or "Gael Script"
 end
 
 ToggleBtn.MouseButton1Click:Connect(ToggleMenu)
@@ -144,6 +134,9 @@ CloseBtn.MouseButton1Click:Connect(ToggleMenu)
 local maxDistance = 500
 local ChamsEnabled, BoxesEnabled, TracersEnabled = false, false, false
 local AimbotEnabled = false
+local AutoGrabEnabled = false
+local SkinFXEnabled = false
+local SkinFXColor = Color3.fromRGB(0, 170, 255)
 local activeTarget = nil
 
 local RoleColors = {
@@ -174,9 +167,7 @@ local function getRole(plr)
     return "Innocent"
 end
 
--- ==========================================
--- DRAWINGS (CAJAS Y LÍNEAS)
--- ==========================================
+-- DRAWINGS
 local Drawings = {}
 local function CreateDrawing(class, props)
     if not Drawing then return nil end
@@ -195,13 +186,77 @@ for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then createDrawin
 Players.PlayerAdded:Connect(createDrawings)
 
 -- ==========================================
--- LOOP ESP Y AIMBOT
+-- LOOP PRINCIPAL
 -- ==========================================
 RunService.RenderStepped:Connect(function()
     local screenCenter = Camera.ViewportSize / 2
     local bestHead = nil
     local shortestDist = 9e9
 
+    -- SKIN FX (Efecto en el arma)
+    if LocalPlayer.Character then
+        local tool = LocalPlayer.Character:FindFirstChildWhichIsA("Tool")
+        if tool then
+            local handle = tool:FindFirstChild("Handle")
+            if handle then
+                local highlight = handle:FindFirstChild("SkinFX_Highlight")
+                local particle = handle:FindFirstChild("SkinFX_Particle")
+                
+                if SkinFXEnabled then
+                    if not highlight then
+                        highlight = Instance.new("Highlight")
+                        highlight.Name = "SkinFX_Highlight"
+                        highlight.Adornee = handle
+                        highlight.FillTransparency = 0.5
+                        highlight.OutlineTransparency = 0
+                        highlight.Parent = handle
+                    end
+                    highlight.FillColor = SkinFXColor
+                    highlight.OutlineColor = SkinFXColor
+                    highlight.Enabled = true
+                    
+                    if not particle then
+                        particle = Instance.new("ParticleEmitter")
+                        particle.Name = "SkinFX_Particle"
+                        particle.Texture = "rbxassetid://243660364"
+                        particle.Rate = 20
+                        particle.Lifetime = NumberRange.new(0.5, 1)
+                        particle.Speed = NumberRange.new(1, 2)
+                        particle.Size = NumberSequence.new(0.2)
+                        particle.Color = ColorSequence.new(SkinFXColor)
+                        particle.Parent = handle
+                    end
+                    particle.Color = ColorSequence.new(SkinFXColor)
+                    particle.Enabled = true
+                else
+                    if highlight then highlight.Enabled = false end
+                    if particle then particle.Enabled = false end
+                end
+            end
+        end
+    end
+
+    -- AUTO GRAB
+    if AutoGrabEnabled and LocalPlayer.Character then
+        local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if myRoot then
+            for _, obj in ipairs(workspace:GetDescendants()) do
+                if obj:IsA("Tool") and (obj.Name:lower():find("knife") or obj.Name:lower():find("gun") or obj.Name:lower():find("revolver")) then
+                    local handle = obj:FindFirstChild("Handle")
+                    if handle and (handle.Position - myRoot.Position).Magnitude <= 15 then
+                        pcall(function()
+                            if firetouchinterest then
+                                firetouchinterest(handle, myRoot, 0)
+                                firetouchinterest(handle, myRoot, 1)
+                            end
+                        end)
+                    end
+                end
+            end
+        end
+    end
+
+    -- ESP Y AIMBOT
     for _, plr in pairs(Players:GetPlayers()) do
         local draw = Drawings[plr]
         local char = plr.Character
@@ -215,7 +270,6 @@ RunService.RenderStepped:Connect(function()
                 local role = getRole(plr)
                 local colors = RoleColors[role] or RoleColors["Innocent"]
 
-                -- CHAMS CON BORDES
                 highlight.Enabled = ChamsEnabled
                 highlight.FillColor = colors.Fill
                 highlight.OutlineColor = colors.Outline
@@ -228,7 +282,6 @@ RunService.RenderStepped:Connect(function()
                 local fovDist = (Vector2.new(headPos.X, headPos.Y) - screenCenter).Magnitude
 
                 if onScreen and torsoOnScreen and distFromMe <= maxDistance then
-                    -- CAJA PROFESIONAL (Más grande)
                     local height = math.abs(torsoPos.Y - headPos.Y) * 2.5
                     local width = height / 2
                     
@@ -246,7 +299,6 @@ RunService.RenderStepped:Connect(function()
                     draw.Tracer.Visible = false
                 end
 
-                -- AIMBOT SOLO SHERIFF
                 local myRole = getRole(LocalPlayer)
                 if AimbotEnabled and myRole == "Sheriff" and onScreen and distFromMe <= maxDistance then
                     if role == "Murder" and fovDist < shortestDist then
@@ -274,18 +326,18 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- ==========================================
--- UI: COMPONENTES
+-- UI: BOTONES Y PALETA
 -- ==========================================
 local function CreateToggle(parent, text, callback)
     local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1, 0, 0, 35)
+    btn.Size = UDim2.new(1, 0, 0, 34)
     btn.BackgroundColor3 = Theme.Panel
     btn.Text = ""
-    btn.ZIndex = 12
+    btn.ZIndex = 20 
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
 
     local label = Instance.new("TextLabel", btn)
-    label.Size = UDim2.new(1, -110, 1, 0)
+    label.Size = UDim2.new(1, -100, 1, 0)
     label.Position = UDim2.new(0, 10, 0, 0)
     label.Text = text
     label.TextColor3 = Theme.Text
@@ -293,31 +345,31 @@ local function CreateToggle(parent, text, callback)
     label.BackgroundTransparency = 1
     label.Font = Enum.Font.BuilderSansMedium
     label.TextSize = 12
-    label.ZIndex = 13
+    label.ZIndex = 21
 
     local statusLabel = Instance.new("TextLabel", btn)
-    statusLabel.Size = UDim2.new(0, 65, 1, 0)
-    statusLabel.Position = UDim2.new(1, -100, 0, 0)
+    statusLabel.Size = UDim2.new(0, 60, 1, 0)
+    statusLabel.Position = UDim2.new(1, -95, 0, 0)
     statusLabel.Text = "OFF"
     statusLabel.TextColor3 = Theme.Muted
     statusLabel.TextXAlignment = Enum.TextXAlignment.Right
     statusLabel.BackgroundTransparency = 1
     statusLabel.Font = Enum.Font.BuilderSansBold
     statusLabel.TextSize = 10
-    statusLabel.ZIndex = 13
+    statusLabel.ZIndex = 21
 
     local switchBg = Instance.new("Frame", btn)
-    switchBg.Size = UDim2.new(0, 32, 0, 16)
+    switchBg.Size = UDim2.new(0, 30, 0, 16)
     switchBg.Position = UDim2.new(1, -35, 0.5, -8)
     switchBg.BackgroundColor3 = Theme.ToggleOff
-    switchBg.ZIndex = 13
+    switchBg.ZIndex = 21
     Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1, 0)
 
     local switchThumb = Instance.new("Frame", switchBg)
     switchThumb.Size = UDim2.new(0, 12, 0, 12)
     switchThumb.Position = UDim.new(0, 2, 0.5, -6)
     switchThumb.BackgroundColor3 = Theme.Muted
-    switchThumb.ZIndex = 14
+    switchThumb.ZIndex = 22
     Instance.new("UICorner", switchThumb).CornerRadius = UDim.new(1, 0)
 
     local state = false
@@ -339,99 +391,157 @@ local function CreateToggle(parent, text, callback)
     return btn
 end
 
--- ==========================================
--- CONSTRUCCIÓN DEL MENÚ
--- ==========================================
-local function BuildMenu()
-    local Sidebar = Instance.new("Frame", MainFrame)
-    Sidebar.Size = UDim2.new(0, 50, 1, -45)
-    Sidebar.Position = UDim2.new(0, 10, 0, 45)
-    Sidebar.BackgroundTransparency = 1
-    Sidebar.ZIndex = 11
-
-    local ContentHost = Instance.new("Frame", MainFrame)
-    ContentHost.Size = UDim2.new(1, -70, 1, -45)
-    ContentHost.Position = UDim2.new(0, 60, 0, 45)
-    ContentHost.BackgroundTransparency = 1
-    ContentHost.ZIndex = 11
-
-    local Pages = {}
-    local function CreatePage(name)
-        local page = Instance.new("ScrollingFrame", ContentHost)
-        page.Size = UDim2.new(1, 0, 1, 0)
-        page.BackgroundTransparency = 1
-        page.ScrollBarThickness = 3
-        page.CanvasSize = UDim2.new(0, 0, 0, 500)
-        page.Visible = false
-        page.ZIndex = 12
-        Pages[name] = page
-        return page
+local function CreateColorPicker(parent, text, defaultColor, callback)
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(1, 0, 0, 30)
+    btn.BackgroundColor3 = Theme.Panel
+    btn.Text = ""
+    btn.ZIndex = 20
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    
+    local label = Instance.new("TextLabel", btn)
+    label.Size = UDim2.new(1, -30, 1, 0)
+    label.Position = UDim2.new(0, 8, 0, 0)
+    label.Text = text
+    label.TextColor3 = Theme.Text
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.BuilderSansMedium
+    label.TextSize = 11
+    label.ZIndex = 21
+    
+    local colorBox = Instance.new("Frame", btn)
+    colorBox.Size = UDim2.new(0, 14, 0, 14)
+    colorBox.Position = UDim2.new(1, -22, 0.5, -7)
+    colorBox.BackgroundColor3 = defaultColor
+    colorBox.ZIndex = 21
+    Instance.new("UICorner", colorBox).CornerRadius = UDim.new(1, 0)
+    
+    local paletteFrame = Instance.new("Frame", MainFrame)
+    paletteFrame.Size = UDim2.new(0, 180, 0, 100)
+    paletteFrame.BackgroundColor3 = Theme.BG
+    paletteFrame.BorderSizePixel = 0
+    paletteFrame.Visible = false
+    paletteFrame.ZIndex = 50
+    Instance.new("UICorner", paletteFrame).CornerRadius = UDim.new(0, 6)
+    local pStroke = Instance.new("UIStroke", paletteFrame)
+    pStroke.Color = Theme.Accent
+    
+    local grid = Instance.new("UIGridLayout", paletteFrame)
+    grid.CellSize = UDim2.new(0, 25, 0, 25)
+    grid.CellPadding = UDim2.new(0, 5, 0, 5)
+    grid.SortOrder = Enum.SortOrder.LayoutOrder
+    
+    local colors = {
+        Color3.fromRGB(255, 0, 0), Color3.fromRGB(0, 255, 0), Color3.fromRGB(0, 0, 255),
+        Color3.fromRGB(255, 255, 0), Color3.fromRGB(255, 0, 255), Color3.fromRGB(0, 255, 255),
+        Color3.fromRGB(255, 150, 0), Color3.fromRGB(150, 0, 255), Color3.fromRGB(255, 255, 255),
+        Color3.fromRGB(0, 0, 0), Color3.fromRGB(150, 150, 150), Color3.fromRGB(100, 50, 0)
+    }
+    
+    for i, color in ipairs(colors) do
+        local cBtn = Instance.new("TextButton", paletteFrame)
+        cBtn.BackgroundColor3 = color
+        cBtn.Text = ""
+        cBtn.ZIndex = 51
+        Instance.new("UICorner", cBtn).CornerRadius = UDim.new(0, 4)
+        cBtn.MouseButton1Click:Connect(function()
+            colorBox.BackgroundColor3 = color
+            if callback then callback(color) end
+            paletteFrame.Visible = false
+        end)
     end
 
-    local function SwitchPage(pageName)
-        for name, page in pairs(Pages) do page.Visible = (name == pageName) end
-    end
-
-    local function CreateTabBtn(iconId, pageName)
-        local btn = Instance.new("ImageButton", Sidebar)
-        btn.Size = UDim2.new(0, 32, 0, 32)
-        btn.Position = UDim2.new(0, 9, 0, 9 + (#Sidebar:GetChildren() * 40))
-        btn.BackgroundColor3 = Theme.Panel
-        btn.BackgroundTransparency = 0.5
-        btn.Image = iconId
-        btn.ImageColor3 = Theme.Accent
-        btn.ZIndex = 11
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
-        btn.MouseButton1Click:Connect(function() SwitchPage(pageName) end)
-        return CreatePage(pageName)
-    end
-
-    -- SECCIÓN ESP
-    local ESPPage = CreateTabBtn("rbxassetid://13571270194", "ESP")
-    local yPos = 0
-    local function AddToggle(text, cb)
-        local t = CreateToggle(ESPPage, text, cb)
-        t.Position = UDim2.new(0, 0, 0, yPos)
-        yPos = yPos + 40
-    end
-
-    AddToggle("ESP (Activar Todo)", function(s) 
-        ChamsEnabled = s; BoxesEnabled = s; TracersEnabled = s 
+    btn.MouseButton1Click:Connect(function()
+        if paletteFrame.Visible then
+            paletteFrame.Visible = false
+        else
+            local pos = btn.AbsolutePosition
+            paletteFrame.Position = UDim2.new(0, pos.X - 100, 0, pos.Y + 35)
+            paletteFrame.Visible = true
+        end
     end)
-    AddToggle("Boxes (Cajas Pro)", function(s) BoxesEnabled = s end)
-    AddToggle("Chams (Pintar con Bordes)", function(s) ChamsEnabled = s end)
-    AddToggle("Tracers (Lazos)", function(s) TracersEnabled = s end)
-
-    -- SECCIÓN COMBAT
-    local CombatPage = CreateTabBtn("rbxassetid://80964454894155", "Combat")
-    yPos = 0
-    local function AddCombatToggle(text, cb)
-        local t = CreateToggle(CombatPage, text, cb)
-        t.Position = UDim2.new(0, 0, 0, yPos)
-        yPos = yPos + 40
-    end
-
-    AddCombatToggle("Aimbot Lock (Solo Sheriff)", function(s) AimbotEnabled = s end)
-
-    -- Texto Informativo
-    local infoLabel = Instance.new("TextLabel", CombatPage)
-    infoLabel.Size = UDim2.new(1, 0, 0, 50)
-    infoLabel.Position = UDim2.new(0, 0, 0, yPos)
-    infoLabel.BackgroundTransparency = 1
-    infoLabel.Text = "El Aimbot solo se activará si eres el Sheriff y apuntará automáticamente al Murder."
-    infoLabel.TextColor3 = Theme.Muted
-    infoLabel.Font = Enum.Font.BuilderSansMedium
-    infoLabel.TextSize = 10
-    infoLabel.TextWrapped = true
-    infoLabel.TextXAlignment = Enum.TextXAlignment.Left
-    infoLabel.ZIndex = 13
-
-    SwitchPage("ESP")
 end
 
 -- ==========================================
--- INICIO
+-- CONSTRUCCIÓN DEL MENÚ Y PESTAÑAS
 -- ==========================================
-ToggleBtn.Visible = true
-MainFrame.Visible = false
-BuildMenu()
+local Sidebar = Instance.new("Frame", MainFrame)
+Sidebar.Size = UDim2.new(0, 80, 1, -40)
+Sidebar.Position = UDim2.new(0, 0, 0, 40)
+Sidebar.BackgroundColor3 = Theme.Sidebar
+Sidebar.ZIndex = 11
+Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 8)
+
+local ContentHost = Instance.new("Frame", MainFrame)
+ContentHost.Size = UDim2.new(1, -90, 1, -50)
+ContentHost.Position = UDim2.new(0, 85, 0, 45)
+ContentHost.BackgroundTransparency = 1
+ContentHost.ZIndex = 11
+
+local function CreateTab(tabName, buildFunction)
+    local btn = Instance.new("TextButton", Sidebar)
+    btn.Size = UDim2.new(1, -10, 0, 32)
+    btn.Position = UDim2.new(0, 5, 0, 5 + (#Sidebar:GetChildren() * 37))
+    btn.BackgroundColor3 = Theme.Panel
+    btn.Text = tabName
+    btn.TextColor3 = Theme.Text
+    btn.Font = Enum.Font.BuilderSansBold
+    btn.TextSize = 12
+    btn.ZIndex = 12
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    
+    btn.MouseButton1Click:Connect(function()
+        for _, child in pairs(ContentHost:GetChildren()) do
+            if child:IsA("ScrollingFrame") then child:Destroy() end
+        end
+        local page = Instance.new("ScrollingFrame", ContentHost)
+        page.Size = UDim2.new(1, 0, 1, 0)
+        page.BackgroundTransparency = 1
+        page.ScrollBarThickness = 2
+        page.CanvasSize = UDim2.new(0, 0, 0, 300)
+        page.ZIndex = 20
+        
+        local layout = Instance.new("UIListLayout", page)
+        layout.Padding = UDim.new(0, 8)
+        
+        buildFunction(page)
+    end)
+    
+    return btn
+end
+
+-- Crear Pestañas
+local ESPTab = CreateTab("ESP", function(page)
+    CreateToggle(page, "ESP (Todo)", function(s) ChamsEnabled = s; BoxesEnabled = s; TracersEnabled = s end)
+    CreateToggle(page, "Boxes (Cajas)", function(s) BoxesEnabled = s end)
+    CreateToggle(page, "Chams (Pintar)", function(s) ChamsEnabled = s end)
+    CreateToggle(page, "Tracers (Lazos)", function(s) TracersEnabled = s end)
+end)
+
+local CombatTab = CreateTab("Combat", function(page)
+    CreateToggle(page, "Aimbot Lock (Sheriff)", function(s) AimbotEnabled = s end)
+end)
+
+local ItemTab = CreateTab("Items", function(page)
+    local title = Instance.new("TextLabel", page)
+    title.Size = UDim2.new(1, 0, 0, 20)
+    title.BackgroundTransparency = 1
+    title.Text = "Recoger Armas Automáticamente"
+    title.TextColor3 = Theme.Text
+    title.Font = Enum.Font.BuilderSansBold
+    title.TextSize = 11
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.ZIndex = 21
+
+    CreateToggle(page, "Auto Grab (Cuchillo/Pistola)", function(s) AutoGrabEnabled = s end)
+end)
+
+local SkinTab = CreateTab("Skins", function(page)
+    CreateToggle(page, "Activar Efecto en Arma", function(s) SkinFXEnabled = s end)
+    CreateColorPicker(page, "Color del Efecto", SkinFXColor, function(c) SkinFXColor = c end)
+end)
+
+-- Cargar la pestaña ESP por defecto
+task.wait(0.1)
+Sidebar:GetChildren()[1].MouseButton1Click:Fire()
