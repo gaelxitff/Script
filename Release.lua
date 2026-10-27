@@ -1,5 +1,5 @@
 -- ==========================================
--- 👑 GAEL SCRIPT | MM2 (FIXED TOUCH EDITION)
+-- 👑 GAEL SCRIPT | MM2 (FINAL TOUCH FIX)
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -21,7 +21,7 @@ local Theme = {
 }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "GaelScript_Fixed"
+ScreenGui.Name = "GaelScript_Final"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
@@ -187,6 +187,7 @@ RunService.RenderStepped:Connect(function()
     local bestHead = nil
     local shortestDist = 9e9
 
+    -- Skin FX
     if LocalPlayer.Character then
         local tool = LocalPlayer.Character:FindFirstChildWhichIsA("Tool")
         if tool then
@@ -229,6 +230,7 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
+    -- Auto Grab
     if AutoGrabEnabled and LocalPlayer.Character then
         local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         if myRoot then
@@ -248,6 +250,7 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
+    -- ESP y Aimbot
     for _, plr in pairs(Players:GetPlayers()) do
         local draw = Drawings[plr]
         local char = plr.Character
@@ -317,7 +320,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- ==========================================
--- SISTEMA DE BOTONES (POSICIONES FIJAS)
+-- SISTEMA DE BOTONES (CON FRAME NORMAL)
 -- ==========================================
 local Sidebar = Instance.new("Frame", MainFrame)
 Sidebar.Size = UDim2.new(0, 85, 1, -40)
@@ -332,14 +335,14 @@ ContentHost.Position = UDim2.new(0, 90, 0, 45)
 ContentHost.BackgroundTransparency = 1
 ContentHost.ZIndex = 11
 
--- Función para crear Toggles con posición manual exacta (ARREGLA EL BUG DE TOQUE)
+-- Función para crear Toggle en un Frame normal (sin scroll)
 local function CreateToggle(parent, text, yPos, callback)
     local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1, -10, 0, 34) -- Tamaño exacto
-    btn.Position = UDim2.new(0, 5, 0, yPos) -- Posición manual
+    btn.Size = UDim2.new(1, -10, 0, 34)
+    btn.Position = UDim2.new(0, 5, 0, yPos)
     btn.BackgroundColor3 = Theme.Panel
     btn.Text = ""
-    btn.ZIndex = 100 -- ZIndex ALTO para asegurar el toque
+    btn.ZIndex = 100
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
 
     local label = Instance.new("TextLabel", btn)
@@ -397,7 +400,7 @@ local function CreateToggle(parent, text, yPos, callback)
     return btn
 end
 
--- Función para la Paleta de Colores
+-- Función para la Paleta
 local function CreateColorPicker(parent, text, defaultColor, yPos, callback)
     local btn = Instance.new("TextButton", parent)
     btn.Size = UDim2.new(1, -10, 0, 30)
@@ -474,6 +477,13 @@ end
 -- ==========================================
 -- CONSTRUCCIÓN DE LAS PESTAÑAS
 -- ==========================================
+local Pages = {}
+local function SwitchPage(pageName)
+    for name, page in pairs(Pages) do
+        page.Visible = (name == pageName)
+    end
+end
+
 local function CreateTab(tabName, buildFunction)
     local btn = Instance.new("TextButton", Sidebar)
     btn.Size = UDim2.new(1, -10, 0, 32)
@@ -486,22 +496,22 @@ local function CreateTab(tabName, buildFunction)
     btn.ZIndex = 100
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     
+    local page = Instance.new("Frame", ContentHost)
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.BackgroundTransparency = 1
+    page.Visible = false
+    page.ZIndex = 99
+    Pages[tabName] = page
+    
     btn.MouseButton1Click:Connect(function()
-        for _, child in pairs(ContentHost:GetChildren()) do
-            if child:IsA("ScrollingFrame") then child:Destroy() end
-        end
-        local page = Instance.new("ScrollingFrame", ContentHost)
-        page.Size = UDim2.new(1, 0, 1, 0)
-        page.BackgroundTransparency = 1
-        page.ScrollBarThickness = 2
-        page.CanvasSize = UDim2.new(0, 0, 0, 350)
-        page.ZIndex = 99
-        
-        buildFunction(page)
+        SwitchPage(tabName)
     end)
+    
+    buildFunction(page)
+    return btn
 end
 
--- Crear Pestañas con Posiciones Fijas
+-- Crear Pestañas
 local ESPTab = CreateTab("ESP", function(page)
     CreateToggle(page, "ESP (Todo)", 0, function(s) ChamsEnabled = s; BoxesEnabled = s; TracersEnabled = s end)
     CreateToggle(page, "Boxes (Cajas)", 40, function(s) BoxesEnabled = s end)
@@ -522,5 +532,4 @@ local SkinTab = CreateTab("Skins", function(page)
     CreateColorPicker(page, "Color del Efecto", SkinFXColor, 40, function(c) SkinFXColor = c end)
 end)
 
-task.wait(0.1)
-Sidebar:GetChildren()[1].MouseButton1Click:Fire()
+SwitchPage("ESP")
