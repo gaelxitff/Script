@@ -1,5 +1,5 @@
 -- ==========================================================
--- 👑 GAEL SCRIPT v5.0 | MM2 MOBILE | MINIMIZABLE
+-- 👑 GAEL SCRIPT v5.5 | MM2 | GUN ESP + AUTO-GRAB
 -- ==========================================================
 local RunService   = game:GetService("RunService")
 local Players      = game:GetService("Players")
@@ -15,13 +15,20 @@ local Camera      = Workspace.CurrentCamera
 -- CONFIG
 -- ==========================================================
 local Config = {
+    -- ESP
     ESPEnabled   = true,
-    ShowNames    = false, -- Desactivado por defecto
-    ShowDistance = false, -- Desactivado por defecto
+    ShowNames    = false,
+    ShowDistance = false,
     ESPThickness = 2,
+    GunESP       = true, -- Cham para las armas
+    -- Aimbot
     AimbotEnabled = true,
     Smooth        = 0.22,
     FOV           = 500,
+    -- Auto Grab
+    AutoGrabEnabled = false,
+    AutoGrabRange   = 100, -- Distancia de recogida
+    -- General
     ESPColorMode  = "Role",
 }
 
@@ -41,7 +48,7 @@ local Theme = {
 local HasDrawing = pcall(function() return Drawing.new("Line") end)
 
 -- ==========================================================
--- POOL DE LÍNEAS
+-- POOL DE LÍNEAS Y LABELS
 -- ==========================================================
 local LinePool, LineIndex = {}, 0
 local NameLabels = {}
@@ -214,6 +221,37 @@ local function UpdateESP()
 end
 
 -- ==========================================================
+-- GUN ESP (CHAM DE ARMAS)
+-- ==========================================================
+local function UpdateGunESP()
+    if not Config.GunESP then
+        -- Limpiar los highlights de las armas si se desactiva
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("Tool") then
+                local h = obj:FindFirstChild("GunESP_Highlight")
+                if h then h:Destroy() end
+            end
+        end
+        return
+    end
+
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("Tool") and (obj.Name:lower():find("gun") or obj.Name:lower():find("knife") or obj.Name:lower():find("revolver")) then
+            if not obj:FindFirstChild("GunESP_Highlight") then
+                local h = Instance.new("Highlight")
+                h.Name = "GunESP_Highlight"
+                h.Adornee = obj
+                h.FillColor = Color3.fromRGB(0, 255, 0) -- Verde Neón
+                h.FillTransparency = 0.3
+                h.OutlineColor = Color3.fromRGB(255, 255, 255)
+                h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                h.Parent = obj
+            end
+        end
+    end
+end
+
+-- ==========================================================
 -- AIMBOT LÓGICA
 -- ==========================================================
 local function GetClosestMurder()
@@ -249,6 +287,32 @@ local function UpdateAimbot()
 end
 
 -- ==========================================================
+-- AUTO-GRAB A DISTANCIA
+-- ==========================================================
+local function UpdateAutoGrab()
+    if not Config.AutoGrabEnabled then return end
+    local myChar = LocalPlayer.Character
+    if not myChar then return end
+    local myRoot = myChar:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return end
+
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("Tool") and (obj.Name:lower():find("gun") or obj.Name:lower():find("knife") or obj.Name:lower():find("revolver")) then
+            local handle = obj:FindFirstChild("Handle")
+            if handle then
+                local dist = (handle.Position - myRoot.Position).Magnitude
+                if dist <= Config.AutoGrabRange then
+                    -- Teletransportar el arma al jugador (Magnetismo)
+                    pcall(function()
+                        handle.CFrame = myRoot.CFrame
+                    end)
+                end
+            end
+        end
+    end
+end
+
+-- ==========================================================
 -- UI — SCREEN GUI
 -- ==========================================================
 local ScreenGui = Instance.new("ScreenGui")
@@ -259,7 +323,7 @@ ScreenGui.IgnoreGuiInset = true
 local okGui = pcall(function() ScreenGui.Parent = CoreGui end)
 if not okGui then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- BOTÓN FLOTANTE (VISIBLE SIEMPRE)
+-- BOTÓN FLOTANTE
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 130, 0, 48)
 ToggleBtn.Position = UDim2.new(0, 15, 0, 60)
@@ -268,7 +332,7 @@ ToggleBtn.Text = "👑 Gael"
 ToggleBtn.TextColor3 = Theme.Accent
 ToggleBtn.Font = Enum.Font.BuilderSansBold
 ToggleBtn.TextSize = 16
-ToggleBtn.ZIndex = 200 -- ZIndex ALTO para que siempre se vea
+ToggleBtn.ZIndex = 200
 ToggleBtn.AutoButtonColor = false
 ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
@@ -300,7 +364,7 @@ local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(1, -60, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "👑 Gael Script v5.0"
+Title.Text = "👑 Gael Script v5.5"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.BuilderSansBold
 Title.TextSize = 17
@@ -320,7 +384,7 @@ CloseBtn.AutoButtonColor = false
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
 
 -- ==========================================================
--- SISTEMA DE PESTAÑAS (SECCIONES)
+-- SISTEMA DE PESTAÑAS
 -- ==========================================================
 local TabBar = Instance.new("Frame", MainFrame)
 TabBar.Size = UDim2.new(1, -20, 0, 36)
@@ -557,6 +621,7 @@ CreateLabel(ESPPage, "─── VISUAL ───", espY, Theme.Accent); espY += 
 CreateToggle(ESPPage, "ESP (Cajas 3D)", espY, function(s) Config.ESPEnabled = s end, Config.ESPEnabled); espY += 48
 CreateToggle(ESPPage, "Nombres", espY, function(s) Config.ShowNames = s end, Config.ShowNames); espY += 48
 CreateToggle(ESPPage, "Mostrar distancia", espY, function(s) Config.ShowDistance = s end, Config.ShowDistance); espY += 48
+CreateToggle(ESPPage, "Gun ESP (Brillo Armas)", espY, function(s) Config.GunESP = s end, Config.GunESP); espY += 48
 CreateSlider(ESPPage, "Grosor líneas", espY, 1, 5, Config.ESPThickness, function(v) Config.ESPThickness = math.floor(v) end, 0); espY += 52
 
 local colorBtn = Instance.new("TextButton", ESPPage)
@@ -591,10 +656,13 @@ aimInfo.Size = UDim2.new(1, 0, 0, 50)
 aimInfo.TextSize = 11
 
 -- ==========================================================
--- SECCIÓN CONFIG
+-- SECCIÓN CONFIG (AUTO-GRAB)
 -- ==========================================================
 local cfgY = 0
-CreateLabel(ConfigPage, "─── INFO ───", cfgY, Theme.Accent); cfgY += 24
+CreateLabel(ConfigPage, "─── ITEMS ───", cfgY, Theme.Accent); cfgY += 24
+
+CreateToggle(ConfigPage, "Auto-Grab (Recoger Armas)", cfgY, function(s) Config.AutoGrabEnabled = s end, Config.AutoGrabEnabled); cfgY += 48
+CreateSlider(ConfigPage, "Rango de Recogida", cfgY, 10, 200, Config.AutoGrabRange, function(v) Config.AutoGrabRange = v end, 0); cfgY += 52
 
 local roleLbl = Instance.new("TextLabel", ConfigPage)
 roleLbl.Size = UDim2.new(1, 0, 0, 28)
@@ -631,6 +699,9 @@ CreateButton(ConfigPage, "🔄 Reiniciar configuración", cfgY, function()
     Config.Smooth        = 0.22
     Config.FOV           = 500
     Config.ESPColorMode  = "Role"
+    Config.GunESP        = true
+    Config.AutoGrabEnabled = false
+    Config.AutoGrabRange = 100
 end, Theme.Panel2); cfgY += 44
 
 CreateButton(ConfigPage, "🧹 Limpiar ESP (reset líneas)", cfgY, function()
@@ -639,7 +710,7 @@ end, Theme.Panel2); cfgY += 44
 
 CreateButton(ConfigPage, "❌ Cerrar menú", cfgY, function()
     MainFrame.Visible = false
-    ToggleBtn.Text = "👑 Gael"
+    ToggleBtn.Visible = true
 end, Theme.Red); cfgY += 44
 
 -- ==========================================================
@@ -672,31 +743,29 @@ MakeDraggable(ToggleBtn, ToggleBtn)
 MakeDraggable(MainFrame, Header)
 
 -- ==========================================================
--- ABRIR / CERRAR (MINIMIZAR)
+-- ABRIR / CERRAR
 -- ==========================================================
 local isOpen = false
 
 local function OpenMenu()
     isOpen = true
     MainFrame.Visible = true
-    ToggleBtn.Visible = false -- Ocultar el botón cuando el menú está abierto
+    ToggleBtn.Visible = false
     if not currentTab then SwitchTab("ESP") end
 end
 
 local function CloseMenu()
     isOpen = false
     MainFrame.Visible = false
-    ToggleBtn.Visible = true -- Mostrar el botón cuando el menú se cierra
+    ToggleBtn.Visible = true
 end
 
 ToggleBtn.MouseButton1Click:Connect(OpenMenu)
 CloseBtn.MouseButton1Click:Connect(CloseMenu)
-
--- Iniciar con el menú cerrado y el botón visible
 CloseMenu()
 
 -- ==========================================================
--- LOOP INFO
+-- LOOPS
 -- ==========================================================
 task.spawn(function()
     while ScreenGui.Parent do
@@ -712,12 +781,11 @@ task.spawn(function()
     end
 end)
 
--- ==========================================================
--- LOOP PRINCIPAL
--- ==========================================================
 RunService.RenderStepped:Connect(function()
     pcall(UpdateESP)
     pcall(UpdateAimbot)
+    pcall(UpdateGunESP)
+    pcall(UpdateAutoGrab)
 end)
 
 -- Limpieza
@@ -726,4 +794,4 @@ ScreenGui.Destroying:Connect(function()
     for _, l in ipairs(NameLabels) do pcall(function() l:Remove() end) end
 end)
 
-print("[Gael Script v5.0] Cargado ✅")
+print("[Gael Script v5.5] Cargado ✅")
