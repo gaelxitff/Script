@@ -1,5 +1,5 @@
 -- ==========================================================
--- 👑 GAEL SCRIPT v8.0 | MM2 | GLASS PRO EDITION
+-- 👑 GAEL SCRIPT v10.5 | MM2 | SAFE MODE
 -- ==========================================================
 local RunService   = game:GetService("RunService")
 local Players      = game:GetService("Players")
@@ -25,6 +25,9 @@ local Config = {
     FOV           = 500,
     AutoGrabEnabled = false,
     AutoGrabRange   = 100,
+    -- MODO SEGURO (ANTI-BAN)
+    GhostMode       = false, -- Hace el ESP más sutil
+    SafeAimbot      = true,  -- Aimbot más lento para parecer humano
 }
 
 local Theme = {
@@ -43,9 +46,12 @@ local Theme = {
 }
 
 -- ==========================================================
--- POOL DE LÍNEAS
+-- POOL DE LÍNEAS Y TEXTOS
 -- ==========================================================
 local LinePool, LineIndex = {}, 0
+local NameLabels = {}
+local ESPPulse = 0
+
 local function GetLine()
     LineIndex += 1
     if not LinePool[LineIndex] then
@@ -62,6 +68,23 @@ end
 local function ResetLines()
     for _, l in ipairs(LinePool) do l.Visible = false end
     LineIndex = 0
+end
+
+local function GetLabel(idx)
+    if not NameLabels[idx] then
+        local lbl = Drawing.new("Text")
+        lbl.Size = 14
+        lbl.Center = true
+        lbl.Outline = true
+        lbl.OutlineColor = Color3.new(0,0,0)
+        lbl.Visible = false
+        NameLabels[idx] = lbl
+    end
+    return NameLabels[idx]
+end
+
+local function ResetLabels()
+    for _, l in ipairs(NameLabels) do l.Visible = false end
 end
 
 -- ==========================================================
@@ -85,14 +108,19 @@ local function IsMurder(p) return HasTool(p, "Knife") end
 local function IsSheriff(p) return HasTool(p, "Gun") end
 local function IsLocalSheriff() return IsSheriff(LocalPlayer) end
 
+local function GetPlayerRole(p)
+    if IsMurder(p) then return "Murder", Theme.Red end
+    if IsSheriff(p) then return "Sheriff", Theme.Blue end
+    return "Innocent", Theme.Green
+end
+
 local function GetPlayerColor(p)
-    if IsMurder(p) then return Theme.Red end
-    if IsSheriff(p) then return Theme.Blue end
-    return Theme.Green
+    local role, color = GetPlayerRole(p)
+    return color
 end
 
 -- ==========================================================
--- ESP LÓGICA
+-- ESP LÓGICA (CON MODO FANTASMA)
 -- ==========================================================
 local function GetCorners(cf, size)
     local corners, half = {}, size / 2
@@ -110,14 +138,20 @@ local BoxEdges = {
 
 local function DrawESP()
     ResetLines()
+    ResetLabels()
     if not Config.ESPEnabled or not LocalPlayer.Character then return end
 
+    ESPPulse += 0.05
+    local pulse = (math.sin(ESPPulse) + 1) / 2
+
+    local idx = 0
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and HasCharacter(p) then
+            idx += 1
             local hrp = p.Character.HumanoidRootPart
             local cf = hrp.CFrame * CFrame.new(0, -0.5, 0)
             local corners = GetCorners(cf, Vector3.new(3, 5, 3))
-            local color = GetPlayerColor(p)
+            local role, color = GetPlayerRole(p)
             
             local screen, visible = {}, {}
             for i, v in ipairs(corners) do
@@ -126,12 +160,33 @@ local function DrawESP()
                 visible[i] = on
             end
 
+            -- MODO FANTASMA: Si está activo, las líneas son más finas y transparentes
+            local thickness = Config.GhostMode and 1 or Config.ESPThickness
+            local transparency = Config.GhostMode and 0.8 or (0.6 + (pulse * 0.4))
+
             for _, e in ipairs(BoxEdges) do
                 if visible[e[1]] or visible[e[2]] then
                     local l = GetLine()
                     l.From, l.To = screen[e[1]], screen[e[2]]
                     l.Color = color
+                    l.Thickness = thickness
+                    l.Transparency = transparency
                     l.Visible = true
+                end
+            end
+
+            -- Nombres (si están activados)
+            if Config.ShowNames then
+                local head = p.Character:FindFirstChild("Head") or hrp
+                local pos, on = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 1.5, 0))
+                if on then
+                    local dist = math.floor((hrp.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude)
+                    local txt = string.format("%s [%s] %dm", p.Name, role, dist)
+                    local lbl = GetLabel(idx)
+                    lbl.Text = txt
+                    lbl.Position = Vector2.new(pos.X, pos.Y)
+                    lbl.Color = color
+                    lbl.Visible = true
                 end
             end
         end
@@ -141,40 +196,41 @@ end
 -- ==========================================================
 -- GUN ESP
 -- ==========================================================
-local function DrawGunESP()
-    if not Config.GunESP then
-        for _, obj in ipairs(Workspace:GetDescendants()) do
-            if obj:IsA("Tool") then
-                local h = obj:FindFirstChild("GunESP_Highlight")
-                if h then h:Destroy() end
+task.spawn(function()
+    while task.wait(0.5) do
+        if Config.GunESP then
+            for _, obj in ipairs(Workspace:GetDescendants()) do
+                if obj:IsA("Tool") and (obj.Name:lower():find("gun") or obj.Name:lower():find("knife") or obj.Name:lower():find("revolver")) then
+                    if not obj:FindFirstChild("GunESP_Highlight") then
+                        local h = Instance.new("Highlight")
+                        h.Name = "GunESP_Highlight"
+                        h.Adornee = obj
+                        h.FillColor = Theme.Green
+                        h.FillTransparency = 0.2
+                        h.OutlineColor = Color3.new(1,1,1)
+                        h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                        h.Parent = obj
+                    end
+                end
+            end
+        else
+            for _, obj in ipairs(Workspace:GetDescendants()) do
+                if obj:IsA("Tool") then
+                    local h = obj:FindFirstChild("GunESP_Highlight")
+                    if h then h:Destroy() end
+                end
             end
         end
-        return
     end
-
-    for _, obj in ipairs(Workspace:GetDescendants()) do
-        if obj:IsA("Tool") and (obj.Name:lower():find("gun") or obj.Name:lower():find("knife")) then
-            if not obj:FindFirstChild("GunESP_Highlight") then
-                local h = Instance.new("Highlight")
-                h.Name = "GunESP_Highlight"
-                h.Adornee = obj
-                h.FillColor = Theme.Green
-                h.FillTransparency = 0.3
-                h.OutlineColor = Color3.new(1,1,1)
-                h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                h.Parent = obj
-            end
-        end
-    end
-end
+end)
 
 -- ==========================================================
--- AIMBOT
+-- AIMBOT (CON MODO SEGURO)
 -- ==========================================================
 local function UpdateAimbot()
     if not Config.AimbotEnabled or not IsLocalSheriff() then return end
     local myChar = LocalPlayer.Character
-    if not myChar then return end
+    if not myChar or not myChar:FindFirstChild("HumanoidRootPart") then return end
     local myPos = myChar.HumanoidRootPart.Position
     
     local best, bestDist = nil, Config.FOV
@@ -192,7 +248,11 @@ local function UpdateAimbot()
     if best then
         local camPos = Camera.CFrame.Position
         local desired = CFrame.new(camPos, best.Position)
-        Camera.CFrame = Camera.CFrame:Lerp(desired, Config.Smooth)
+        
+        -- MODO SEGURO: Aimbot más lento (0.1 en vez de 0.22) para parecer humano
+        local smoothness = Config.SafeAimbot and 0.1 or Config.Smooth
+        
+        Camera.CFrame = Camera.CFrame:Lerp(desired, smoothness)
     end
 end
 
@@ -202,9 +262,8 @@ end
 local function UpdateAutoGrab()
     if not Config.AutoGrabEnabled then return end
     local myChar = LocalPlayer.Character
-    if not myChar then return end
-    local myRoot = myChar:FindFirstChild("HumanoidRootPart")
-    if not myRoot then return end
+    if not myChar or not myChar:FindFirstChild("HumanoidRootPart") then return end
+    local myRoot = myChar.HumanoidRootPart
 
     for _, obj in ipairs(Workspace:GetDescendants()) do
         if obj:IsA("Tool") and (obj.Name:lower():find("gun") or obj.Name:lower():find("knife")) then
@@ -220,7 +279,7 @@ end
 -- UI - GLASS PRO
 -- ==========================================================
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "GaelScriptV8"
+ScreenGui.Name = "GaelScriptV10_5"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
@@ -245,8 +304,8 @@ TStroke.Transparency = 0.5
 
 -- Ventana Principal
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 340, 0, 480)
-MainFrame.Position = UDim2.new(0.5, -170, 0.5, -240)
+MainFrame.Size = UDim2.new(0, 340, 0, 520)
+MainFrame.Position = UDim2.new(0.5, -170, 0.5, -260)
 MainFrame.BackgroundColor3 = Theme.BG
 MainFrame.BackgroundTransparency = 0.1
 MainFrame.BorderSizePixel = 0
@@ -259,7 +318,7 @@ MainStroke.Color = Theme.Border
 MainStroke.Thickness = 1
 MainStroke.Transparency = 0.8
 
--- Header con Degradado
+-- Header
 local Header = Instance.new("Frame", MainFrame)
 Header.Size = UDim2.new(1, 0, 0, 60)
 Header.BackgroundColor3 = Theme.Glass2
@@ -275,7 +334,7 @@ local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(1, -60, 1, 0)
 Title.Position = UDim2.new(0, 20, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "👑 Gael Script v8.0"
+Title.Text = "👑 Gael Script v10.5"
 Title.TextColor3 = Color3.new(1,1,1)
 Title.Font = Enum.Font.BuilderSansBold
 Title.TextSize = 18
@@ -294,7 +353,7 @@ CloseBtn.ZIndex = 52
 CloseBtn.AutoButtonColor = false
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
 
--- Barra de Pestañas (Estilo Píldora)
+-- Barra de Pestañas
 local TabBar = Instance.new("Frame", MainFrame)
 TabBar.Size = UDim2.new(1, -40, 0, 40)
 TabBar.Position = UDim2.new(0, 20, 0, 75)
@@ -455,6 +514,18 @@ local function CreateButton(text, callback, color)
     end)
 end
 
+local function CreateLabel(text, color)
+    local lbl = Instance.new("TextLabel", ContentArea)
+    lbl.Size = UDim2.new(1, 0, 0, 30)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = color or Theme.Muted
+    lbl.Font = Enum.Font.BuilderSansBold
+    lbl.TextSize = 14
+    lbl.ZIndex = 100
+    return lbl
+end
+
 -- ==========================================================
 -- PESTAÑAS
 -- ==========================================================
@@ -476,7 +547,7 @@ local function SwitchTab(name)
 
     if name == "ESP" then
         CreateToggle("ESP (Cajas 3D)", function(s) Config.ESPEnabled = s end, Config.ESPEnabled)
-        CreateToggle("Nombres", function(s) Config.ShowNames = s end, Config.ShowNames)
+        CreateToggle("Nombres con Rol", function(s) Config.ShowNames = s end, Config.ShowNames)
         CreateToggle("Gun ESP (Brillo Armas)", function(s) Config.GunESP = s end, Config.GunESP)
         CreateSlider("Grosor Líneas", 1, 5, Config.ESPThickness, function(v) Config.ESPThickness = math.floor(v) end, 0)
     
@@ -486,27 +557,45 @@ local function SwitchTab(name)
         CreateSlider("FOV (Distancia)", 100, 1000, Config.FOV, function(v) Config.FOV = v end, 0)
 
     elseif name == "Config" then
+        local roleLbl = CreateLabel("Tu rol: ...", Theme.Muted)
+        task.spawn(function()
+            while ScreenGui.Parent do
+                local role, color = GetPlayerRole(LocalPlayer)
+                roleLbl.Text = "Tu rol: " .. role
+                roleLbl.TextColor3 = color
+                task.wait(0.5)
+            end
+        end)
+
         CreateToggle("Auto-Grab (Recoger Armas)", function(s) Config.AutoGrabEnabled = s end, Config.AutoGrabEnabled)
         CreateSlider("Rango Auto-Grab", 10, 200, Config.AutoGrabRange, function(v) Config.AutoGrabRange = v end, 0)
         CreateButton("🧹 Limpiar ESP", function()
             ResetLines()
+            ResetLabels()
         end, Theme.Glass2)
         CreateButton("❌ Cerrar Menú", function()
             MainFrame.Visible = false
             ToggleBtn.Visible = true
         end, Theme.Red)
+
+    elseif name == "Seguridad" then
+        CreateLabel("─── ANTI-BAN ───", Theme.Accent)
+        CreateLabel("El Modo Fantasma hace el ESP más sutil (líneas finas y transparentes) para que los jugadores no te reporten.", Theme.Muted)
+        CreateToggle("Modo Fantasma (ESP Sutil)", function(s) Config.GhostMode = s end, Config.GhostMode)
+        CreateToggle("Aimbot Seguro (Más Lento)", function(s) Config.SafeAimbot = s end, Config.SafeAimbot)
+        CreateLabel("Nota: Ningún script es 100% indetectable. Usa una cuenta secundaria si tienes miedo de perder tu cuenta principal.", Theme.Red)
     end
 end
 
-local function CreateTab(name)
+local function CreateTab(name, icon)
     local btn = Instance.new("TextButton", TabBar)
-    btn.Size = UDim2.new(0, 90, 0, 32)
+    btn.Size = UDim2.new(0, 75, 0, 32)
     btn.BackgroundColor3 = Theme.Glass
     btn.BackgroundTransparency = 0.5
-    btn.Text = name
+    btn.Text = icon .. " " .. name
     btn.TextColor3 = Theme.Text
     btn.Font = Enum.Font.BuilderSansBold
-    btn.TextSize = 14
+    btn.TextSize = 12
     btn.ZIndex = 52
     btn.AutoButtonColor = false
     Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
@@ -519,9 +608,10 @@ local function CreateTab(name)
     Tabs[name] = {Button = btn}
 end
 
-CreateTab("ESP")
-CreateTab("Aimbot")
-CreateTab("Config")
+CreateTab("ESP", "👁️")
+CreateTab("Aimbot", "🎯")
+CreateTab("Config", "⚙️")
+CreateTab("Seguridad", "🛡️")
 
 -- ==========================================================
 -- DRAG & TOGGLE
@@ -573,7 +663,6 @@ end)
 -- ==========================================================
 RunService.RenderStepped:Connect(function()
     pcall(DrawESP)
-    pcall(DrawGunESP)
     pcall(UpdateAimbot)
     pcall(UpdateAutoGrab)
 end)
@@ -581,4 +670,5 @@ end)
 -- Limpieza
 ScreenGui.Destroying:Connect(function()
     for _, l in ipairs(LinePool) do pcall(function() l:Remove() end) end
+    for _, l in ipairs(NameLabels) do pcall(function() l:Remove() end) end
 end)
