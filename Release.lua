@@ -1,5 +1,5 @@
 -- ==========================================
--- 👑 GAEL SCRIPT | MM2 (ULTIMATE MOBILE)
+-- 👑 GAEL SCRIPT | MM2 (REAL FIX)
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -21,7 +21,7 @@ local Theme = {
 }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "GaelScript_Ultimate"
+ScreenGui.Name = "GaelScript_FinalFix"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
@@ -60,7 +60,7 @@ UIS.InputChanged:Connect(function(input)
 end)
 
 -- ==========================================
--- VENTANA PRINCIPAL (MÓVIL)
+-- VENTANA PRINCIPAL
 -- ==========================================
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 380, 0, 320) 
@@ -129,7 +129,7 @@ ToggleBtn.MouseButton1Click:Connect(ToggleMenu)
 CloseBtn.MouseButton1Click:Connect(ToggleMenu)
 
 -- ==========================================
--- VARIABLES DEL JUEGO
+-- VARIABLES
 -- ==========================================
 local maxDistance = 500
 local ChamsEnabled, BoxesEnabled, TracersEnabled = false, false, false
@@ -167,7 +167,6 @@ local function getRole(plr)
     return "Innocent"
 end
 
--- DRAWINGS
 local Drawings = {}
 local function CreateDrawing(class, props)
     if not Drawing then return nil end
@@ -186,14 +185,14 @@ for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then createDrawin
 Players.PlayerAdded:Connect(createDrawings)
 
 -- ==========================================
--- LOOP PRINCIPAL
+-- LÓGICA DEL JUEGO
 -- ==========================================
 RunService.RenderStepped:Connect(function()
     local screenCenter = Camera.ViewportSize / 2
     local bestHead = nil
     local shortestDist = 9e9
 
-    -- SKIN FX (Efecto en el arma)
+    -- SKIN FX
     if LocalPlayer.Character then
         local tool = LocalPlayer.Character:FindFirstChildWhichIsA("Tool")
         if tool then
@@ -326,7 +325,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- ==========================================
--- UI: BOTONES Y PALETA
+-- UI: BOTONES (CON LÓGICA CORREGIDA)
 -- ==========================================
 local function CreateToggle(parent, text, callback)
     local btn = Instance.new("TextButton", parent)
@@ -391,6 +390,7 @@ local function CreateToggle(parent, text, callback)
     return btn
 end
 
+-- Paleta de Colores
 local function CreateColorPicker(parent, text, defaultColor, callback)
     local btn = Instance.new("TextButton", parent)
     btn.Size = UDim2.new(1, 0, 0, 30)
@@ -417,6 +417,7 @@ local function CreateColorPicker(parent, text, defaultColor, callback)
     colorBox.ZIndex = 21
     Instance.new("UICorner", colorBox).CornerRadius = UDim.new(1, 0)
     
+    -- Panel de la paleta
     local paletteFrame = Instance.new("Frame", MainFrame)
     paletteFrame.Size = UDim2.new(0, 180, 0, 100)
     paletteFrame.BackgroundColor3 = Theme.BG
@@ -467,15 +468,15 @@ end
 -- CONSTRUCCIÓN DEL MENÚ Y PESTAÑAS
 -- ==========================================
 local Sidebar = Instance.new("Frame", MainFrame)
-Sidebar.Size = UDim2.new(0, 80, 1, -40)
+Sidebar.Size = UDim2.new(0, 85, 1, -40)
 Sidebar.Position = UDim2.new(0, 0, 0, 40)
 Sidebar.BackgroundColor3 = Theme.Sidebar
 Sidebar.ZIndex = 11
 Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 8)
 
 local ContentHost = Instance.new("Frame", MainFrame)
-ContentHost.Size = UDim2.new(1, -90, 1, -50)
-ContentHost.Position = UDim2.new(0, 85, 0, 45)
+ContentHost.Size = UDim2.new(1, -95, 1, -50)
+ContentHost.Position = UDim2.new(0, 90, 0, 45)
 ContentHost.BackgroundTransparency = 1
 ContentHost.ZIndex = 11
 
@@ -492,6 +493,7 @@ local function CreateTab(tabName, buildFunction)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     
     btn.MouseButton1Click:Connect(function()
+        -- BORRAR PÁGINA ANTERIOR (ESTO ARREGLA EL BUG DE LOS CLICS)
         for _, child in pairs(ContentHost:GetChildren()) do
             if child:IsA("ScrollingFrame") then child:Destroy() end
         end
@@ -542,6 +544,6 @@ local SkinTab = CreateTab("Skins", function(page)
     CreateColorPicker(page, "Color del Efecto", SkinFXColor, function(c) SkinFXColor = c end)
 end)
 
--- Cargar la pestaña ESP por defecto
+-- Abrir la primera pestaña
 task.wait(0.1)
 Sidebar:GetChildren()[1].MouseButton1Click:Fire()
