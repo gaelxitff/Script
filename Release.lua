@@ -1,5 +1,5 @@
 -- ==========================================================
--- 👑 GAEL SCRIPT v4.5 | MM2 MOBILE | MENÚ POR SECCIONES
+-- 👑 GAEL SCRIPT v5.0 | MM2 MOBILE | MINIMIZABLE
 -- ==========================================================
 local RunService   = game:GetService("RunService")
 local Players      = game:GetService("Players")
@@ -15,17 +15,14 @@ local Camera      = Workspace.CurrentCamera
 -- CONFIG
 -- ==========================================================
 local Config = {
-    -- ESP
     ESPEnabled   = true,
-    ShowNames    = true,
-    ShowDistance = true,
+    ShowNames    = false, -- Desactivado por defecto
+    ShowDistance = false, -- Desactivado por defecto
     ESPThickness = 2,
-    -- Aimbot
     AimbotEnabled = true,
     Smooth        = 0.22,
     FOV           = 500,
-    -- General
-    ESPColorMode  = "Role", -- "Role" o "Static"
+    ESPColorMode  = "Role",
 }
 
 local Theme = {
@@ -41,11 +38,6 @@ local Theme = {
     Blue      = Color3.fromRGB(60, 120, 255),
 }
 
-local IsMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
-
--- ==========================================================
--- COMPATIBILIDAD
--- ==========================================================
 local HasDrawing = pcall(function() return Drawing.new("Line") end)
 
 -- ==========================================================
@@ -123,9 +115,6 @@ local function GetPlayerRole(p)
     return "Innocent", Theme.Green
 end
 
--- ==========================================================
--- RAYCAST
--- ==========================================================
 local RayParams = RaycastParams.new()
 RayParams.FilterType = Enum.RaycastFilterType.Exclude
 
@@ -270,7 +259,7 @@ ScreenGui.IgnoreGuiInset = true
 local okGui = pcall(function() ScreenGui.Parent = CoreGui end)
 if not okGui then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- Botón flotante
+-- BOTÓN FLOTANTE (VISIBLE SIEMPRE)
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 130, 0, 48)
 ToggleBtn.Position = UDim2.new(0, 15, 0, 60)
@@ -279,7 +268,7 @@ ToggleBtn.Text = "👑 Gael"
 ToggleBtn.TextColor3 = Theme.Accent
 ToggleBtn.Font = Enum.Font.BuilderSansBold
 ToggleBtn.TextSize = 16
-ToggleBtn.ZIndex = 100
+ToggleBtn.ZIndex = 200 -- ZIndex ALTO para que siempre se vea
 ToggleBtn.AutoButtonColor = false
 ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
@@ -287,7 +276,7 @@ local TStroke = Instance.new("UIStroke", ToggleBtn)
 TStroke.Color = Theme.Accent
 TStroke.Thickness = 2.5
 
--- Ventana principal
+-- VENTANA PRINCIPAL
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 300, 0, 420)
 MainFrame.Position = UDim2.new(0.5, -150, 0.5, -210)
@@ -311,7 +300,7 @@ local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(1, -60, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "👑 Gael Script v4.5"
+Title.Text = "👑 Gael Script v5.0"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.BuilderSansBold
 Title.TextSize = 17
@@ -340,14 +329,12 @@ TabBar.BackgroundColor3 = Theme.Panel
 TabBar.ZIndex = 51
 Instance.new("UICorner", TabBar).CornerRadius = UDim.new(0, 8)
 
--- Layout horizontal para pestañas
 local TabLayout = Instance.new("UIListLayout", TabBar)
 TabLayout.FillDirection = Enum.FillDirection.Horizontal
 TabLayout.Padding = UDim.new(0, 4)
 TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 TabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 
--- Área de contenido (donde cambian las secciones)
 local ContentArea = Instance.new("Frame", MainFrame)
 ContentArea.Size = UDim2.new(1, -20, 1, -140)
 ContentArea.Position = UDim2.new(0, 10, 0, 96)
@@ -355,7 +342,6 @@ ContentArea.BackgroundTransparency = 1
 ContentArea.ZIndex = 51
 ContentArea.ClipsDescendants = true
 
--- Contenedores de cada sección
 local Sections = {}
 
 local function CreateSection(name)
@@ -372,7 +358,6 @@ local ESPPage    = CreateSection("ESP")
 local AimbotPage = CreateSection("Aimbot")
 local ConfigPage = CreateSection("Config")
 
--- Botones de pestañas
 local TabButtons = {}
 local currentTab = nil
 
@@ -411,7 +396,7 @@ CreateTabButton("Aimbot")
 CreateTabButton("Config")
 
 -- ==========================================================
--- BUILDERS (Toggle, Slider, Button) — genéricos por sección
+-- BUILDERS
 -- ==========================================================
 local function CreateToggle(parent, text, yPos, callback, default)
     local state = default ~= false
@@ -574,7 +559,6 @@ CreateToggle(ESPPage, "Nombres", espY, function(s) Config.ShowNames = s end, Con
 CreateToggle(ESPPage, "Mostrar distancia", espY, function(s) Config.ShowDistance = s end, Config.ShowDistance); espY += 48
 CreateSlider(ESPPage, "Grosor líneas", espY, 1, 5, Config.ESPThickness, function(v) Config.ESPThickness = math.floor(v) end, 0); espY += 52
 
--- Modo de color
 local colorBtn = Instance.new("TextButton", ESPPage)
 colorBtn.Size = UDim2.new(1, 0, 0, 38)
 colorBtn.Position = UDim2.new(0, 0, 0, espY)
@@ -640,8 +624,8 @@ CreateLabel(ConfigPage, "─── ACCIONES ───", cfgY, Theme.Accent); cfg
 
 CreateButton(ConfigPage, "🔄 Reiniciar configuración", cfgY, function()
     Config.ESPEnabled    = true
-    Config.ShowNames     = true
-    Config.ShowDistance  = true
+    Config.ShowNames     = false
+    Config.ShowDistance  = false
     Config.ESPThickness  = 2
     Config.AimbotEnabled = true
     Config.Smooth        = 0.22
@@ -688,23 +672,31 @@ MakeDraggable(ToggleBtn, ToggleBtn)
 MakeDraggable(MainFrame, Header)
 
 -- ==========================================================
--- ABRIR / CERRAR
+-- ABRIR / CERRAR (MINIMIZAR)
 -- ==========================================================
 local isOpen = false
-local function ToggleMenu()
-    isOpen = not isOpen
-    MainFrame.Visible = isOpen
-    ToggleBtn.Text = isOpen and "✕ Cerrar" or "👑 Gael"
-    if isOpen and not currentTab then SwitchTab("ESP") end
-end
-ToggleBtn.MouseButton1Click:Connect(ToggleMenu)
-CloseBtn.MouseButton1Click:Connect(ToggleMenu)
 
--- Abrir sección ESP por defecto
-SwitchTab("ESP")
+local function OpenMenu()
+    isOpen = true
+    MainFrame.Visible = true
+    ToggleBtn.Visible = false -- Ocultar el botón cuando el menú está abierto
+    if not currentTab then SwitchTab("ESP") end
+end
+
+local function CloseMenu()
+    isOpen = false
+    MainFrame.Visible = false
+    ToggleBtn.Visible = true -- Mostrar el botón cuando el menú se cierra
+end
+
+ToggleBtn.MouseButton1Click:Connect(OpenMenu)
+CloseBtn.MouseButton1Click:Connect(CloseMenu)
+
+-- Iniciar con el menú cerrado y el botón visible
+CloseMenu()
 
 -- ==========================================================
--- LOOP INFO (rol + estado)
+-- LOOP INFO
 -- ==========================================================
 task.spawn(function()
     while ScreenGui.Parent do
@@ -734,5 +726,4 @@ ScreenGui.Destroying:Connect(function()
     for _, l in ipairs(NameLabels) do pcall(function() l:Remove() end) end
 end)
 
-print("[Gael Script v4.5] Cargado ✅")
-print("Drawing soportado: " .. tostring(HasDrawing))
+print("[Gael Script v5.0] Cargado ✅")
