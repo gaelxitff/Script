@@ -1,5 +1,5 @@
 -- ==========================================================
--- 👑 GAEL SCRIPT v1.0 | MM2 | OFFICIAL RELEASE
+-- 👑 GAEL SCRIPT v2.0 | MM2 | CHAM + TRACER
 -- ==========================================================
 local RunService   = game:GetService("RunService")
 local Players      = game:GetService("Players")
@@ -15,7 +15,9 @@ local Camera      = Workspace.CurrentCamera
 -- CONFIGURACIÓN
 -- ==========================================================
 local Config = {
-    ESPEnabled   = true,
+    ESPEnabled   = true, -- Cajas 3D
+    ChamEnabled  = false,
+    TracerEnabled = false,
     ShowNames    = false,
     ESPThickness = 2,
     GunESP       = true,
@@ -29,26 +31,29 @@ local Config = {
 }
 
 local Theme = {
-    BG        = Color3.fromRGB(10, 10, 15),
-    Glass     = Color3.fromRGB(25, 25, 35),
-    Glass2    = Color3.fromRGB(35, 35, 48),
-    Border    = Color3.fromRGB(255, 255, 255),
+    BG        = Color3.fromRGB(8, 8, 12),
+    Glass     = Color3.fromRGB(20, 20, 30),
+    Glass2    = Color3.fromRGB(30, 30, 45),
+    Border    = Color3.fromRGB(0, 170, 255),
     Accent    = Color3.fromRGB(0, 170, 255),
     Accent2   = Color3.fromRGB(0, 100, 255),
     Text      = Color3.fromRGB(255, 255, 255),
-    Muted     = Color3.fromRGB(160, 160, 180),
-    ToggleOff = Color3.fromRGB(45, 45, 60),
-    Red       = Color3.fromRGB(255, 60, 60),
-    Green     = Color3.fromRGB(60, 220, 120),
-    Blue      = Color3.fromRGB(60, 120, 255),
+    Muted     = Color3.fromRGB(150, 150, 170),
+    ToggleOff = Color3.fromRGB(40, 40, 55),
+    Red       = Color3.fromRGB(255, 50, 50),
+    Green     = Color3.fromRGB(50, 255, 100),
+    Blue      = Color3.fromRGB(50, 120, 255),
+    Yellow    = Color3.fromRGB(255, 200, 50),
 }
 
 -- ==========================================================
--- POOL DE LÍNEAS
+-- POOL DE LÍNEAS Y VARIABLES
 -- ==========================================================
 local LinePool, LineIndex = {}, 0
 local NameLabels = {}
 local ESPPulse = 0
+local GunHighlights = {}
+local ChamsHighlights = {}
 
 local function GetLine()
     LineIndex += 1
@@ -113,7 +118,7 @@ local function GetPlayerRole(p)
 end
 
 -- ==========================================================
--- ESP LÓGICA
+-- ESP LÓGICA (CAJAS Y TRACERS)
 -- ==========================================================
 local function GetCorners(cf, size)
     local corners, half = {}, size / 2
@@ -132,10 +137,14 @@ local BoxEdges = {
 local function DrawESP()
     ResetLines()
     ResetLabels()
-    if not Config.ESPEnabled or not LocalPlayer.Character then return end
+    
+    -- Si todo está apagado, no dibujar nada
+    if not LocalPlayer.Character then return end
+    if not Config.ESPEnabled and not Config.TracerEnabled and not Config.ShowNames then return end
 
     ESPPulse += 0.05
     local pulse = (math.sin(ESPPulse) + 1) / 2
+    local screenBottom = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
 
     local idx = 0
     for _, p in ipairs(Players:GetPlayers()) do
@@ -143,30 +152,48 @@ local function DrawESP()
             idx += 1
             local hrp = p.Character.HumanoidRootPart
             local cf = hrp.CFrame * CFrame.new(0, -0.5, 0)
-            local corners = GetCorners(cf, Vector3.new(3, 5, 3))
             local role, color = GetPlayerRole(p)
             
-            local screen, visible = {}, {}
-            for i, v in ipairs(corners) do
-                local pos, on = Camera:WorldToViewportPoint(v)
-                screen[i] = Vector2.new(pos.X, pos.Y)
-                visible[i] = on
+            -- 1. CAJAS (ESP)
+            if Config.ESPEnabled then
+                local corners = GetCorners(cf, Vector3.new(3, 5, 3))
+                local screen, visible = {}, {}
+                for i, v in ipairs(corners) do
+                    local pos, on = Camera:WorldToViewportPoint(v)
+                    screen[i] = Vector2.new(pos.X, pos.Y)
+                    visible[i] = on
+                end
+
+                local thickness = Config.GhostMode and 1 or Config.ESPThickness
+                local transparency = Config.GhostMode and 0.8 or (0.6 + (pulse * 0.4))
+
+                for _, e in ipairs(BoxEdges) do
+                    if visible[e[1]] or visible[e[2]] then
+                        local l = GetLine()
+                        l.From, l.To = screen[e[1]], screen[e[2]]
+                        l.Color = color
+                        l.Thickness = thickness
+                        l.Transparency = transparency
+                        l.Visible = true
+                    end
+                end
             end
 
-            local thickness = Config.GhostMode and 1 or Config.ESPThickness
-            local transparency = Config.GhostMode and 0.8 or (0.6 + (pulse * 0.4))
-
-            for _, e in ipairs(BoxEdges) do
-                if visible[e[1]] or visible[e[2]] then
+            -- 2. TRACER (LÍNEA DESDE ABAJO)
+            if Config.TracerEnabled then
+                local headPos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+                if onScreen then
                     local l = GetLine()
-                    l.From, l.To = screen[e[1]], screen[e[2]]
+                    l.From = screenBottom
+                    l.To = Vector2.new(headPos.X, headPos.Y)
                     l.Color = color
-                    l.Thickness = thickness
-                    l.Transparency = transparency
+                    l.Thickness = Config.ESPThickness
+                    l.Transparency = 1
                     l.Visible = true
                 end
             end
 
+            -- 3. NOMBRES
             if Config.ShowNames then
                 local head = p.Character:FindFirstChild("Head") or hrp
                 local pos, on = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 1.5, 0))
@@ -185,35 +212,83 @@ local function DrawESP()
 end
 
 -- ==========================================================
--- GUN ESP
+-- CHAM (RESALTADO DE CUERPO)
 -- ==========================================================
-task.spawn(function()
-    while task.wait(0.5) do
-        if Config.GunESP then
-            for _, obj in ipairs(Workspace:GetDescendants()) do
-                if obj:IsA("Tool") and (obj.Name:lower():find("gun") or obj.Name:lower():find("knife") or obj.Name:lower():find("revolver")) then
-                    if not obj:FindFirstChild("GunESP_Highlight") then
-                        local h = Instance.new("Highlight")
-                        h.Name = "GunESP_Highlight"
-                        h.Adornee = obj
-                        h.FillColor = Theme.Green
-                        h.FillTransparency = 0.2
-                        h.OutlineColor = Color3.new(1,1,1)
-                        h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                        h.Parent = obj
-                    end
-                end
-            end
-        else
-            for _, obj in ipairs(Workspace:GetDescendants()) do
-                if obj:IsA("Tool") then
-                    local h = obj:FindFirstChild("GunESP_Highlight")
-                    if h then h:Destroy() end
-                end
+local function UpdateChams()
+    if not Config.ChamEnabled then
+        -- Limpiar
+        for p, h in pairs(ChamsHighlights) do
+            if h and h.Parent then h:Destroy() end
+        end
+        ChamsHighlights = {}
+        return
+    end
+
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and HasCharacter(p) then
+            if not ChamsHighlights[p] or not ChamsHighlights[p].Parent then
+                local h = Instance.new("Highlight")
+                h.Adornee = p.Character
+                local role, color = GetPlayerRole(p)
+                h.FillColor = color
+                h.FillTransparency = 0.5
+                h.OutlineColor = color
+                h.OutlineTransparency = 1
+                h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                h.Parent = p.Character
+                ChamsHighlights[p] = h
+            else
+                -- Actualizar color si cambió de rol
+                local role, color = GetPlayerRole(p)
+                ChamsHighlights[p].FillColor = color
+                ChamsHighlights[p].OutlineColor = color
             end
         end
     end
-end)
+
+    -- Limpiar jugadores que ya no están
+    for p, h in pairs(ChamsHighlights) do
+        if not p or not p.Parent or not HasCharacter(p) then
+            if h and h.Parent then h:Destroy() end
+            ChamsHighlights[p] = nil
+        end
+    end
+end
+
+-- ==========================================================
+-- GUN ESP
+-- ==========================================================
+local function UpdateGunESP()
+    if not Config.GunESP then
+        for obj, h in pairs(GunHighlights) do
+            if h and h.Parent then h:Destroy() end
+        end
+        GunHighlights = {}
+        return
+    end
+
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("Tool") and (obj.Name:lower():find("gun") or obj.Name:lower():find("knife") or obj.Name:lower():find("revolver")) then
+            if not GunHighlights[obj] or not GunHighlights[obj].Parent then
+                local h = Instance.new("Highlight")
+                h.Adornee = obj
+                h.FillColor = Theme.Red
+                h.FillTransparency = 0.1
+                h.OutlineColor = Color3.new(1,1,1)
+                h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                h.Parent = obj
+                GunHighlights[obj] = h
+            end
+        end
+    end
+
+    for obj, h in pairs(GunHighlights) do
+        if not obj or not obj.Parent or not obj:IsA("Tool") then
+            if h and h.Parent then h:Destroy() end
+            GunHighlights[obj] = nil
+        end
+    end
+end
 
 -- ==========================================================
 -- AIMBOT
@@ -264,10 +339,10 @@ local function UpdateAutoGrab()
 end
 
 -- ==========================================================
--- UI - V1.0 OFFICIAL
+-- UI - V2.0
 -- ==========================================================
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "GaelScriptV1"
+ScreenGui.Name = "GaelScriptV2_0"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
@@ -303,15 +378,15 @@ MainFrame.Parent = ScreenGui
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
 local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Color = Theme.Border
-MainStroke.Thickness = 1
-MainStroke.Transparency = 0.8
+MainStroke.Thickness = 1.5
+MainStroke.Transparency = 0.3
 
--- Fondo de Partículas (Estrellas Animadas)
+-- Fondo de Partículas
 local ParticleBg = Instance.new("ImageLabel", MainFrame)
 ParticleBg.Size = UDim2.new(1, 0, 1, 0)
 ParticleBg.BackgroundTransparency = 1
 ParticleBg.Image = "rbxassetid://243660364"
-ParticleBg.ImageTransparency = 0.8
+ParticleBg.ImageTransparency = 0.85
 ParticleBg.ImageColor3 = Theme.Accent
 ParticleBg.ScaleType = Enum.ScaleType.Tile
 ParticleBg.TileSize = UDim2.new(0, 150, 0, 150)
@@ -342,7 +417,7 @@ local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(1, -60, 1, 0)
 Title.Position = UDim2.new(0, 20, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "👑 Gael Script v1.0"
+Title.Text = "👑 Gael Script v2.0"
 Title.TextColor3 = Color3.new(1,1,1)
 Title.Font = Enum.Font.BuilderSansBold
 Title.TextSize = 18
@@ -555,6 +630,8 @@ local function SwitchTab(name)
 
     if name == "ESP" then
         CreateToggle("ESP (Cajas 3D)", function(s) Config.ESPEnabled = s end, Config.ESPEnabled)
+        CreateToggle("CHAM (Resaltado)", function(s) Config.ChamEnabled = s end, Config.ChamEnabled)
+        CreateToggle("TRACER (Líneas)", function(s) Config.TracerEnabled = s end, Config.TracerEnabled)
         CreateToggle("Gun ESP (Brillo Armas)", function(s) Config.GunESP = s end, Config.GunESP)
         CreateSlider("Grosor Líneas", 1, 5, Config.ESPThickness, function(v) Config.ESPThickness = math.floor(v) end, 0)
     
@@ -670,12 +747,20 @@ end)
 -- ==========================================================
 RunService.RenderStepped:Connect(function()
     pcall(DrawESP)
+    pcall(UpdateChams)
     pcall(UpdateAimbot)
     pcall(UpdateAutoGrab)
+    pcall(UpdateGunESP)
 end)
 
 -- Limpieza
 ScreenGui.Destroying:Connect(function()
     for _, l in ipairs(LinePool) do pcall(function() l:Remove() end) end
     for _, l in ipairs(NameLabels) do pcall(function() l:Remove() end) end
+    for obj, h in pairs(GunHighlights) do
+        if h and h.Parent then pcall(function() h:Destroy() end) end
+    end
+    for p, h in pairs(ChamsHighlights) do
+        if h and h.Parent then pcall(function() h:Destroy() end) end
+    end
 end)
