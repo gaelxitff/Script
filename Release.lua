@@ -1,5 +1,5 @@
 -- ==========================================================
--- 👑 GAEL SCRIPT v10.5 | MM2 | SAFE MODE
+-- 👑 GAEL SCRIPT v1.0 | MM2 | OFFICIAL RELEASE
 -- ==========================================================
 local RunService   = game:GetService("RunService")
 local Players      = game:GetService("Players")
@@ -17,7 +17,6 @@ local Camera      = Workspace.CurrentCamera
 local Config = {
     ESPEnabled   = true,
     ShowNames    = false,
-    ShowDistance = false,
     ESPThickness = 2,
     GunESP       = true,
     AimbotEnabled = true,
@@ -25,9 +24,8 @@ local Config = {
     FOV           = 500,
     AutoGrabEnabled = false,
     AutoGrabRange   = 100,
-    -- MODO SEGURO (ANTI-BAN)
-    GhostMode       = false, -- Hace el ESP más sutil
-    SafeAimbot      = true,  -- Aimbot más lento para parecer humano
+    GhostMode       = false,
+    SafeAimbot      = true,
 }
 
 local Theme = {
@@ -46,7 +44,7 @@ local Theme = {
 }
 
 -- ==========================================================
--- POOL DE LÍNEAS Y TEXTOS
+-- POOL DE LÍNEAS
 -- ==========================================================
 local LinePool, LineIndex = {}, 0
 local NameLabels = {}
@@ -114,13 +112,8 @@ local function GetPlayerRole(p)
     return "Innocent", Theme.Green
 end
 
-local function GetPlayerColor(p)
-    local role, color = GetPlayerRole(p)
-    return color
-end
-
 -- ==========================================================
--- ESP LÓGICA (CON MODO FANTASMA)
+-- ESP LÓGICA
 -- ==========================================================
 local function GetCorners(cf, size)
     local corners, half = {}, size / 2
@@ -160,7 +153,6 @@ local function DrawESP()
                 visible[i] = on
             end
 
-            -- MODO FANTASMA: Si está activo, las líneas son más finas y transparentes
             local thickness = Config.GhostMode and 1 or Config.ESPThickness
             local transparency = Config.GhostMode and 0.8 or (0.6 + (pulse * 0.4))
 
@@ -175,7 +167,6 @@ local function DrawESP()
                 end
             end
 
-            -- Nombres (si están activados)
             if Config.ShowNames then
                 local head = p.Character:FindFirstChild("Head") or hrp
                 local pos, on = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 1.5, 0))
@@ -225,7 +216,7 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- AIMBOT (CON MODO SEGURO)
+-- AIMBOT
 -- ==========================================================
 local function UpdateAimbot()
     if not Config.AimbotEnabled or not IsLocalSheriff() then return end
@@ -248,10 +239,7 @@ local function UpdateAimbot()
     if best then
         local camPos = Camera.CFrame.Position
         local desired = CFrame.new(camPos, best.Position)
-        
-        -- MODO SEGURO: Aimbot más lento (0.1 en vez de 0.22) para parecer humano
         local smoothness = Config.SafeAimbot and 0.1 or Config.Smooth
-        
         Camera.CFrame = Camera.CFrame:Lerp(desired, smoothness)
     end
 end
@@ -276,10 +264,10 @@ local function UpdateAutoGrab()
 end
 
 -- ==========================================================
--- UI - GLASS PRO
+-- UI - V1.0 OFFICIAL
 -- ==========================================================
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "GaelScriptV10_5"
+ScreenGui.Name = "GaelScriptV1"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
@@ -318,6 +306,26 @@ MainStroke.Color = Theme.Border
 MainStroke.Thickness = 1
 MainStroke.Transparency = 0.8
 
+-- Fondo de Partículas (Estrellas Animadas)
+local ParticleBg = Instance.new("ImageLabel", MainFrame)
+ParticleBg.Size = UDim2.new(1, 0, 1, 0)
+ParticleBg.BackgroundTransparency = 1
+ParticleBg.Image = "rbxassetid://243660364"
+ParticleBg.ImageTransparency = 0.8
+ParticleBg.ImageColor3 = Theme.Accent
+ParticleBg.ScaleType = Enum.ScaleType.Tile
+ParticleBg.TileSize = UDim2.new(0, 150, 0, 150)
+ParticleBg.ZIndex = 0
+Instance.new("UICorner", ParticleBg).CornerRadius = UDim.new(0, 16)
+
+task.spawn(function()
+    while MainFrame.Parent do
+        ParticleBg.Position = UDim2.new(0, 0, 0, 0)
+        TweenService:Create(ParticleBg, TweenInfo.new(15, Enum.EasingStyle.Linear), {Position = UDim2.new(0, 0, -1, 0)}):Play()
+        task.wait(15)
+    end
+end)
+
 -- Header
 local Header = Instance.new("Frame", MainFrame)
 Header.Size = UDim2.new(1, 0, 0, 60)
@@ -334,7 +342,7 @@ local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(1, -60, 1, 0)
 Title.Position = UDim2.new(0, 20, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "👑 Gael Script v10.5"
+Title.Text = "👑 Gael Script v1.0"
 Title.TextColor3 = Color3.new(1,1,1)
 Title.Font = Enum.Font.BuilderSansBold
 Title.TextSize = 18
@@ -547,7 +555,6 @@ local function SwitchTab(name)
 
     if name == "ESP" then
         CreateToggle("ESP (Cajas 3D)", function(s) Config.ESPEnabled = s end, Config.ESPEnabled)
-        CreateToggle("Nombres con Rol", function(s) Config.ShowNames = s end, Config.ShowNames)
         CreateToggle("Gun ESP (Brillo Armas)", function(s) Config.GunESP = s end, Config.GunESP)
         CreateSlider("Grosor Líneas", 1, 5, Config.ESPThickness, function(v) Config.ESPThickness = math.floor(v) end, 0)
     
@@ -580,10 +587,10 @@ local function SwitchTab(name)
 
     elseif name == "Seguridad" then
         CreateLabel("─── ANTI-BAN ───", Theme.Accent)
-        CreateLabel("El Modo Fantasma hace el ESP más sutil (líneas finas y transparentes) para que los jugadores no te reporten.", Theme.Muted)
+        CreateLabel("El Modo Fantasma hace el ESP más sutil.", Theme.Muted)
         CreateToggle("Modo Fantasma (ESP Sutil)", function(s) Config.GhostMode = s end, Config.GhostMode)
         CreateToggle("Aimbot Seguro (Más Lento)", function(s) Config.SafeAimbot = s end, Config.SafeAimbot)
-        CreateLabel("Nota: Ningún script es 100% indetectable. Usa una cuenta secundaria si tienes miedo de perder tu cuenta principal.", Theme.Red)
+        CreateLabel("Ningún script es 100% indetectable.", Theme.Red)
     end
 end
 
