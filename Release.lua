@@ -1,5 +1,5 @@
 -- ==========================================
--- 👑 GAEL SCRIPT | MM2 (REAL FIX)
+-- 👑 GAEL SCRIPT | MM2 (FIXED TOUCH EDITION)
 -- ==========================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -21,13 +21,11 @@ local Theme = {
 }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "GaelScript_FinalFix"
+ScreenGui.Name = "GaelScript_Fixed"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
--- ==========================================
 -- BOTÓN FLOTANTE
--- ==========================================
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 150, 0, 40)
 ToggleBtn.Position = UDim2.new(0.5, -75, 0, 20)
@@ -43,6 +41,7 @@ local TStroke = Instance.new("UIStroke", ToggleBtn)
 TStroke.Color = Theme.Accent
 TStroke.Thickness = 2
 
+-- Mover botón
 local dragToggle, startToggle, posToggle
 ToggleBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -59,14 +58,11 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
--- ==========================================
 -- VENTANA PRINCIPAL
--- ==========================================
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 380, 0, 320) 
-MainFrame.Position = UDim2.new(0.5, -190, 0.5, -160)
+MainFrame.Size = UDim2.new(0, 360, 0, 300) 
+MainFrame.Position = UDim2.new(0.5, -180, 0.5, -150)
 MainFrame.BackgroundColor3 = Theme.BG
-MainFrame.BackgroundTransparency = 0.05
 MainFrame.BorderSizePixel = 0
 MainFrame.Visible = false
 MainFrame.Parent = ScreenGui
@@ -75,6 +71,7 @@ local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Color = Theme.Accent
 MainStroke.Thickness = 1.5
 
+-- Header
 local Header = Instance.new("Frame", MainFrame)
 Header.Size = UDim2.new(1, 0, 0, 40)
 Header.BackgroundTransparency = 1
@@ -87,7 +84,7 @@ Title.BackgroundTransparency = 1
 Title.Text = "Gael Script"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.BuilderSansBold
-Title.TextSize = 18
+Title.TextSize = 16
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.ZIndex = 12
 
@@ -102,6 +99,7 @@ CloseBtn.TextSize = 12
 CloseBtn.ZIndex = 12
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
 
+-- Mover ventana
 local dragging, dragStart, startPos
 Header.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -128,9 +126,7 @@ end
 ToggleBtn.MouseButton1Click:Connect(ToggleMenu)
 CloseBtn.MouseButton1Click:Connect(ToggleMenu)
 
--- ==========================================
 -- VARIABLES
--- ==========================================
 local maxDistance = 500
 local ChamsEnabled, BoxesEnabled, TracersEnabled = false, false, false
 local AimbotEnabled = false
@@ -167,6 +163,7 @@ local function getRole(plr)
     return "Innocent"
 end
 
+-- DRAWINGS
 local Drawings = {}
 local function CreateDrawing(class, props)
     if not Drawing then return nil end
@@ -184,15 +181,12 @@ end
 for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then createDrawings(p) end end
 Players.PlayerAdded:Connect(createDrawings)
 
--- ==========================================
--- LÓGICA DEL JUEGO
--- ==========================================
+-- LOOP PRINCIPAL
 RunService.RenderStepped:Connect(function()
     local screenCenter = Camera.ViewportSize / 2
     local bestHead = nil
     local shortestDist = 9e9
 
-    -- SKIN FX
     if LocalPlayer.Character then
         local tool = LocalPlayer.Character:FindFirstChildWhichIsA("Tool")
         if tool then
@@ -235,7 +229,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- AUTO GRAB
     if AutoGrabEnabled and LocalPlayer.Character then
         local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         if myRoot then
@@ -255,7 +248,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- ESP Y AIMBOT
     for _, plr in pairs(Players:GetPlayers()) do
         local draw = Drawings[plr]
         local char = plr.Character
@@ -325,14 +317,29 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- ==========================================
--- UI: BOTONES (CON LÓGICA CORREGIDA)
+-- SISTEMA DE BOTONES (POSICIONES FIJAS)
 -- ==========================================
-local function CreateToggle(parent, text, callback)
+local Sidebar = Instance.new("Frame", MainFrame)
+Sidebar.Size = UDim2.new(0, 85, 1, -40)
+Sidebar.Position = UDim2.new(0, 0, 0, 40)
+Sidebar.BackgroundColor3 = Theme.Sidebar
+Sidebar.ZIndex = 11
+Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 8)
+
+local ContentHost = Instance.new("Frame", MainFrame)
+ContentHost.Size = UDim2.new(1, -95, 1, -50)
+ContentHost.Position = UDim2.new(0, 90, 0, 45)
+ContentHost.BackgroundTransparency = 1
+ContentHost.ZIndex = 11
+
+-- Función para crear Toggles con posición manual exacta (ARREGLA EL BUG DE TOQUE)
+local function CreateToggle(parent, text, yPos, callback)
     local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1, 0, 0, 34)
+    btn.Size = UDim2.new(1, -10, 0, 34) -- Tamaño exacto
+    btn.Position = UDim2.new(0, 5, 0, yPos) -- Posición manual
     btn.BackgroundColor3 = Theme.Panel
     btn.Text = ""
-    btn.ZIndex = 20 
+    btn.ZIndex = 100 -- ZIndex ALTO para asegurar el toque
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
 
     local label = Instance.new("TextLabel", btn)
@@ -344,7 +351,7 @@ local function CreateToggle(parent, text, callback)
     label.BackgroundTransparency = 1
     label.Font = Enum.Font.BuilderSansMedium
     label.TextSize = 12
-    label.ZIndex = 21
+    label.ZIndex = 101
 
     local statusLabel = Instance.new("TextLabel", btn)
     statusLabel.Size = UDim2.new(0, 60, 1, 0)
@@ -355,20 +362,20 @@ local function CreateToggle(parent, text, callback)
     statusLabel.BackgroundTransparency = 1
     statusLabel.Font = Enum.Font.BuilderSansBold
     statusLabel.TextSize = 10
-    statusLabel.ZIndex = 21
+    statusLabel.ZIndex = 101
 
     local switchBg = Instance.new("Frame", btn)
     switchBg.Size = UDim2.new(0, 30, 0, 16)
     switchBg.Position = UDim2.new(1, -35, 0.5, -8)
     switchBg.BackgroundColor3 = Theme.ToggleOff
-    switchBg.ZIndex = 21
+    switchBg.ZIndex = 101
     Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1, 0)
 
     local switchThumb = Instance.new("Frame", switchBg)
     switchThumb.Size = UDim2.new(0, 12, 0, 12)
     switchThumb.Position = UDim.new(0, 2, 0.5, -6)
     switchThumb.BackgroundColor3 = Theme.Muted
-    switchThumb.ZIndex = 22
+    switchThumb.ZIndex = 102
     Instance.new("UICorner", switchThumb).CornerRadius = UDim.new(1, 0)
 
     local state = false
@@ -390,13 +397,14 @@ local function CreateToggle(parent, text, callback)
     return btn
 end
 
--- Paleta de Colores
-local function CreateColorPicker(parent, text, defaultColor, callback)
+-- Función para la Paleta de Colores
+local function CreateColorPicker(parent, text, defaultColor, yPos, callback)
     local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1, 0, 0, 30)
+    btn.Size = UDim2.new(1, -10, 0, 30)
+    btn.Position = UDim2.new(0, 5, 0, yPos)
     btn.BackgroundColor3 = Theme.Panel
     btn.Text = ""
-    btn.ZIndex = 20
+    btn.ZIndex = 100
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     
     local label = Instance.new("TextLabel", btn)
@@ -408,22 +416,21 @@ local function CreateColorPicker(parent, text, defaultColor, callback)
     label.BackgroundTransparency = 1
     label.Font = Enum.Font.BuilderSansMedium
     label.TextSize = 11
-    label.ZIndex = 21
+    label.ZIndex = 101
     
     local colorBox = Instance.new("Frame", btn)
     colorBox.Size = UDim2.new(0, 14, 0, 14)
     colorBox.Position = UDim2.new(1, -22, 0.5, -7)
     colorBox.BackgroundColor3 = defaultColor
-    colorBox.ZIndex = 21
+    colorBox.ZIndex = 101
     Instance.new("UICorner", colorBox).CornerRadius = UDim.new(1, 0)
     
-    -- Panel de la paleta
     local paletteFrame = Instance.new("Frame", MainFrame)
     paletteFrame.Size = UDim2.new(0, 180, 0, 100)
     paletteFrame.BackgroundColor3 = Theme.BG
     paletteFrame.BorderSizePixel = 0
     paletteFrame.Visible = false
-    paletteFrame.ZIndex = 50
+    paletteFrame.ZIndex = 200
     Instance.new("UICorner", paletteFrame).CornerRadius = UDim.new(0, 6)
     local pStroke = Instance.new("UIStroke", paletteFrame)
     pStroke.Color = Theme.Accent
@@ -444,7 +451,7 @@ local function CreateColorPicker(parent, text, defaultColor, callback)
         local cBtn = Instance.new("TextButton", paletteFrame)
         cBtn.BackgroundColor3 = color
         cBtn.Text = ""
-        cBtn.ZIndex = 51
+        cBtn.ZIndex = 201
         Instance.new("UICorner", cBtn).CornerRadius = UDim.new(0, 4)
         cBtn.MouseButton1Click:Connect(function()
             colorBox.BackgroundColor3 = color
@@ -465,21 +472,8 @@ local function CreateColorPicker(parent, text, defaultColor, callback)
 end
 
 -- ==========================================
--- CONSTRUCCIÓN DEL MENÚ Y PESTAÑAS
+-- CONSTRUCCIÓN DE LAS PESTAÑAS
 -- ==========================================
-local Sidebar = Instance.new("Frame", MainFrame)
-Sidebar.Size = UDim2.new(0, 85, 1, -40)
-Sidebar.Position = UDim2.new(0, 0, 0, 40)
-Sidebar.BackgroundColor3 = Theme.Sidebar
-Sidebar.ZIndex = 11
-Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 8)
-
-local ContentHost = Instance.new("Frame", MainFrame)
-ContentHost.Size = UDim2.new(1, -95, 1, -50)
-ContentHost.Position = UDim2.new(0, 90, 0, 45)
-ContentHost.BackgroundTransparency = 1
-ContentHost.ZIndex = 11
-
 local function CreateTab(tabName, buildFunction)
     local btn = Instance.new("TextButton", Sidebar)
     btn.Size = UDim2.new(1, -10, 0, 32)
@@ -489,11 +483,10 @@ local function CreateTab(tabName, buildFunction)
     btn.TextColor3 = Theme.Text
     btn.Font = Enum.Font.BuilderSansBold
     btn.TextSize = 12
-    btn.ZIndex = 12
+    btn.ZIndex = 100
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     
     btn.MouseButton1Click:Connect(function()
-        -- BORRAR PÁGINA ANTERIOR (ESTO ARREGLA EL BUG DE LOS CLICS)
         for _, child in pairs(ContentHost:GetChildren()) do
             if child:IsA("ScrollingFrame") then child:Destroy() end
         end
@@ -501,49 +494,33 @@ local function CreateTab(tabName, buildFunction)
         page.Size = UDim2.new(1, 0, 1, 0)
         page.BackgroundTransparency = 1
         page.ScrollBarThickness = 2
-        page.CanvasSize = UDim2.new(0, 0, 0, 300)
-        page.ZIndex = 20
-        
-        local layout = Instance.new("UIListLayout", page)
-        layout.Padding = UDim.new(0, 8)
+        page.CanvasSize = UDim2.new(0, 0, 0, 350)
+        page.ZIndex = 99
         
         buildFunction(page)
     end)
-    
-    return btn
 end
 
--- Crear Pestañas
+-- Crear Pestañas con Posiciones Fijas
 local ESPTab = CreateTab("ESP", function(page)
-    CreateToggle(page, "ESP (Todo)", function(s) ChamsEnabled = s; BoxesEnabled = s; TracersEnabled = s end)
-    CreateToggle(page, "Boxes (Cajas)", function(s) BoxesEnabled = s end)
-    CreateToggle(page, "Chams (Pintar)", function(s) ChamsEnabled = s end)
-    CreateToggle(page, "Tracers (Lazos)", function(s) TracersEnabled = s end)
+    CreateToggle(page, "ESP (Todo)", 0, function(s) ChamsEnabled = s; BoxesEnabled = s; TracersEnabled = s end)
+    CreateToggle(page, "Boxes (Cajas)", 40, function(s) BoxesEnabled = s end)
+    CreateToggle(page, "Chams (Pintar)", 80, function(s) ChamsEnabled = s end)
+    CreateToggle(page, "Tracers (Lazos)", 120, function(s) TracersEnabled = s end)
 end)
 
 local CombatTab = CreateTab("Combat", function(page)
-    CreateToggle(page, "Aimbot Lock (Sheriff)", function(s) AimbotEnabled = s end)
+    CreateToggle(page, "Aimbot Lock (Sheriff)", 0, function(s) AimbotEnabled = s end)
 end)
 
 local ItemTab = CreateTab("Items", function(page)
-    local title = Instance.new("TextLabel", page)
-    title.Size = UDim2.new(1, 0, 0, 20)
-    title.BackgroundTransparency = 1
-    title.Text = "Recoger Armas Automáticamente"
-    title.TextColor3 = Theme.Text
-    title.Font = Enum.Font.BuilderSansBold
-    title.TextSize = 11
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    title.ZIndex = 21
-
-    CreateToggle(page, "Auto Grab (Cuchillo/Pistola)", function(s) AutoGrabEnabled = s end)
+    CreateToggle(page, "Auto Grab (Armas)", 0, function(s) AutoGrabEnabled = s end)
 end)
 
 local SkinTab = CreateTab("Skins", function(page)
-    CreateToggle(page, "Activar Efecto en Arma", function(s) SkinFXEnabled = s end)
-    CreateColorPicker(page, "Color del Efecto", SkinFXColor, function(c) SkinFXColor = c end)
+    CreateToggle(page, "Activar Efecto en Arma", 0, function(s) SkinFXEnabled = s end)
+    CreateColorPicker(page, "Color del Efecto", SkinFXColor, 40, function(c) SkinFXColor = c end)
 end)
 
--- Abrir la primera pestaña
 task.wait(0.1)
 Sidebar:GetChildren()[1].MouseButton1Click:Fire()
