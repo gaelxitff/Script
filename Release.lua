@@ -1,5 +1,5 @@
 -- ==========================================================
--- 🏴‍☠️ ONE PIECE GAEL SCRIPT v7.1 | ULTIMATE MM2 (FIXED)
+-- 🏴‍☠️ ONE PIECE | ULTIMATE MM2 HUB | MOBILE OPTIMIZED
 -- ==========================================================
 local RunService   = game:GetService("RunService")
 local Players      = game:GetService("Players")
@@ -29,7 +29,7 @@ local Config = {
     Instakill     = false,
     ShowFOVCircle = true,
     ScreenFOV     = 250,
-    LastInstakill = 0, -- Cooldown
+    LastInstakill = 0,
     
     WalkSpeed     = 16,
     JumpPower     = 50,
@@ -47,21 +47,21 @@ local Config = {
 }
 
 -- ==========================================================
--- ONE PIECE PALETTE (Error corregido: se agregaron StrawGold y StrawDark)
+-- ONE PIECE PALETTE
 -- ==========================================================
 local OP = {
-    Parchment = Color3.fromRGB(246, 231, 197),
-    ParchDark = Color3.fromRGB(215, 195, 155),
-    Ink       = Color3.fromRGB(35, 25, 15),
-    Gold      = Color3.fromRGB(235, 195, 70),
-    FireRed   = Color3.fromRGB(235, 75, 75),
-    Marine    = Color3.fromRGB(70, 135, 225),
-    Green     = Color3.fromRGB(90, 210, 130),
+    Parchment = Color3.fromRGB(250, 240, 220),
+    ParchDark = Color3.fromRGB(220, 200, 160),
+    Ink       = Color3.fromRGB(25, 20, 15),
+    Gold      = Color3.fromRGB(255, 205, 60),
+    FireRed   = Color3.fromRGB(230, 70, 70),
+    Marine    = Color3.fromRGB(70, 140, 230),
+    Green     = Color3.fromRGB(80, 220, 120),
     White     = Color3.fromRGB(255, 255, 255),
-    Muted     = Color3.fromRGB(115, 140, 170),
-    Jolly     = Color3.fromRGB(22, 28, 44),
-    StrawGold = Color3.fromRGB(255, 210, 90), -- FIX
-    StrawDark = Color3.fromRGB(205, 155, 45), -- FIX
+    Muted     = Color3.fromRGB(140, 130, 110),
+    Jolly     = Color3.fromRGB(15, 20, 30),
+    StrawGold = Color3.fromRGB(255, 220, 100),
+    StrawDark = Color3.fromRGB(200, 150, 40),
 }
 
 local IsMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
@@ -71,22 +71,22 @@ local IsMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
 -- ==========================================================
 local Weathers = {
     CalmSea = {
-        Name = "Calm Sea", Accent = Color3.fromRGB(120, 190, 255),
+        Accent = Color3.fromRGB(120, 190, 255),
         Gradient = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(140, 200, 255)), ColorSequenceKeypoint.new(0.55, Color3.fromRGB(80, 150, 220)), ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 100, 175))}),
         Clouds = true, Sun = true, Rain = false, Stars = false,
     },
     Storm = {
-        Name = "Storm", Accent = Color3.fromRGB(140, 160, 200),
+        Accent = Color3.fromRGB(140, 160, 200),
         Gradient = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 80, 100)), ColorSequenceKeypoint.new(0.55, Color3.fromRGB(45, 55, 80)), ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 30, 50))}),
         Clouds = true, Sun = false, Rain = true, Stars = false,
     },
     Sunset = {
-        Name = "Sunset", Accent = Color3.fromRGB(255, 170, 90),
+        Accent = Color3.fromRGB(255, 170, 90),
         Gradient = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 200, 120)), ColorSequenceKeypoint.new(0.45, Color3.fromRGB(250, 130, 100)), ColorSequenceKeypoint.new(1, Color3.fromRGB(130, 65, 140))}),
         Clouds = true, Sun = true, Rain = false, Stars = false,
     },
     NightSea = {
-        Name = "Night Sea", Accent = Color3.fromRGB(130, 175, 240),
+        Accent = Color3.fromRGB(130, 175, 240),
         Gradient = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 45, 95)), ColorSequenceKeypoint.new(0.55, Color3.fromRGB(20, 30, 70)), ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 15, 40))}),
         Clouds = false, Sun = false, Rain = false, Stars = true,
     },
@@ -129,7 +129,7 @@ local function PlaySound(kind)
     if not Config.SoundsEnabled then return end
     pcall(function()
         local s = Instance.new("Sound")
-        s.SoundId = "rbxasset://sounds/electronicpingshort.wav"; s.Volume = 0.35
+        s.SoundId = "rbxasset://sounds/electronicpingshort.wav"; s.Volume = 0.3
         s.PlaybackSpeed = (kind == "open" and 1.3) or (kind == "close" and 0.7) or 1
         s.Parent = SoundService; s:Play(); Debris:AddItem(s, 2)
     end)
@@ -163,14 +163,13 @@ local function GetPlayerRole(p)
 end
 
 -- ==========================================================
--- HAPPYHUB EXTRACTED LOGIC (AIMBOT / INSTAKILL / DODGE)
+-- HAPPYHUB EXTRACTED LOGIC
 -- ==========================================================
 local function getGun()
     local char = LocalPlayer.Character
     if not char then return nil end
     local backpack = LocalPlayer:FindFirstChild("Backpack")
-    local gun = char:FindFirstChild("Gun") or (backpack and backpack:FindFirstChild("Gun"))
-    return gun
+    return char:FindFirstChild("Gun") or (backpack and backpack:FindFirstChild("Gun"))
 end
 
 local function getMurderer()
@@ -184,20 +183,15 @@ local function InstaKill(targetPlr)
     if not targetPlr or not targetPlr.Character then return end
     local gun = getGun()
     if not gun or gun.Parent ~= LocalPlayer.Character then return end
-    
     local shootEvent = gun:FindFirstChild("Shoot")
     if not shootEvent then return end
-    
     local targetHRP = targetPlr.Character:FindFirstChild("HumanoidRootPart")
     if not targetHRP then return end
-    
     local origin = CFrame.new(targetHRP.Position - targetHRP.CFrame.LookVector * 3.5)
     local target = CFrame.new(targetHRP.Position)
-    
     pcall(function() shootEvent:FireServer(origin, target) end)
 end
 
--- Knife Dodge Logic
 task.spawn(function()
     local cs = ReplicatedStorage:WaitForChild("ClientServices", 10)
     local ws = cs and cs:FindFirstChild("WeaponService")
@@ -209,14 +203,12 @@ task.spawn(function()
             local hrp = getHRP()
             if not hrp then return end
             local myPos = hrp.Position
-            
             local dir = p2 - p1
             local len = dir.Magnitude
             if len < 5 then return end
             local unit = dir.Unit
             local toMe = myPos - p1
             local proj = toMe:Dot(unit)
-            
             if proj > -10 and proj < len + 30 then
                 local closest = p1 + unit * math.clamp(proj, 0, len)
                 if (myPos - closest).Magnitude < 12 then
@@ -230,10 +222,9 @@ task.spawn(function()
 end)
 
 -- ==========================================================
--- ESP LÓGICA
+-- ESP & AIMBOT
 -- ==========================================================
 local HighlightCache = {}
-
 local function GetCorners(cf, size)
     local corners, half = {}, size / 2
     for X=-1,1,2 do for Y=-1,1,2 do for Z=-1,1,2 do
@@ -241,17 +232,14 @@ local function GetCorners(cf, size)
     end end end
     return corners
 end
-
 local BoxEdges = {{1,2},{2,4},{4,3},{3,1},{5,6},{6,8},{8,7},{7,5},{1,5},{2,6},{3,7},{4,8}}
 
 local function DrawFor(player, labelIdx)
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
-
     local color = GetPlayerColor(player)
 
-    -- 3D BOX
     if Config.ESPEnabled then
         local cf = hrp.CFrame * CFrame.new(0, -0.5, 0)
         local corners = GetCorners(cf, Vector3.new(3, 5, 3))
@@ -267,7 +255,6 @@ local function DrawFor(player, labelIdx)
         end
     end
 
-    -- HIGHLIGHT
     if Config.ESPHighlight then
         if not HighlightCache[player] or not HighlightCache[player].Parent then
             local h = Instance.new("Highlight")
@@ -281,12 +268,11 @@ local function DrawFor(player, labelIdx)
         HighlightCache[player]:Destroy(); HighlightCache[player] = nil
     end
 
-    -- NAMETAGS
     if Config.ShowNames then
         local head = char:FindFirstChild("Head") or hrp
         local pos, on = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 1.5, 0))
         if on then
-            local role, _ = GetPlayerRole(player)
+            local role = GetPlayerRole(player)
             local txt = player.Name
             if Config.ShowDistance then
                 local myC = LocalPlayer.Character
@@ -308,24 +294,17 @@ local function UpdateESP()
     if not HasDrawing then return end
     ResetLines(); ResetLabels()
     if not (Config.ESPEnabled or Config.ESPHighlight or Config.ShowNames) or not LocalPlayer.Character then 
-        for p, h in pairs(HighlightCache) do 
-            pcall(function() h:Destroy() end) 
-            HighlightCache[p] = nil 
-        end
+        for p, h in pairs(HighlightCache) do pcall(function() h:Destroy() end); HighlightCache[p] = nil end
         return 
     end
     local idx = 0
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
-            idx += 1
-            pcall(DrawFor, p, idx)
+            idx += 1; pcall(DrawFor, p, idx)
         end
     end
 end
 
--- ==========================================================
--- AIMBOT & FOV LÓGICA
--- ==========================================================
 local function GetCrosshair()
     if IsMobile then return Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     else local m = UIS:GetMouseLocation(); return Vector2.new(m.X, m.Y) end
@@ -347,7 +326,6 @@ local function UpdateAimbot()
                     local desired = CFrame.new(Camera.CFrame.Position, tHead.Position)
                     Camera.CFrame = Camera.CFrame:Lerp(desired, Config.AimbotSmooth)
                     
-                    -- Instakill con cooldown para evitar Kick por spam
                     if Config.Instakill and tick() - Config.LastInstakill > 0.15 then
                         Config.LastInstakill = tick()
                         InstaKill(target)
@@ -370,7 +348,7 @@ local function UpdateAimbot()
 end
 
 -- ==========================================================
--- MOVEMENT & FARM LÓGICA
+-- MOVEMENT
 -- ==========================================================
 local noclipConn = nil
 local function ToggleNoclip(state)
@@ -437,10 +415,7 @@ local function ToggleFarm(state)
                             pcall(firetouchinterest, hrp, bestCoin, 0)
                             task.wait(0.01)
                             pcall(firetouchinterest, hrp, bestCoin, 1)
-                            
-                            if minDist > 10 then
-                                hrp.Velocity = (bestCoin.Position - hrp.Position).Unit * Config.FarmSpeed
-                            end
+                            if minDist > 10 then hrp.Velocity = (bestCoin.Position - hrp.Position).Unit * Config.FarmSpeed end
                         end
                     end
                 end
@@ -452,10 +427,10 @@ local function ToggleFarm(state)
 end
 
 -- ==========================================================
--- UI CREATION (A prueba de fallos)
+-- UI CREATION (Responsive)
 -- ==========================================================
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OnePieceUltimate"
+ScreenGui.Name = "OnePieceMenu"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
@@ -467,50 +442,60 @@ local toastStack = 0
 local function ShowToast(text, accent)
     accent = accent or OP.Gold; toastStack += 1; local slot = toastStack
     local toast = Instance.new("Frame", ScreenGui)
-    toast.Size = UDim2.new(0, 240, 0, 46); toast.Position = UDim2.new(1, 20, 0, 20 + (slot-1)*56)
+    toast.Size = UDim2.new(0, 220, 0, 42); toast.Position = UDim2.new(1, 20, 0, 20 + (slot-1)*52)
     toast.BackgroundColor3 = OP.Parchment; toast.BackgroundTransparency = 0.05; toast.ZIndex = 200
     Instance.new("UICorner", toast).CornerRadius = UDim.new(0, 12)
     local stroke = Instance.new("UIStroke", toast); stroke.Color = accent; stroke.Thickness = 2
     local bar = Instance.new("Frame", toast); bar.Size = UDim2.new(0, 5, 1, -14); bar.Position = UDim2.new(0, 6, 0, 7); bar.BackgroundColor3 = accent
     Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
     local label = Instance.new("TextLabel", toast); label.Size = UDim2.new(1, -30, 1, 0); label.Position = UDim2.new(0, 20, 0, 0)
-    label.BackgroundTransparency = 1; label.Text = text; label.TextColor3 = OP.Ink; label.Font = Enum.Font.BuilderSansBold; label.TextSize = 13; label.TextXAlignment = Enum.TextXAlignment.Left
+    label.BackgroundTransparency = 1; label.Text = text; label.TextColor3 = OP.Ink; label.Font = Enum.Font.BuilderSansBold; label.TextSize = 12; label.TextXAlignment = Enum.TextXAlignment.Left
     
-    TweenService:Create(toast, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(1, -260, 0, 20 + (slot-1)*56)}):Play()
+    TweenService:Create(toast, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(1, -240, 0, 20 + (slot-1)*52)}):Play()
     task.delay(2.3, function()
-        local tOut = TweenService:Create(toast, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(1, 20, 0, 20 + (slot-1)*56)})
+        local tOut = TweenService:Create(toast, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(1, 20, 0, 20 + (slot-1)*52)})
         tOut:Play(); tOut.Completed:Wait(); toast:Destroy(); toastStack -= 1
     end)
 end
 
 -- TOGGLE BUTTON
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 158, 0, 46); ToggleBtn.Position = UDim2.new(0, 15, 0, 60)
-ToggleBtn.BackgroundColor3 = OP.Parchment; ToggleBtn.Text = "🏴‍☠️ ONE PIECE V7"
-ToggleBtn.TextColor3 = OP.Ink; ToggleBtn.Font = Enum.Font.BuilderSansBold; ToggleBtn.TextSize = 15
+ToggleBtn.Size = UDim2.new(0, 140, 0, 42); ToggleBtn.Position = UDim2.new(0, 15, 0, 60)
+ToggleBtn.BackgroundColor3 = OP.Parchment; ToggleBtn.Text = "🏴‍☠️ ONE PIECE"
+ToggleBtn.TextColor3 = OP.Ink; ToggleBtn.Font = Enum.Font.BuilderSansBold; ToggleBtn.TextSize = 14
 ToggleBtn.ZIndex = 100; ToggleBtn.AutoButtonColor = false; ToggleBtn.Parent = ScreenGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 local tGrad = Instance.new("UIGradient", ToggleBtn); tGrad.Rotation = 90; tGrad.Color = ColorSequence.new(OP.Parchment, OP.ParchDark)
 local tStroke = Instance.new("UIStroke", ToggleBtn); tStroke.Color = OP.Gold; tStroke.Thickness = 2
 
--- MAIN WINDOW
+-- RESPONSIVE MAIN WINDOW
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 340, 0, 540); MainFrame.AnchorPoint = Vector2.new(0.5, 0.5); MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainFrame.Size = UDim2.new(0, 300, 0, 480); MainFrame.AnchorPoint = Vector2.new(0.5, 0.5); MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 MainFrame.BackgroundColor3 = OP.White; MainFrame.Visible = false; MainFrame.ClipsDescendants = true; MainFrame.ZIndex = 50; MainFrame.Parent = ScreenGui
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 18)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
+
+-- AUTO SCALE FOR MOBILE
+local menuScale = Instance.new("UIScale", MainFrame)
+local function UpdateScale()
+    local vp = Camera.ViewportSize
+    local minDim = math.min(vp.X, vp.Y)
+    menuScale.Scale = math.clamp(minDim / 480, 0.65, 1)
+end
+UpdateScale()
+Camera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateScale)
+
 local mainGradient = Instance.new("UIGradient", MainFrame); mainGradient.Rotation = 90; mainGradient.Color = Weathers.CalmSea.Gradient
-local mainStroke = Instance.new("UIStroke", MainFrame); mainStroke.Color = OP.Gold; mainStroke.Thickness = 2.5; mainStroke.Transparency = 0.1
-local menuScale = Instance.new("UIScale", MainFrame); menuScale.Scale = 1
+local mainStroke = Instance.new("UIStroke", MainFrame); mainStroke.Color = OP.Gold; mainStroke.Thickness = 2; mainStroke.Transparency = 0.1
 
 -- WEATHER LAYERS
 local CloudLayer = Instance.new("Frame", MainFrame); CloudLayer.Size = UDim2.new(1, 0, 1, 0); CloudLayer.BackgroundTransparency = 1; CloudLayer.ClipsDescendants = true; CloudLayer.ZIndex = 2
 local RainLayer = Instance.new("Frame", MainFrame); RainLayer.Size = UDim2.new(1, 0, 1, 0); RainLayer.BackgroundTransparency = 1; RainLayer.ClipsDescendants = true; RainLayer.ZIndex = 3; RainLayer.Visible = false
 local StarLayer = Instance.new("Frame", MainFrame); StarLayer.Size = UDim2.new(1, 0, 1, 0); StarLayer.BackgroundTransparency = 1; StarLayer.ClipsDescendants = true; StarLayer.ZIndex = 2; StarLayer.Visible = false
-local SunLayer = Instance.new("Frame", MainFrame); SunLayer.Size = UDim2.new(0, 60, 0, 60); SunLayer.Position = UDim2.new(1, -85, 0, 20); SunLayer.BackgroundColor3 = Color3.fromRGB(255, 230, 130); SunLayer.BackgroundTransparency = 0.15; SunLayer.ZIndex = 2; SunLayer.Visible = false
+local SunLayer = Instance.new("Frame", MainFrame); SunLayer.Size = UDim2.new(0, 50, 0, 50); SunLayer.Position = UDim2.new(1, -75, 0, 20); SunLayer.BackgroundColor3 = Color3.fromRGB(255, 230, 130); SunLayer.BackgroundTransparency = 0.15; SunLayer.ZIndex = 2; SunLayer.Visible = false
 Instance.new("UICorner", SunLayer).CornerRadius = UDim.new(1, 0)
 
-for i = 1, 4 do
-    local cloud = Instance.new("Frame", CloudLayer); cloud.Size = UDim2.new(0, 100 + math.random(20,60), 0, 34); cloud.Position = UDim2.new(-0.4, 0, math.random(10,80)/100, 0); cloud.BackgroundColor3 = OP.White; cloud.BackgroundTransparency = 0.6
+for i = 1, 3 do
+    local cloud = Instance.new("Frame", CloudLayer); cloud.Size = UDim2.new(0, 80 + math.random(20,50), 0, 30); cloud.Position = UDim2.new(-0.4, 0, math.random(10,80)/100, 0); cloud.BackgroundColor3 = OP.White; cloud.BackgroundTransparency = 0.6
     Instance.new("UICorner", cloud).CornerRadius = UDim.new(1, 0)
     task.spawn(function()
         while cloud.Parent do
@@ -528,41 +513,43 @@ local function ApplyWeather(name)
 end
 
 -- HEADER
-local StrawHat = Instance.new("Frame", MainFrame); StrawHat.Size = UDim2.new(0, 36, 0, 36); StrawHat.Position = UDim2.new(0, 14, 0, 12); StrawHat.BackgroundTransparency = 1; StrawHat.ZIndex = 52
-local hatCap = Instance.new("Frame", StrawHat); hatCap.Size = UDim2.new(0, 22, 0, 15); hatCap.Position = UDim2.new(0, 7, 0, 3); hatCap.BackgroundColor3 = OP.StrawGold; hatCap.ZIndex = 53
+local StrawHat = Instance.new("Frame", MainFrame); StrawHat.Size = UDim2.new(0, 32, 0, 32); StrawHat.Position = UDim2.new(0, 14, 0, 14); StrawHat.BackgroundTransparency = 1; StrawHat.ZIndex = 52
+local hatCap = Instance.new("Frame", StrawHat); hatCap.Size = UDim2.new(0, 20, 0, 14); hatCap.Position = UDim2.new(0, 6, 0, 2); hatCap.BackgroundColor3 = OP.StrawGold; hatCap.ZIndex = 53
 Instance.new("UICorner", hatCap).CornerRadius = UDim.new(0, 10)
-local hatBand = Instance.new("Frame", StrawHat); hatBand.Size = UDim2.new(0, 22, 0, 4); hatBand.Position = UDim2.new(0, 7, 0, 12); hatBand.BackgroundColor3 = OP.FireRed; hatBand.ZIndex = 54
+local hatBand = Instance.new("Frame", StrawHat); hatBand.Size = UDim2.new(0, 20, 0, 4); hatBand.Position = UDim2.new(0, 6, 0, 10); hatBand.BackgroundColor3 = OP.FireRed; hatBand.ZIndex = 54
 Instance.new("UICorner", hatBand).CornerRadius = UDim.new(0, 2)
-local hatBrim = Instance.new("Frame", StrawHat); hatBrim.Size = UDim2.new(0, 34, 0, 7); hatBrim.Position = UDim2.new(0, 1, 0, 20); hatBrim.BackgroundColor3 = OP.StrawDark; hatBrim.ZIndex = 53
+local hatBrim = Instance.new("Frame", StrawHat); hatBrim.Size = UDim2.new(0, 30, 0, 6); hatBrim.Position = UDim2.new(0, 1, 0, 18); hatBrim.BackgroundColor3 = OP.StrawDark; hatBrim.ZIndex = 53
 Instance.new("UICorner", hatBrim).CornerRadius = UDim.new(1, 0)
 
-local Header = Instance.new("Frame", MainFrame); Header.Size = UDim2.new(1, 0, 0, 56); Header.BackgroundTransparency = 1; Header.ZIndex = 51
-local Title = Instance.new("TextLabel", Header); Title.Size = UDim2.new(1, -140, 0, 26); Title.Position = UDim2.new(0, 56, 0, 5); Title.BackgroundTransparency = 1; Title.Text = "ONE PIECE"; Title.TextColor3 = OP.Gold; Title.Font = Enum.Font.BuilderSansBold; Title.TextSize = 21; Title.TextXAlignment = Enum.TextXAlignment.Left; Title.TextStrokeColor3 = OP.Jolly; Title.TextStrokeTransparency = 0; Title.ZIndex = 52
-local Subtitle = Instance.new("TextLabel", Header); Subtitle.Size = UDim2.new(1, -140, 0, 16); Subtitle.Position = UDim2.new(0, 57, 0, 32); Subtitle.BackgroundTransparency = 1; Subtitle.Text = "⚓ ULTIMATE MM2"; Subtitle.TextColor3 = OP.FireRed; Subtitle.Font = Enum.Font.BuilderSansBold; Subtitle.TextSize = 10; Subtitle.TextXAlignment = Enum.TextXAlignment.Left; Subtitle.TextStrokeColor3 = OP.Jolly; Subtitle.TextStrokeTransparency = 0.5; Subtitle.ZIndex = 52
+local Header = Instance.new("Frame", MainFrame); Header.Size = UDim2.new(1, 0, 0, 52); Header.BackgroundTransparency = 1; Header.ZIndex = 51
+local Title = Instance.new("TextLabel", Header); Title.Size = UDim2.new(1, -100, 0, 26); Title.Position = UDim2.new(0, 52, 0, 6); Title.BackgroundTransparency = 1; Title.Text = "ONE PIECE"; Title.TextColor3 = OP.Gold; Title.Font = Enum.Font.BuilderSansBold; Title.TextSize = 22; Title.TextXAlignment = Enum.TextXAlignment.Left; Title.TextStrokeColor3 = OP.Jolly; Title.TextStrokeTransparency = 0; Title.ZIndex = 52
+local Subtitle = Instance.new("TextLabel", Header); Subtitle.Size = UDim2.new(1, -100, 0, 14); Subtitle.Position = UDim2.new(0, 53, 0, 30); Subtitle.BackgroundTransparency = 1; Subtitle.Text = "⚓ GRAND LINE"; Subtitle.TextColor3 = OP.FireRed; Subtitle.Font = Enum.Font.BuilderSansBold; Subtitle.TextSize = 10; Subtitle.TextXAlignment = Enum.TextXAlignment.Left; Subtitle.TextStrokeColor3 = OP.Jolly; Subtitle.TextStrokeTransparency = 0.5; Subtitle.ZIndex = 52
 
-local CloseBtn = Instance.new("TextButton", Header); CloseBtn.Size = UDim2.new(0, 34, 0, 34); CloseBtn.Position = UDim2.new(1, -46, 0.5, -17); CloseBtn.BackgroundColor3 = OP.Parchment; CloseBtn.Text = "✕"; CloseBtn.TextColor3 = OP.FireRed; CloseBtn.Font = Enum.Font.GothamBold; CloseBtn.TextSize = 16; CloseBtn.ZIndex = 52; CloseBtn.AutoButtonColor = false
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 10)
+local CloseBtn = Instance.new("TextButton", Header); CloseBtn.Size = UDim2.new(0, 30, 0, 30); CloseBtn.Position = UDim2.new(1, -42, 0.5, -15); CloseBtn.BackgroundColor3 = OP.Parchment; CloseBtn.Text = "✕"; CloseBtn.TextColor3 = OP.FireRed; CloseBtn.Font = Enum.Font.GothamBold; CloseBtn.TextSize = 14; CloseBtn.ZIndex = 52; CloseBtn.AutoButtonColor = false
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
 local cbStroke = Instance.new("UIStroke", CloseBtn); cbStroke.Color = OP.Gold; cbStroke.Thickness = 1.5
 
 -- TABS
 local TabBar = Instance.new("ScrollingFrame", MainFrame)
-TabBar.Size = UDim2.new(1, -24, 0, 42); TabBar.Position = UDim2.new(0, 12, 0, 62)
+TabBar.Size = UDim2.new(1, -20, 0, 38); TabBar.Position = UDim2.new(0, 10, 0, 58)
 TabBar.BackgroundColor3 = OP.Parchment; TabBar.BackgroundTransparency = 0.25; TabBar.ZIndex = 51
 TabBar.ScrollBarThickness = 0; TabBar.CanvasSize = UDim2.new(0, 0, 0, 0); TabBar.ScrollingDirection = Enum.ScrollingDirection.X
-TabBar.AutomaticCanvasSize = Enum.AutomaticSize.X -- FIX: Tabs no se apilan
+TabBar.AutomaticCanvasSize = Enum.AutomaticSize.X
 Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
 local tbStroke = Instance.new("UIStroke", TabBar); tbStroke.Color = OP.Gold; tbStroke.Thickness = 1.5; tbStroke.Transparency = 0.3
 
 local TabLayout = Instance.new("UIListLayout", TabBar); TabLayout.FillDirection = Enum.FillDirection.Horizontal; TabLayout.Padding = UDim.new(0, 6); TabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+local TabPadding = Instance.new("UIPadding", TabBar); TabPadding.PaddingLeft = UDim.new(0, 6); TabPadding.PaddingRight = UDim.new(0, 6)
 
 local ContentArea = Instance.new("ScrollingFrame", MainFrame)
-ContentArea.Size = UDim2.new(1, -24, 1, -170); ContentArea.Position = UDim2.new(0, 12, 0, 112)
-ContentArea.BackgroundTransparency = 1; ContentArea.BorderSizePixel = 0; ContentArea.ScrollBarThickness = 4; ContentArea.ScrollBarImageColor3 = OP.Gold
-ContentArea.CanvasSize = UDim2.new(0, 0, 0, 600); ContentArea.ZIndex = 51; ContentArea.ClipsDescendants = true
+ContentArea.Size = UDim2.new(1, -20, 1, -155); ContentArea.Position = UDim2.new(0, 10, 0, 104)
+ContentArea.BackgroundTransparency = 1; ContentArea.BorderSizePixel = 0; ContentArea.ScrollBarThickness = 3; ContentArea.ScrollBarImageColor3 = OP.Gold
+ContentArea.CanvasSize = UDim2.new(0, 0, 0, 800); ContentArea.ZIndex = 51; ContentArea.ClipsDescendants = true
+local ContentPadding = Instance.new("UIPadding", ContentArea); ContentPadding.PaddingRight = UDim.new(0, 6)
 
 local Sections = {}
 local function CreateSection(name)
-    local f = Instance.new("Frame", ContentArea); f.Size = UDim2.new(1, -6, 0, 600); f.BackgroundTransparency = 1; f.Visible = false; f.ZIndex = 52; f.BorderSizePixel = 0
+    local f = Instance.new("Frame", ContentArea); f.Size = UDim2.new(1, 0, 0, 800); f.BackgroundTransparency = 1; f.Visible = false; f.ZIndex = 52; f.BorderSizePixel = 0
     Sections[name] = f; return f
 end
 
@@ -586,7 +573,7 @@ local function SwitchTab(name)
 end
 
 local function CreateTabButton(name)
-    local btn = Instance.new("TextButton", TabBar); btn.Size = UDim2.new(0, 70, 0, 30); btn.BackgroundColor3 = OP.Parchment; btn.BackgroundTransparency = 0.3; btn.Text = name; btn.TextColor3 = OP.Muted; btn.Font = Enum.Font.BuilderSansBold; btn.TextSize = 12; btn.AutoButtonColor = false; btn.ZIndex = 52
+    local btn = Instance.new("TextButton", TabBar); btn.Size = UDim2.new(0, 65, 0, 26); btn.BackgroundColor3 = OP.Parchment; btn.BackgroundTransparency = 0.3; btn.Text = name; btn.TextColor3 = OP.Muted; btn.Font = Enum.Font.BuilderSansBold; btn.TextSize = 12; btn.AutoButtonColor = false; btn.ZIndex = 52
     Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
     btn.Activated:Connect(function() PlaySound(); SwitchTab(name) end)
     TabButtons[name] = btn
@@ -595,25 +582,25 @@ CreateTabButton("ESP"); CreateTabButton("Aimbot"); CreateTabButton("Move"); Crea
 
 -- BUILDERS
 local function CreateLabel(parent, text, yPos, color)
-    local lbl = Instance.new("TextLabel", parent); lbl.Size = UDim2.new(1, 0, 0, 20); lbl.Position = UDim2.new(0, 6, 0, yPos); lbl.BackgroundTransparency = 1; lbl.Text = text; lbl.TextColor3 = color or OP.Muted; lbl.Font = Enum.Font.BuilderSansBold; lbl.TextSize = 11; lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.ZIndex = 100
+    local lbl = Instance.new("TextLabel", parent); lbl.Size = UDim2.new(1, 0, 0, 18); lbl.Position = UDim2.new(0, 4, 0, yPos); lbl.BackgroundTransparency = 1; lbl.Text = text; lbl.TextColor3 = color or OP.Muted; lbl.Font = Enum.Font.BuilderSansBold; lbl.TextSize = 11; lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.ZIndex = 100
     return lbl
 end
 
 local function CreateToggle(parent, text, yPos, callback, default)
     local state = default ~= false
-    local btn = Instance.new("TextButton", parent); btn.Size = UDim2.new(1, 0, 0, 44); btn.Position = UDim2.new(0, 0, 0, yPos); btn.BackgroundColor3 = OP.Parchment; btn.BackgroundTransparency = 0.15; btn.Text = ""; btn.AutoButtonColor = false; btn.ZIndex = 100
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
+    local btn = Instance.new("TextButton", parent); btn.Size = UDim2.new(1, 0, 0, 40); btn.Position = UDim2.new(0, 0, 0, yPos); btn.BackgroundColor3 = OP.Parchment; btn.BackgroundTransparency = 0.15; btn.Text = ""; btn.AutoButtonColor = false; btn.ZIndex = 100
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
     local stroke = Instance.new("UIStroke", btn); stroke.Color = OP.Gold; stroke.Thickness = 1; stroke.Transparency = 0.55
-    local label = Instance.new("TextLabel", btn); label.Size = UDim2.new(1, -70, 1, 0); label.Position = UDim2.new(0, 14, 0, 0); label.Text = text; label.TextColor3 = OP.Ink; label.TextXAlignment = Enum.TextXAlignment.Left; label.BackgroundTransparency = 1; label.Font = Enum.Font.BuilderSansBold; label.TextSize = 14; label.ZIndex = 101
-    local switchBg = Instance.new("Frame", btn); switchBg.Size = UDim2.new(0, 44, 0, 22); switchBg.Position = UDim2.new(1, -56, 0.5, -11); switchBg.BackgroundColor3 = state and OP.Gold or OP.ParchDark; switchBg.ZIndex = 101
+    local label = Instance.new("TextLabel", btn); label.Size = UDim2.new(1, -60, 1, 0); label.Position = UDim2.new(0, 12, 0, 0); label.Text = text; label.TextColor3 = OP.Ink; label.TextXAlignment = Enum.TextXAlignment.Left; label.BackgroundTransparency = 1; label.Font = Enum.Font.BuilderSansBold; label.TextSize = 13; label.ZIndex = 101
+    local switchBg = Instance.new("Frame", btn); switchBg.Size = UDim2.new(0, 40, 0, 20); switchBg.Position = UDim2.new(1, -52, 0.5, -10); switchBg.BackgroundColor3 = state and OP.Gold or OP.ParchDark; switchBg.ZIndex = 101
     Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1, 0)
-    local thumb = Instance.new("Frame", switchBg); thumb.Size = UDim2.new(0, 18, 0, 18); thumb.Position = state and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9); thumb.BackgroundColor3 = OP.White; thumb.ZIndex = 102
+    local thumb = Instance.new("Frame", switchBg); thumb.Size = UDim2.new(0, 16, 0, 16); thumb.Position = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8); thumb.BackgroundColor3 = OP.White; thumb.ZIndex = 102
     Instance.new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
     
     btn.Activated:Connect(function()
         state = not state; PlaySound()
         TweenService:Create(switchBg, TweenInfo.new(0.25), {BackgroundColor3 = state and OP.Gold or OP.ParchDark}):Play()
-        TweenService:Create(thumb, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = state and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)}):Play()
+        TweenService:Create(thumb, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)}):Play()
         if callback then callback(state) end
     end)
     return btn
@@ -621,23 +608,23 @@ end
 
 local function CreateSlider(parent, text, yPos, minVal, maxVal, defaultVal, callback, decimals)
     decimals = decimals or 2
-    local frame = Instance.new("Frame", parent); frame.Size = UDim2.new(1, 0, 0, 50); frame.Position = UDim2.new(0, 0, 0, yPos); frame.BackgroundColor3 = OP.Parchment; frame.BackgroundTransparency = 0.15; frame.ZIndex = 100
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+    local frame = Instance.new("Frame", parent); frame.Size = UDim2.new(1, 0, 0, 46); frame.Position = UDim2.new(0, 0, 0, yPos); frame.BackgroundColor3 = OP.Parchment; frame.BackgroundTransparency = 0.15; frame.ZIndex = 100
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
     local stroke = Instance.new("UIStroke", frame); stroke.Color = OP.Gold; stroke.Thickness = 1; stroke.Transparency = 0.55
-    local label = Instance.new("TextLabel", frame); label.Size = UDim2.new(1, -24, 0, 18); label.Position = UDim2.new(0, 14, 0, 6); label.BackgroundTransparency = 1; label.Text = string.format("%s: %." .. decimals .. "f", text, defaultVal); label.TextColor3 = OP.Ink; label.TextXAlignment = Enum.TextXAlignment.Left; label.Font = Enum.Font.BuilderSansBold; label.TextSize = 13; label.ZIndex = 101
-    local bar = Instance.new("Frame", frame); bar.Size = UDim2.new(1, -28, 0, 8); bar.Position = UDim2.new(0, 14, 0, 32); bar.BackgroundColor3 = OP.ParchDark; bar.ZIndex = 101; bar.Active = true
+    local label = Instance.new("TextLabel", frame); label.Size = UDim2.new(1, -20, 0, 16); label.Position = UDim2.new(0, 12, 0, 6); label.BackgroundTransparency = 1; label.Text = string.format("%s: %." .. decimals .. "f", text, defaultVal); label.TextColor3 = OP.Ink; label.TextXAlignment = Enum.TextXAlignment.Left; label.Font = Enum.Font.BuilderSansBold; label.TextSize = 12; label.ZIndex = 101
+    local bar = Instance.new("Frame", frame); bar.Size = UDim2.new(1, -24, 0, 6); bar.Position = UDim2.new(0, 12, 0, 28); bar.BackgroundColor3 = OP.ParchDark; bar.ZIndex = 101; bar.Active = true
     Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
     local percent = (defaultVal - minVal) / (maxVal - minVal)
     local fill = Instance.new("Frame", bar); fill.Size = UDim2.new(percent, 0, 1, 0); fill.BackgroundColor3 = OP.Gold; fill.ZIndex = 102
     Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
-    local knob = Instance.new("Frame", bar); knob.Size = UDim2.new(0, 18, 0, 18); knob.Position = UDim2.new(percent, -9, 0.5, -9); knob.BackgroundColor3 = OP.White; knob.ZIndex = 103
+    local knob = Instance.new("Frame", bar); knob.Size = UDim2.new(0, 16, 0, 16); knob.Position = UDim2.new(percent, -8, 0.5, -8); knob.BackgroundColor3 = OP.White; knob.ZIndex = 103
     Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
     
     local dragging = false
     local function setVal(x)
         local rel = math.clamp((x - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
         local val = minVal + (maxVal - minVal) * rel
-        fill.Size = UDim2.new(rel, 0, 1, 0); knob.Position = UDim2.new(rel, -9, 0.5, -9); label.Text = string.format("%s: %." .. decimals .. "f", text, val)
+        fill.Size = UDim2.new(rel, 0, 1, 0); knob.Position = UDim2.new(rel, -8, 0.5, -8); label.Text = string.format("%s: %." .. decimals .. "f", text, val)
         if callback then callback(val) end
     end
     bar.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = true; setVal(input.Position.X) end end)
@@ -647,8 +634,8 @@ end
 
 local function CreateButton(parent, text, yPos, callback, color)
     local base = color or OP.Parchment
-    local btn = Instance.new("TextButton", parent); btn.Size = UDim2.new(1, 0, 0, 40); btn.Position = UDim2.new(0, 0, 0, yPos); btn.BackgroundColor3 = base; btn.BackgroundTransparency = 0.1; btn.Text = text; btn.TextColor3 = OP.Ink; btn.Font = Enum.Font.BuilderSansBold; btn.TextSize = 13; btn.AutoButtonColor = false; btn.ZIndex = 100
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
+    local btn = Instance.new("TextButton", parent); btn.Size = UDim2.new(1, 0, 0, 36); btn.Position = UDim2.new(0, 0, 0, yPos); btn.BackgroundColor3 = base; btn.BackgroundTransparency = 0.1; btn.Text = text; btn.TextColor3 = OP.Ink; btn.Font = Enum.Font.BuilderSansBold; btn.TextSize = 12; btn.AutoButtonColor = false; btn.ZIndex = 100
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
     local stroke = Instance.new("UIStroke", btn); stroke.Color = OP.Gold; stroke.Thickness = 1.2; stroke.Transparency = 0.4
     btn.Activated:Connect(function() PlaySound(); if callback then callback() end end)
     return btn
@@ -658,50 +645,50 @@ end
 -- POBLAR PÁGINAS
 -- ==========================================================
 local espY = 0
-CreateLabel(ESPPage, "─── VISUAL ───", espY, OP.FireRed); espY += 24
-CreateToggle(ESPPage, "Cajas 3D", espY, function(s) Config.ESPEnabled = s end, Config.ESPEnabled); espY += 50
-CreateToggle(ESPPage, "Resaltado (Highlight)", espY, function(s) Config.ESPHighlight = s end, Config.ESPHighlight); espY += 50
+CreateLabel(ESPPage, "─── VISUAL ───", espY, OP.FireRed); espY += 22
+CreateToggle(ESPPage, "Cajas 3D", espY, function(s) Config.ESPEnabled = s end, Config.ESPEnabled); espY += 46
+CreateToggle(ESPPage, "Resaltado (Highlight)", espY, function(s) Config.ESPHighlight = s end, Config.ESPHighlight); espY += 46
 CreateToggle(ESPPage, "Nombres y Distancia", espY, function(s) Config.ShowNames = s end, Config.ShowNames); espY += 50
 
 local aimY = 0
-CreateLabel(AimbotPage, "─── COMBATE ───", aimY, OP.FireRed); aimY += 24
-CreateToggle(AimbotPage, "Aimbot (Cámara)", aimY, function(s) Config.AimbotEnabled = s end, Config.AimbotEnabled); aimY += 50
-CreateToggle(AimbotPage, "Instakill (Auto Disparo)", aimY, function(s) Config.Instakill = s end, Config.Instakill); aimY += 50
-CreateToggle(AimbotPage, "Mostrar FOV", aimY, function(s) Config.ShowFOVCircle = s end, Config.ShowFOVCircle); aimY += 50
-CreateSlider(AimbotPage, "Smooth (Suavidad)", aimY, 0.05, 0.5, Config.AimbotSmooth, function(v) Config.AimbotSmooth = v end); aimY += 56
-CreateSlider(AimbotPage, "Tamaño FOV", aimY, 50, 600, Config.ScreenFOV, function(v) Config.ScreenFOV = v end, 0); aimY += 56
+CreateLabel(AimbotPage, "─── COMBATE ───", aimY, OP.FireRed); aimY += 22
+CreateToggle(AimbotPage, "Aimbot (Cámara)", aimY, function(s) Config.AimbotEnabled = s end, Config.AimbotEnabled); aimY += 46
+CreateToggle(AimbotPage, "Instakill (Auto Disparo)", aimY, function(s) Config.Instakill = s end, Config.Instakill); aimY += 46
+CreateToggle(AimbotPage, "Mostrar FOV", aimY, function(s) Config.ShowFOVCircle = s end, Config.ShowFOVCircle); aimY += 46
+CreateSlider(AimbotPage, "Smooth (Suavidad)", aimY, 0.05, 0.5, Config.AimbotSmooth, function(v) Config.AimbotSmooth = v end); aimY += 52
+CreateSlider(AimbotPage, "Tamaño FOV", aimY, 50, 600, Config.ScreenFOV, function(v) Config.ScreenFOV = v end, 0); aimY += 52
 
 local mvY = 0
-CreateLabel(MovePage, "─── VELOCIDAD ───", mvY, OP.FireRed); mvY += 24
-CreateSlider(MovePage, "WalkSpeed", mvY, 16, 150, Config.WalkSpeed, function(v) Config.WalkSpeed = v; local h = getHumanoid(); if h then h.WalkSpeed = v end end, 0); mvY += 56
-CreateSlider(MovePage, "JumpPower", mvY, 50, 200, Config.JumpPower, function(v) Config.JumpPower = v; local h = getHumanoid(); if h then h.JumpPower = v; h.UseJumpPower = true end end, 0); mvY += 56
-CreateLabel(MovePage, "─── HABILIDADES ───", mvY, OP.FireRed); mvY += 24
-CreateToggle(MovePage, "Fly (Volar)", mvY, function(s) Config.FlyEnabled = s; ToggleFly(s) end, Config.FlyEnabled); mvY += 50
-CreateSlider(MovePage, "Velocidad Vuelo", mvY, 20, 200, Config.FlySpeed, function(v) Config.FlySpeed = v end, 0); mvY += 56
-CreateToggle(MovePage, "Noclip", mvY, function(s) Config.Noclip = s; ToggleNoclip(s) end, Config.Noclip); mvY += 50
+CreateLabel(MovePage, "─── VELOCIDAD ───", mvY, OP.FireRed); mvY += 22
+CreateSlider(MovePage, "WalkSpeed", mvY, 16, 150, Config.WalkSpeed, function(v) Config.WalkSpeed = v; local h = getHumanoid(); if h then h.WalkSpeed = v end end, 0); mvY += 52
+CreateSlider(MovePage, "JumpPower", mvY, 50, 200, Config.JumpPower, function(v) Config.JumpPower = v; local h = getHumanoid(); if h then h.JumpPower = v; h.UseJumpPower = true end end, 0); mvY += 52
+CreateLabel(MovePage, "─── HABILIDADES ───", mvY, OP.FireRed); mvY += 22
+CreateToggle(MovePage, "Fly (Volar)", mvY, function(s) Config.FlyEnabled = s; ToggleFly(s) end, Config.FlyEnabled); mvY += 46
+CreateSlider(MovePage, "Velocidad Vuelo", mvY, 20, 200, Config.FlySpeed, function(v) Config.FlySpeed = v end, 0); mvY += 52
+CreateToggle(MovePage, "Noclip", mvY, function(s) Config.Noclip = s; ToggleNoclip(s) end, Config.Noclip); mvY += 46
 
 local farmY = 0
-CreateLabel(FarmPage, "─── FARMEO ───", farmY, OP.FireRed); farmY += 24
-CreateToggle(FarmPage, "Auto Recolectar Monedas", farmY, function(s) Config.AutoFarm = s; ToggleFarm(s) end, Config.AutoFarm); farmY += 50
-CreateSlider(FarmPage, "Velocidad Farm", farmY, 20, 100, Config.FarmSpeed, function(v) Config.FarmSpeed = v end, 0); farmY += 56
+CreateLabel(FarmPage, "─── FARMEO ───", farmY, OP.FireRed); farmY += 22
+CreateToggle(FarmPage, "Auto Recolectar Monedas", farmY, function(s) Config.AutoFarm = s; ToggleFarm(s) end, Config.AutoFarm); farmY += 46
+CreateSlider(FarmPage, "Velocidad Farm", farmY, 20, 100, Config.FarmSpeed, function(v) Config.FarmSpeed = v end, 0); farmY += 52
 
 local miscY = 0
-CreateLabel(MiscPage, "─── MISC ───", miscY, OP.FireRed); miscY += 24
-CreateToggle(MiscPage, "Esquivar Cuchillos", miscY, function(s) Config.KnifeDodge = s end, Config.KnifeDodge); miscY += 50
-CreateToggle(MiscPage, "Anti-Void", miscY, function(s) Config.AntiVoid = s end, Config.AntiVoid); miscY += 50
-CreateToggle(MiscPage, "Efectos de Sonido", miscY, function(s) Config.SoundsEnabled = s end, Config.SoundsEnabled); miscY += 50
+CreateLabel(MiscPage, "─── MISC ───", miscY, OP.FireRed); miscY += 22
+CreateToggle(MiscPage, "Esquivar Cuchillos", miscY, function(s) Config.KnifeDodge = s end, Config.KnifeDodge); miscY += 46
+CreateToggle(MiscPage, "Anti-Void", miscY, function(s) Config.AntiVoid = s end, Config.AntiVoid); miscY += 46
+CreateToggle(MiscPage, "Efectos de Sonido", miscY, function(s) Config.SoundsEnabled = s end, Config.SoundsEnabled); miscY += 46
 
 local wY = 0
-CreateLabel(WeatherPage, "─── CLIMA ───", wY, OP.FireRed); wY += 24
-CreateButton(WeatherPage, "☀️  Calm Sea", wY, function() ApplyWeather("CalmSea"); ShowToast("Clima: Calm Sea") end, OP.Parchment); wY += 46
-CreateButton(WeatherPage, "⚡  Storm", wY, function() ApplyWeather("Storm"); ShowToast("Clima: Storm") end, OP.Parchment); wY += 46
-CreateButton(WeatherPage, "🌅  Sunset", wY, function() ApplyWeather("Sunset"); ShowToast("Clima: Sunset") end, OP.Parchment); wY += 46
-CreateButton(WeatherPage, "🌙  Night Sea", wY, function() ApplyWeather("NightSea"); ShowToast("Clima: Night Sea") end, OP.Parchment); wY += 46
+CreateLabel(WeatherPage, "─── CLIMA ───", wY, OP.FireRed); wY += 22
+CreateButton(WeatherPage, "☀️  Calm Sea", wY, function() ApplyWeather("CalmSea"); ShowToast("Clima: Calm Sea") end, OP.Parchment); wY += 42
+CreateButton(WeatherPage, "⚡  Storm", wY, function() ApplyWeather("Storm"); ShowToast("Clima: Storm") end, OP.Parchment); wY += 42
+CreateButton(WeatherPage, "🌅  Sunset", wY, function() ApplyWeather("Sunset"); ShowToast("Clima: Sunset") end, OP.Parchment); wY += 42
+CreateButton(WeatherPage, "🌙  Night Sea", wY, function() ApplyWeather("NightSea"); ShowToast("Clima: Night Sea") end, OP.Parchment); wY += 42
 
 local cfgY = 0
-CreateLabel(ConfigPage, "─── INFO ───", cfgY, OP.FireRed); cfgY += 24
-local roleLbl = Instance.new("TextLabel", ConfigPage); roleLbl.Size = UDim2.new(1, 0, 0, 26); roleLbl.Position = UDim2.new(0, 6, 0, cfgY); roleLbl.BackgroundTransparency = 1; roleLbl.Text = "Tu rol: ..."; roleLbl.TextColor3 = OP.Muted; roleLbl.Font = Enum.Font.BuilderSansBold; roleLbl.TextSize = 14; roleLbl.TextXAlignment = Enum.TextXAlignment.Left; cfgY += 30
-CreateLabel(ConfigPage, "─── ACCIONES ───", cfgY, OP.FireRed); cfgY += 24
+CreateLabel(ConfigPage, "─── INFO ───", cfgY, OP.FireRed); cfgY += 22
+local roleLbl = Instance.new("TextLabel", ConfigPage); roleLbl.Size = UDim2.new(1, 0, 0, 22); roleLbl.Position = UDim2.new(0, 4, 0, cfgY); roleLbl.BackgroundTransparency = 1; roleLbl.Text = "Tu rol: ..."; roleLbl.TextColor3 = OP.Muted; roleLbl.Font = Enum.Font.BuilderSansBold; roleLbl.TextSize = 13; roleLbl.TextXAlignment = Enum.TextXAlignment.Left; cfgY += 26
+CreateLabel(ConfigPage, "─── ACCIONES ───", cfgY, OP.FireRed); cfgY += 22
 CreateButton(ConfigPage, "❌ Cerrar menú", cfgY, function() if _G.OnePieceMenuOpen then ToggleMenu() end end, OP.FireRed)
 
 -- ==========================================================
@@ -719,14 +706,14 @@ _G.OnePieceMenuOpen = false
 function ToggleMenu()
     _G.OnePieceMenuOpen = not _G.OnePieceMenuOpen
     if _G.OnePieceMenuOpen then
-        MainFrame.Visible = true; menuScale.Scale = 0.7
-        TweenService:Create(menuScale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
-        ToggleBtn.Text = "✕ Cerrar"; PlaySound("open")
+        MainFrame.Visible = true; menuScale.Scale = 0.85
+        TweenService:Create(menuScale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = math.clamp(math.min(Camera.ViewportSize.X, Camera.ViewportSize.Y) / 480, 0.65, 1)}):Play()
+        ToggleBtn.Text = "✕ CERRAR"; PlaySound("open")
         if not currentTab then SwitchTab("ESP") end
     else
-        local t = TweenService:Create(menuScale, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Scale = 0.7})
-        t:Play(); t.Completed:Connect(function() MainFrame.Visible = false; menuScale.Scale = 1 end)
-        ToggleBtn.Text = "🏴‍☠️ ONE PIECE V7"; PlaySound("close")
+        local t = TweenService:Create(menuScale, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Scale = 0.85})
+        t:Play(); t.Completed:Connect(function() MainFrame.Visible = false; UpdateScale() end)
+        ToggleBtn.Text = "🏴‍☠️ ONE PIECE"; PlaySound("close")
     end
 end
 
@@ -738,7 +725,6 @@ CloseBtn.Activated:Connect(ToggleMenu)
 -- ==========================================================
 SwitchTab("ESP"); ApplyWeather("CalmSea")
 
--- Info loop
 task.spawn(function()
     while ScreenGui.Parent do
         local role, color = GetPlayerRole(LocalPlayer)
@@ -748,18 +734,13 @@ task.spawn(function()
     end
 end)
 
--- Update loop
 RunService.RenderStepped:Connect(function()
     pcall(UpdateESP)
     pcall(UpdateAimbot)
-    
-    -- Anti-Void Logic
     if Config.AntiVoid then
         local hrp = getHRP()
-        if hrp and hrp.Position.Y < -30 then
-            hrp.CFrame = CFrame.new(0, 50, 0)
-        end
+        if hrp and hrp.Position.Y < -30 then hrp.CFrame = CFrame.new(0, 50, 0) end
     end
 end)
 
-print("[One Piece Ultimate v7.1] ¡Menú cargado correctamente! 🏴‍☠️")
+print("[ONE PIECE] ¡Menú cargado y optimizado para móviles! 🏴‍☠️")
