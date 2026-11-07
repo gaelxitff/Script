@@ -1,5 +1,5 @@
 -- ==========================================================
--- 🏴‍☠️ ONE PIECE GAEL SCRIPT v7.0 | ULTIMATE MM2
+-- 🏴‍☠️ ONE PIECE GAEL SCRIPT v7.1 | ULTIMATE MM2 (FIXED)
 -- ==========================================================
 local RunService   = game:GetService("RunService")
 local Players      = game:GetService("Players")
@@ -18,22 +18,19 @@ local Camera      = Workspace.CurrentCamera
 -- CONFIG
 -- ==========================================================
 local Config = {
-    -- ESP
     ESPEnabled    = true,
     ESPHighlight  = true,
     ShowNames     = true,
     ShowDistance  = true,
     ESPThickness  = 2,
-    ESPColorMode  = "Role",
     
-    -- Aimbot
     AimbotEnabled = false,
     AimbotSmooth  = 0.15,
     Instakill     = false,
     ShowFOVCircle = true,
     ScreenFOV     = 250,
+    LastInstakill = 0, -- Cooldown
     
-    -- Movement
     WalkSpeed     = 16,
     JumpPower     = 50,
     FlyEnabled    = false,
@@ -41,18 +38,16 @@ local Config = {
     Noclip        = false,
     AntiVoid      = true,
     
-    -- Farm
     AutoFarm      = false,
     FarmSpeed     = 50,
     
-    -- Misc
     KnifeDodge    = true,
     SoundsEnabled = true,
     Weather       = "CalmSea",
 }
 
 -- ==========================================================
--- ONE PIECE PALETTE
+-- ONE PIECE PALETTE (Error corregido: se agregaron StrawGold y StrawDark)
 -- ==========================================================
 local OP = {
     Parchment = Color3.fromRGB(246, 231, 197),
@@ -65,6 +60,8 @@ local OP = {
     White     = Color3.fromRGB(255, 255, 255),
     Muted     = Color3.fromRGB(115, 140, 170),
     Jolly     = Color3.fromRGB(22, 28, 44),
+    StrawGold = Color3.fromRGB(255, 210, 90), -- FIX
+    StrawDark = Color3.fromRGB(205, 155, 45), -- FIX
 }
 
 local IsMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
@@ -171,9 +168,9 @@ end
 local function getGun()
     local char = LocalPlayer.Character
     if not char then return nil end
-    local gun = char:FindFirstChild("Gun") or LocalPlayer.Backpack:FindFirstChild("Gun")
-    if gun then return gun end
-    return nil
+    local backpack = LocalPlayer:FindFirstChild("Backpack")
+    local gun = char:FindFirstChild("Gun") or (backpack and backpack:FindFirstChild("Gun"))
+    return gun
 end
 
 local function getMurderer()
@@ -201,8 +198,8 @@ local function InstaKill(targetPlr)
 end
 
 -- Knife Dodge Logic
-local function setupKnifeDodge()
-    local cs = ReplicatedStorage:FindFirstChild("ClientServices")
+task.spawn(function()
+    local cs = ReplicatedStorage:WaitForChild("ClientServices", 10)
     local ws = cs and cs:FindFirstChild("WeaponService")
     local gf = ws and ws:FindFirstChild("GunFired")
     if gf then
@@ -230,8 +227,7 @@ local function setupKnifeDodge()
             end
         end)
     end
-end
-task.spawn(setupKnifeDodge)
+end)
 
 -- ==========================================================
 -- ESP LÓGICA
@@ -312,7 +308,10 @@ local function UpdateESP()
     if not HasDrawing then return end
     ResetLines(); ResetLabels()
     if not (Config.ESPEnabled or Config.ESPHighlight or Config.ShowNames) or not LocalPlayer.Character then 
-        for p, h in pairs(HighlightCache) do h:Destroy(); HighlightCache[p] = nil end
+        for p, h in pairs(HighlightCache) do 
+            pcall(function() h:Destroy() end) 
+            HighlightCache[p] = nil 
+        end
         return 
     end
     local idx = 0
@@ -348,7 +347,9 @@ local function UpdateAimbot()
                     local desired = CFrame.new(Camera.CFrame.Position, tHead.Position)
                     Camera.CFrame = Camera.CFrame:Lerp(desired, Config.AimbotSmooth)
                     
-                    if Config.Instakill then
+                    -- Instakill con cooldown para evitar Kick por spam
+                    if Config.Instakill and tick() - Config.LastInstakill > 0.15 then
+                        Config.LastInstakill = tick()
                         InstaKill(target)
                     end
                 end
@@ -374,6 +375,7 @@ end
 local noclipConn = nil
 local function ToggleNoclip(state)
     if state then
+        if noclipConn then noclipConn:Disconnect() end
         noclipConn = RunService.Stepped:Connect(function()
             if LocalPlayer.Character then
                 for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
@@ -386,7 +388,7 @@ local function ToggleNoclip(state)
     end
 end
 
-local flyBV, flyBG = nil, nil
+local flyBV, flyBG, flyConn = nil, nil, nil
 local function ToggleFly(state)
     local hrp = getHRP(); local hum = getHumanoid()
     if not hrp or not hum then return end
@@ -395,7 +397,9 @@ local function ToggleFly(state)
         hum.PlatformStand = true
         flyBV = Instance.new("BodyVelocity"); flyBV.MaxForce = Vector3.new(1e5,1e5,1e5); flyBV.Parent = hrp
         flyBG = Instance.new("BodyGyro"); flyBG.MaxTorque = Vector3.new(1e5,1e5,1e5); flyBG.P = 1e4; flyBG.Parent = hrp
-        RunService.Heartbeat:Connect(function()
+        
+        if flyConn then flyConn:Disconnect() end
+        flyConn = RunService.Heartbeat:Connect(function()
             if not Config.FlyEnabled or not flyBV or not flyBG then return end
             local cam = Workspace.CurrentCamera
             local moveDir = getHumanoid().MoveDirection
@@ -404,6 +408,7 @@ local function ToggleFly(state)
             flyBG.CFrame = cam.CFrame
         end)
     else
+        if flyConn then flyConn:Disconnect(); flyConn = nil end
         if flyBV then flyBV:Destroy(); flyBV = nil end
         if flyBG then flyBG:Destroy(); flyBG = nil end
         if hum then hum.PlatformStand = false end
@@ -413,6 +418,7 @@ end
 local farmThread = nil
 local function ToggleFarm(state)
     if state then
+        if farmThread then task.cancel(farmThread) end
         farmThread = task.spawn(function()
             while Config.AutoFarm do
                 task.wait(0.1)
@@ -428,12 +434,10 @@ local function ToggleFarm(state)
                             end
                         end
                         if bestCoin then
-                            -- Toca la moneda
                             pcall(firetouchinterest, hrp, bestCoin, 0)
                             task.wait(0.01)
                             pcall(firetouchinterest, hrp, bestCoin, 1)
                             
-                            -- Vuela hacia ella si está lejos
                             if minDist > 10 then
                                 hrp.Velocity = (bestCoin.Position - hrp.Position).Unit * Config.FarmSpeed
                             end
@@ -448,7 +452,7 @@ local function ToggleFarm(state)
 end
 
 -- ==========================================================
--- UI CREATION
+-- UI CREATION (A prueba de fallos)
 -- ==========================================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "OnePieceUltimate"
@@ -505,7 +509,6 @@ local StarLayer = Instance.new("Frame", MainFrame); StarLayer.Size = UDim2.new(1
 local SunLayer = Instance.new("Frame", MainFrame); SunLayer.Size = UDim2.new(0, 60, 0, 60); SunLayer.Position = UDim2.new(1, -85, 0, 20); SunLayer.BackgroundColor3 = Color3.fromRGB(255, 230, 130); SunLayer.BackgroundTransparency = 0.15; SunLayer.ZIndex = 2; SunLayer.Visible = false
 Instance.new("UICorner", SunLayer).CornerRadius = UDim.new(1, 0)
 
--- ANIMACIONES DE FONDO
 for i = 1, 4 do
     local cloud = Instance.new("Frame", CloudLayer); cloud.Size = UDim2.new(0, 100 + math.random(20,60), 0, 34); cloud.Position = UDim2.new(-0.4, 0, math.random(10,80)/100, 0); cloud.BackgroundColor3 = OP.White; cloud.BackgroundTransparency = 0.6
     Instance.new("UICorner", cloud).CornerRadius = UDim.new(1, 0)
@@ -541,11 +544,12 @@ local CloseBtn = Instance.new("TextButton", Header); CloseBtn.Size = UDim2.new(0
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 10)
 local cbStroke = Instance.new("UIStroke", CloseBtn); cbStroke.Color = OP.Gold; cbStroke.Thickness = 1.5
 
--- TABS (Scrollable para que quepan todas en celular)
+-- TABS
 local TabBar = Instance.new("ScrollingFrame", MainFrame)
 TabBar.Size = UDim2.new(1, -24, 0, 42); TabBar.Position = UDim2.new(0, 12, 0, 62)
 TabBar.BackgroundColor3 = OP.Parchment; TabBar.BackgroundTransparency = 0.25; TabBar.ZIndex = 51
 TabBar.ScrollBarThickness = 0; TabBar.CanvasSize = UDim2.new(0, 0, 0, 0); TabBar.ScrollingDirection = Enum.ScrollingDirection.X
+TabBar.AutomaticCanvasSize = Enum.AutomaticSize.X -- FIX: Tabs no se apilan
 Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
 local tbStroke = Instance.new("UIStroke", TabBar); tbStroke.Color = OP.Gold; tbStroke.Thickness = 1.5; tbStroke.Transparency = 0.3
 
@@ -698,7 +702,7 @@ local cfgY = 0
 CreateLabel(ConfigPage, "─── INFO ───", cfgY, OP.FireRed); cfgY += 24
 local roleLbl = Instance.new("TextLabel", ConfigPage); roleLbl.Size = UDim2.new(1, 0, 0, 26); roleLbl.Position = UDim2.new(0, 6, 0, cfgY); roleLbl.BackgroundTransparency = 1; roleLbl.Text = "Tu rol: ..."; roleLbl.TextColor3 = OP.Muted; roleLbl.Font = Enum.Font.BuilderSansBold; roleLbl.TextSize = 14; roleLbl.TextXAlignment = Enum.TextXAlignment.Left; cfgY += 30
 CreateLabel(ConfigPage, "─── ACCIONES ───", cfgY, OP.FireRed); cfgY += 24
-CreateButton(ConfigPage, "❌ Cerrar menú", cfgY, function() if isOpen then ToggleMenu() end end, OP.FireRed)
+CreateButton(ConfigPage, "❌ Cerrar menú", cfgY, function() if _G.OnePieceMenuOpen then ToggleMenu() end end, OP.FireRed)
 
 -- ==========================================================
 -- DRAG & OPEN/CLOSE
@@ -711,10 +715,10 @@ local function MakeDraggable(frame, handle)
 end
 MakeDraggable(ToggleBtn, ToggleBtn); MakeDraggable(MainFrame, Header)
 
-isOpen = false
-local function ToggleMenu()
-    isOpen = not isOpen
-    if isOpen then
+_G.OnePieceMenuOpen = false
+function ToggleMenu()
+    _G.OnePieceMenuOpen = not _G.OnePieceMenuOpen
+    if _G.OnePieceMenuOpen then
         MainFrame.Visible = true; menuScale.Scale = 0.7
         TweenService:Create(menuScale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
         ToggleBtn.Text = "✕ Cerrar"; PlaySound("open")
@@ -758,4 +762,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-print("[One Piece Ultimate v7.0] ¡Cargado con las funciones de HappyHub! 🏴‍☠️")
+print("[One Piece Ultimate v7.1] ¡Menú cargado correctamente! 🏴‍☠️")
