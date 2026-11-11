@@ -1,5 +1,5 @@
 -- ==========================================================
--- 🏴‍☠️ ONE PIECE HUB v19.0 | PRO EDITION | CLEAN ESP & UI
+-- 🏴‍☠️ ONE PIECE HUB v20.0 | ULTRA PRO EDITION
 -- ==========================================================
 local RunService   = game:GetService("RunService")
 local Players      = game:GetService("Players")
@@ -19,13 +19,11 @@ local Camera      = Workspace.CurrentCamera
 local Config = {
     ESPEnabled    = true,
     ESPHighlight  = true,
-    
     AimbotEnabled = false,
-    AimbotSmooth  = 0.15,
+    AimbotSmooth  = 0.18,
     ShowFOVCircle = true,
     ScreenFOV     = 250,
     LockDistance  = 150,
-    
     SoundsEnabled = true,
 }
 
@@ -52,24 +50,25 @@ local Songs = {
     {name = "Crab Rave", id = "5410086218"},
 }
 
--- PALETA DE COLORES PREMIUM (NEON CRIMSON)
+-- PALETA PRO
 local OP = {
-    BG        = Color3.fromRGB(10, 10, 12),
-    Panel     = Color3.fromRGB(20, 20, 24),
-    Panel2    = Color3.fromRGB(30, 30, 36),
-    Red       = Color3.fromRGB(255, 30, 60),
-    RedDark   = Color3.fromRGB(150, 10, 20),
+    BG        = Color3.fromRGB(12, 12, 14),
+    BG2       = Color3.fromRGB(20, 10, 12),
+    Panel     = Color3.fromRGB(24, 24, 28),
+    Panel2    = Color3.fromRGB(36, 36, 42),
+    Red       = Color3.fromRGB(255, 35, 55),
+    RedDark   = Color3.fromRGB(180, 20, 30),
     White     = Color3.fromRGB(255, 255, 255),
-    Text      = Color3.fromRGB(245, 245, 245),
-    Muted     = Color3.fromRGB(120, 120, 130),
-    Green     = Color3.fromRGB(60, 255, 120),
-    Blue      = Color3.fromRGB(60, 150, 255),
+    Text      = Color3.fromRGB(240, 240, 245),
+    Muted     = Color3.fromRGB(130, 130, 140),
+    Green     = Color3.fromRGB(50, 220, 100),
+    Blue      = Color3.fromRGB(50, 140, 255),
 }
 
 local IsMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
 
 -- ==========================================================
--- DRAWING & POOLS (ESP)
+-- ESP & DRAWING
 -- ==========================================================
 local HasDrawing = pcall(function() return Drawing.new("Line") end)
 local LinePool, LineIndex = {}, 0
@@ -86,7 +85,7 @@ local function GetLine()
     if not LinePool[LineIndex] then
         local l = Drawing.new("Line"); l.Transparency = 1; l.Visible = false; LinePool[LineIndex] = l
     end
-    local line = LinePool[LineIndex]; line.Thickness = 2; return line
+    local line = LinePool[LineIndex]; line.Thickness = 1.5; return line
 end
 
 local function ResetLines() 
@@ -97,7 +96,7 @@ local function PlaySound(kind)
     if not Config.SoundsEnabled then return end
     pcall(function()
         local s = Instance.new("Sound")
-        s.SoundId = "rbxasset://sounds/electronicpingshort.wav"; s.Volume = 0.3
+        s.SoundId = "rbxasset://sounds/electronicpingshort.wav"; s.Volume = 0.25
         s.PlaybackSpeed = (kind == "open" and 1.3) or (kind == "close" and 0.7) or 1
         s.Parent = SoundService; s:Play(); Debris:AddItem(s, 2)
     end)
@@ -130,7 +129,7 @@ local function getMurderer()
 end
 
 -- ==========================================================
--- ESP LÓGICA (SIN NOMBRES/DISTANCIA, SOLO CAJAS Y CHAMS)
+-- ESP LÓGICA
 -- ==========================================================
 local HighlightCache = {}
 
@@ -166,13 +165,13 @@ local function DrawFor(player)
     if Config.ESPHighlight then
         if not HighlightCache[player] or not HighlightCache[player].Parent then
             local h = Instance.new("Highlight")
-            h.FillColor = color; h.FillTransparency = 0.5
-            h.OutlineColor = OP.White; h.OutlineTransparency = 0 
+            h.FillColor = color; h.FillTransparency = 0.6
+            h.OutlineColor = color; h.OutlineTransparency = 0 
             h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop; h.Parent = char
             HighlightCache[player] = h
         else
             HighlightCache[player].FillColor = color
-            HighlightCache[player].OutlineColor = OP.White
+            HighlightCache[player].OutlineColor = color
         end
     elseif HighlightCache[player] then
         HighlightCache[player]:Destroy(); HighlightCache[player] = nil
@@ -182,15 +181,10 @@ end
 local function UpdateESP()
     if not HasDrawing then return end
     ResetLines()
-    
     if not (Config.ESPEnabled or Config.ESPHighlight) then 
-        for p, h in pairs(HighlightCache) do 
-            pcall(function() h:Destroy() end) 
-            HighlightCache[p] = nil 
-        end
+        for p, h in pairs(HighlightCache) do pcall(function() h:Destroy() end); HighlightCache[p] = nil end
         return 
     end
-    
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
             pcall(DrawFor, p)
@@ -236,7 +230,7 @@ local function UpdateAimbot()
 end
 
 -- ==========================================================
--- UI CREATION (PRO & MOBILE)
+-- UI CREATION (PRO MAX)
 -- ==========================================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "OnePieceMenu"
@@ -245,6 +239,12 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
 pcall(function() ScreenGui.Parent = CoreGui end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
+
+-- SOMBRA DEL MENÚ (DROP SHADOW)
+local ShadowFrame = Instance.new("Frame", ScreenGui)
+ShadowFrame.Size = UDim2.new(0, 280, 0, 400); ShadowFrame.AnchorPoint = Vector2.new(0.5, 0.5); ShadowFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+ShadowFrame.BackgroundColor3 = Color3.new(0,0,0); ShadowFrame.BackgroundTransparency = 0.5; ShadowFrame.Visible = false; ShadowFrame.ZIndex = 49
+Instance.new("UICorner", ShadowFrame).CornerRadius = UDim.new(0, 14)
 
 -- BOTÓN FLOTANTE
 local ToggleBtn = Instance.new("TextButton")
@@ -259,7 +259,15 @@ local tStroke = Instance.new("UIStroke", ToggleBtn); tStroke.Color = OP.Red; tSt
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 280, 0, 400); MainFrame.AnchorPoint = Vector2.new(0.5, 0.5); MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 MainFrame.BackgroundColor3 = OP.BG; MainFrame.Visible = false; MainFrame.ClipsDescendants = true; MainFrame.ZIndex = 50; MainFrame.Parent = ScreenGui
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
+
+-- GRADIENTE DE FONDO
+local bgGradient = Instance.new("UIGradient", MainFrame)
+bgGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, OP.BG2),
+    ColorSequenceKeypoint.new(1, OP.BG)
+})
+bgGradient.Rotation = 90
 
 local menuScale = Instance.new("UIScale", MainFrame)
 local function UpdateScale()
@@ -269,26 +277,27 @@ end
 UpdateScale()
 Camera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateScale)
 
-local mainStroke = Instance.new("UIStroke", MainFrame); mainStroke.Color = OP.Red; mainStroke.Thickness = 2; mainStroke.Transparency = 0.2
+local mainStroke = Instance.new("UIStroke", MainFrame); mainStroke.Color = OP.Red; mainStroke.Thickness = 1.5; mainStroke.Transparency = 0.3
 
--- PARTÍCULAS TIPO BRASAS
+-- PARTÍCULAS DE ENERGÍA
 local ParticleLayer = Instance.new("Frame", MainFrame)
 ParticleLayer.Size = UDim2.new(1, 0, 1, 0); ParticleLayer.BackgroundTransparency = 1; ParticleLayer.ZIndex = 3; ParticleLayer.ClipsDescendants = true
 
 task.spawn(function()
     while ScreenGui.Parent do
-        task.wait(0.1)
+        task.wait(0.15)
         if MainFrame.Visible then
             local p = Instance.new("Frame", ParticleLayer)
-            p.Size = UDim2.new(0, math.random(2, 4), 0, math.random(2, 4))
+            local size = math.random(2, 5)
+            p.Size = UDim2.new(0, size, 0, size)
             p.Position = UDim2.new(math.random(), 0, 1.1, 0)
             p.BackgroundColor3 = OP.Red
-            p.BackgroundTransparency = 0.2
+            p.BackgroundTransparency = math.random(2, 6) / 10
             p.ZIndex = 3
             Instance.new("UICorner", p).CornerRadius = UDim.new(1, 0)
             
             local tween = TweenService:Create(p, TweenInfo.new(math.random(3, 6), Enum.EasingStyle.Linear), {
-                Position = UDim2.new(p.Position.X.Scale + (math.random(-10,10)/100), 0, -0.1, 0),
+                Position = UDim2.new(p.Position.X.Scale + (math.random(-5,5)/100), 0, -0.1, 0),
                 BackgroundTransparency = 1
             })
             tween:Play()
@@ -306,7 +315,7 @@ Instance.new("UICorner", hatBand).CornerRadius = UDim.new(0, 2)
 local hatBrim = Instance.new("Frame", StrawHat); hatBrim.Size = UDim2.new(0, 26, 0, 5); hatBrim.Position = UDim2.new(0, 1, 0, 15); hatBrim.BackgroundColor3 = OP.RedDark; hatBrim.ZIndex = 53
 Instance.new("UICorner", hatBrim).CornerRadius = UDim.new(1, 0)
 
-local Title = Instance.new("TextLabel", MainFrame); Title.Size = UDim2.new(1, -100, 0, 26); Title.Position = UDim2.new(0, 48, 0, 10); Title.BackgroundTransparency = 1; Title.Text = "ONE PIECE"; Title.TextColor3 = OP.Red; Title.Font = Enum.Font.BuilderSansBold; Title.TextSize = 20; Title.TextXAlignment = Enum.TextXAlignment.Left; Title.ZIndex = 52
+local Title = Instance.new("TextLabel", MainFrame); Title.Size = UDim2.new(1, -100, 0, 26); Title.Position = UDim2.new(0, 48, 0, 10); Title.BackgroundTransparency = 1; Title.Text = "ONE PIECE"; Title.TextColor3 = OP.White; Title.Font = Enum.Font.BuilderSansBold; Title.TextSize = 20; Title.TextXAlignment = Enum.TextXAlignment.Left; Title.ZIndex = 52
 local titleGrad = Instance.new("UIGradient", Title)
 titleGrad.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, OP.Red), ColorSequenceKeypoint.new(1, OP.White)})
 
@@ -316,7 +325,7 @@ Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
 -- TABS
 local TabBar = Instance.new("ScrollingFrame", MainFrame)
 TabBar.Size = UDim2.new(1, -20, 0, 32); TabBar.Position = UDim2.new(0, 10, 0, 52)
-TabBar.BackgroundColor3 = OP.Panel; TabBar.BackgroundTransparency = 0.3; TabBar.ZIndex = 51
+TabBar.BackgroundColor3 = OP.Panel; TabBar.BackgroundTransparency = 0.4; TabBar.ZIndex = 51
 TabBar.ScrollBarThickness = 0; TabBar.CanvasSize = UDim2.new(0, 0, 0, 0); TabBar.AutomaticCanvasSize = Enum.AutomaticSize.X; TabBar.ScrollingDirection = Enum.ScrollingDirection.X
 Instance.new("UICorner", TabBar).CornerRadius = UDim.new(1, 0)
 local TabLayout = Instance.new("UIListLayout", TabBar); TabLayout.FillDirection = Enum.FillDirection.Horizontal; TabLayout.Padding = UDim.new(0, 4); TabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
@@ -358,7 +367,7 @@ local function CreateTabButton(name)
 end
 CreateTabButton("ESP"); CreateTabButton("Aimbot"); CreateTabButton("Music")
 
--- BUILDERS (CON EFECTO DE PRESIÓN TÁCTIL)
+-- BUILDERS
 local function CreateLabel(parent, text, yPos, color)
     local lbl = Instance.new("TextLabel", parent); lbl.Size = UDim2.new(1, 0, 0, 18); lbl.Position = UDim2.new(0, 4, 0, yPos); lbl.BackgroundTransparency = 1; lbl.Text = text; lbl.TextColor3 = color or OP.Muted; lbl.Font = Enum.Font.BuilderSansBold; lbl.TextSize = 10; lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.ZIndex = 100
     return lbl
@@ -375,6 +384,9 @@ local function CreateToggle(parent, text, yPos, callback, default)
     local switchBg = Instance.new("Frame", btn); switchBg.Size = UDim2.new(0, 34, 0, 18); switchBg.Position = UDim2.new(1, -46, 0.5, -9); switchBg.BackgroundColor3 = state and OP.Red or OP.Panel2; switchBg.ZIndex = 101
     Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1, 0)
     
+    local swGrad = Instance.new("UIGradient", switchBg)
+    swGrad.Color = ColorSequence.new(state and OP.Red or OP.Panel2, state and OP.RedDark or OP.Panel)
+    
     local thumb = Instance.new("Frame", switchBg); thumb.Size = UDim2.new(0, 14, 0, 14); thumb.Position = state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7); thumb.BackgroundColor3 = OP.White; thumb.ZIndex = 102
     Instance.new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
     
@@ -384,6 +396,7 @@ local function CreateToggle(parent, text, yPos, callback, default)
     btn.Activated:Connect(function()
         state = not state; PlaySound()
         TweenService:Create(switchBg, TweenInfo.new(0.2), {BackgroundColor3 = state and OP.Red or OP.Panel2}):Play()
+        swGrad.Color = ColorSequence.new(state and OP.Red or OP.Panel2, state and OP.RedDark or OP.Panel)
         TweenService:Create(thumb, TweenInfo.new(0.2), {Position = state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)}):Play()
         if callback then callback(state) end
     end)
@@ -403,6 +416,7 @@ local function CreateSlider(parent, text, yPos, minVal, maxVal, defaultVal, call
     local percent = (defaultVal - minVal) / (maxVal - minVal)
     local fill = Instance.new("Frame", bar); fill.Size = UDim2.new(percent, 0, 1, 0); fill.BackgroundColor3 = OP.Red; fill.ZIndex = 102
     Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+    local fGrad = Instance.new("UIGradient", fill); fGrad.Color = ColorSequence.new(OP.Red, OP.RedDark)
     
     local knob = Instance.new("Frame", bar); knob.Size = UDim2.new(0, 14, 0, 14); knob.Position = UDim2.new(percent, -7, 0.5, -7); knob.BackgroundColor3 = OP.White; knob.ZIndex = 103
     Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
@@ -431,31 +445,31 @@ local aimY = 0
 CreateLabel(AimbotPage, "─── COMBATE ───", aimY, OP.Red); aimY += 22
 CreateToggle(AimbotPage, "Aimbot Lock", aimY, function(s) Config.AimbotEnabled = s end, Config.AimbotEnabled); aimY += 42
 CreateToggle(AimbotPage, "Mostrar Círculo FOV", aimY, function(s) Config.ShowFOVCircle = s end, Config.ShowFOVCircle); aimY += 42
-CreateSlider(AimbotPage, "Suavidad (Smooth)", aimY, 0.05, 0.5, Config.AimbotSmooth, function(v) Config.AimbotSmooth = v end); aimY += 48
+CreateSlider(AimbotPage, "Suavidad", aimY, 0.05, 0.5, Config.AimbotSmooth, function(v) Config.AimbotSmooth = v end); aimY += 48
 CreateSlider(AimbotPage, "Tamaño FOV", aimY, 50, 600, Config.ScreenFOV, function(v) Config.ScreenFOV = v end, 0); aimY += 48
-CreateSlider(AimbotPage, "Distancia Max (Studs)", aimY, 10, 500, Config.LockDistance, function(v) Config.LockDistance = v end, 0); aimY += 48
+CreateSlider(AimbotPage, "Distancia Max", aimY, 10, 500, Config.LockDistance, function(v) Config.LockDistance = v end, 0); aimY += 48
 CreateLabel(AimbotPage, "* Solo funciona si eres Sheriff.", aimY, OP.Muted)
 
 -- ==========================================================
--- FLOATING MINI PLAYER
+-- FLOATING MINI PLAYER (PRO)
 -- ==========================================================
 local PlayerGui = Instance.new("Frame", ScreenGui)
 PlayerGui.Name = "MusicPlayer"
-PlayerGui.Size = UDim2.new(0, 190, 0, 75)
-PlayerGui.Position = UDim2.new(0.5, -95, 0.8, -37)
+PlayerGui.Size = UDim2.new(0, 220, 0, 90)
+PlayerGui.Position = UDim2.new(0.5, -110, 0.8, -45)
 PlayerGui.BackgroundColor3 = OP.BG
-PlayerGui.BackgroundTransparency = 0.2
+PlayerGui.BackgroundTransparency = 0.1
 PlayerGui.Visible = false
 PlayerGui.ZIndex = 150
 PlayerGui.Active = true
-Instance.new("UICorner", PlayerGui).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", PlayerGui).CornerRadius = UDim.new(0, 12)
 local playerStroke = Instance.new("UIStroke", PlayerGui); playerStroke.Color = OP.Red; playerStroke.Thickness = 1.5
 
 local SongNameLbl = Instance.new("TextLabel", PlayerGui)
-SongNameLbl.Size = UDim2.new(1, -40, 0, 20); SongNameLbl.Position = UDim2.new(0, 10, 0, 5)
+SongNameLbl.Size = UDim2.new(1, -60, 0, 20); SongNameLbl.Position = UDim2.new(0, 10, 0, 5)
 SongNameLbl.BackgroundTransparency = 1; SongNameLbl.Text = "Ninguna canción"
 SongNameLbl.TextColor3 = OP.Text; SongNameLbl.Font = Enum.Font.BuilderSansBold; SongNameLbl.TextSize = 12
-SongNameLbl.TextXAlignment = Enum.TextXAlignment.Left; SongNameLbl.ZIndex = 151
+SongNameLbl.TextXAlignment = Enum.TextXAlignment.Left; SongNameLbl.TextTruncate = Enum.TextTruncate.AtEnd; SongNameLbl.ZIndex = 151
 
 local ClosePlayerBtn = Instance.new("TextButton", PlayerGui)
 ClosePlayerBtn.Size = UDim2.new(0, 20, 0, 20); ClosePlayerBtn.Position = UDim2.new(1, -26, 0, 5)
@@ -464,29 +478,37 @@ ClosePlayerBtn.Font = Enum.Font.GothamBold; ClosePlayerBtn.TextSize = 10; CloseP
 Instance.new("UICorner", ClosePlayerBtn).CornerRadius = UDim.new(0, 4)
 
 local PlayBtnPlayer = Instance.new("TextButton", PlayerGui)
-PlayBtnPlayer.Size = UDim2.new(0, 36, 0, 28); PlayBtnPlayer.Position = UDim2.new(0, 10, 0, 40)
-PlayBtnPlayer.BackgroundColor3 = OP.Red; PlayBtnPlayer.Text = "⏸"; PlayBtnPlayer.TextColor3 = OP.White
-PlayBtnPlayer.Font = Enum.Font.GothamBold; PlayBtnPlayer.TextSize = 14; PlayBtnPlayer.ZIndex = 151; PlayBtnPlayer.AutoButtonColor = false
+PlayBtnPlayer.Size = UDim2.new(0, 26, 0, 24); PlayBtnPlayer.Position = UDim2.new(0, 10, 0, 55)
+PlayBtnPlayer.BackgroundColor3 = OP.Panel2; PlayBtnPlayer.Text = "⏸"; PlayBtnPlayer.TextColor3 = OP.White
+PlayBtnPlayer.Font = Enum.Font.GothamBold; PlayBtnPlayer.TextSize = 12; PlayBtnPlayer.ZIndex = 151; PlayBtnPlayer.AutoButtonColor = false
 Instance.new("UICorner", PlayBtnPlayer).CornerRadius = UDim.new(0, 4)
 
-local MiniVisualizer = Instance.new("Frame", PlayerGui)
-MiniVisualizer.Size = UDim2.new(1, -60, 0, 28); MiniVisualizer.Position = UDim2.new(0, 55, 0, 40)
-MiniVisualizer.BackgroundTransparency = 1; MiniVisualizer.ZIndex = 151
-local MiniLayout = Instance.new("UIListLayout", MiniVisualizer)
-MiniLayout.FillDirection = Enum.FillDirection.Horizontal
-MiniLayout.Padding = UDim.new(0, 2)
-MiniLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-MiniLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+local PrevBtn = Instance.new("TextButton", PlayerGui)
+PrevBtn.Size = UDim2.new(0, 26, 0, 24); PrevBtn.Position = UDim2.new(0, 40, 0, 55)
+PrevBtn.BackgroundColor3 = OP.Panel2; PrevBtn.Text = "⏮"; PrevBtn.TextColor3 = OP.White
+PrevBtn.Font = Enum.Font.GothamBold; PrevBtn.TextSize = 12; PrevBtn.ZIndex = 151; PrevBtn.AutoButtonColor = false
+Instance.new("UICorner", PrevBtn).CornerRadius = UDim.new(0, 4)
 
-local MiniBars = {}
-for i = 1, 8 do
-    local bar = Instance.new("Frame", MiniVisualizer)
-    bar.Size = UDim2.new(0, 5, 0, 5)
-    bar.BackgroundColor3 = OP.Red
-    bar.ZIndex = 152
-    Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 1)
-    MiniBars[i] = bar
-end
+local NextBtn = Instance.new("TextButton", PlayerGui)
+NextBtn.Size = UDim2.new(0, 26, 0, 24); NextBtn.Position = UDim2.new(0, 70, 0, 55)
+NextBtn.BackgroundColor3 = OP.Panel2; NextBtn.Text = "⏭"; NextBtn.TextColor3 = OP.White
+NextBtn.Font = Enum.Font.GothamBold; NextBtn.TextSize = 12; NextBtn.ZIndex = 151; NextBtn.AutoButtonColor = false
+Instance.new("UICorner", NextBtn).CornerRadius = UDim.new(0, 4)
+
+-- BARRA DE PROGRESO
+local ProgressBarBg = Instance.new("Frame", PlayerGui)
+ProgressBarBg.Size = UDim2.new(1, -110, 0, 4); ProgressBarBg.Position = UDim2.new(0, 105, 0, 58)
+ProgressBarBg.BackgroundColor3 = OP.Panel2; ProgressBarBg.ZIndex = 151
+Instance.new("UICorner", ProgressBarBg).CornerRadius = UDim.new(1, 0)
+
+local ProgressBarFill = Instance.new("Frame", ProgressBarBg)
+ProgressBarFill.Size = UDim2.new(0, 0, 1, 0); ProgressBarFill.BackgroundColor3 = OP.Red; ProgressBarFill.ZIndex = 152
+Instance.new("UICorner", ProgressBarFill).CornerRadius = UDim.new(1, 0)
+
+local TimeLbl = Instance.new("TextLabel", PlayerGui)
+TimeLbl.Size = UDim2.new(0, 50, 0, 20); TimeLbl.Position = UDim2.new(1, -60, 0, 28)
+TimeLbl.BackgroundTransparency = 1; TimeLbl.Text = "0:00"
+TimeLbl.TextColor3 = OP.Muted; TimeLbl.Font = Enum.Font.BuilderSans; TimeLbl.TextSize = 10; TimeLbl.ZIndex = 151
 
 local function MakeDraggable(frame, handle)
     local dragging, dragStart, startPos
@@ -497,32 +519,43 @@ end
 MakeDraggable(PlayerGui, SongNameLbl)
 
 -- ==========================================================
--- LÓGICA DE MÚSICA (AUDIO)
+-- LÓGICA DE MÚSICA (PRO)
 -- ==========================================================
 local MusicSound = Instance.new("Sound", SoundService)
 MusicSound.Volume = 5
 MusicSound.Looped = true
+local currentSongIndex = 1
 
-local function PlaySong(id, name)
+local function PlaySong(index)
+    if not Songs[index] then return end
+    currentSongIndex = index
+    local song = Songs[index]
     pcall(function()
         MusicSound:Stop()
-        MusicSound.SoundId = "rbxassetid://" .. id
+        MusicSound.SoundId = "rbxassetid://" .. song.id
         MusicSound:Play()
         
-        SongNameLbl.Text = name
+        SongNameLbl.Text = song.name
         PlayerGui.Visible = true
         PlayBtnPlayer.Text = "⏸"
     end)
 end
 
 PlayBtnPlayer.Activated:Connect(function()
-    if MusicSound.IsPlaying then
-        MusicSound:Pause()
-        PlayBtnPlayer.Text = "▶"
-    else
-        MusicSound:Resume()
-        PlayBtnPlayer.Text = "⏸"
-    end
+    if MusicSound.IsPlaying then MusicSound:Pause(); PlayBtnPlayer.Text = "▶"
+    else MusicSound:Resume(); PlayBtnPlayer.Text = "⏸" end
+end)
+
+PrevBtn.Activated:Connect(function()
+    local newIndex = currentSongIndex - 1
+    if newIndex < 1 then newIndex = #Songs end
+    PlaySong(newIndex)
+end)
+
+NextBtn.Activated:Connect(function()
+    local newIndex = currentSongIndex + 1
+    if newIndex > #Songs then newIndex = 1 end
+    PlaySong(newIndex)
 end)
 
 ClosePlayerBtn.Activated:Connect(function()
@@ -530,23 +563,22 @@ ClosePlayerBtn.Activated:Connect(function()
     PlayerGui.Visible = false
 end)
 
+-- ACTUALIZACIÓN DE TIEMPO Y BARRA
 RunService.RenderStepped:Connect(function()
-    if PlayerGui.Visible and MusicSound.IsPlaying then
-        for i, bar in ipairs(MiniBars) do
-            local height = 5 + math.random(0, 15) + (math.sin(tick() * 15 + i) * 5)
-            bar.Size = UDim2.new(0, 5, 0, height)
-            bar.BackgroundColor3 = OP.Red:Lerp(OP.White, math.random(0, 5)/10)
-        end
-    elseif PlayerGui.Visible then
-        for _, bar in ipairs(MiniBars) do
-            bar.Size = UDim2.new(0, 5, 0, 5)
-            bar.BackgroundColor3 = OP.Panel2
+    if PlayerGui.Visible then
+        if MusicSound.IsPlaying and MusicSound.TimeLength > 0 then
+            local percent = MusicSound.TimePosition / MusicSound.TimeLength
+            ProgressBarFill.Size = UDim2.new(percent, 0, 1, 0)
+            
+            local curM = math.floor(MusicSound.TimePosition / 60)
+            local curS = math.floor(MusicSound.TimePosition % 60)
+            TimeLbl.Text = string.format("%d:%02d", curM, curS)
         end
     end
 end)
 
 -- ==========================================================
--- SECCIÓN MUSIC
+-- SECCIÓN MUSIC (LISTA)
 -- ==========================================================
 local musicY = 0
 CreateLabel(MusicPage, "─── LISTA DE REPRODUCCIÓN ───", musicY, OP.Red); musicY += 22
@@ -574,14 +606,14 @@ for i, song in ipairs(Songs) do
 
     btn.Activated:Connect(function()
         PlaySound()
-        PlaySong(song.id, song.name)
+        PlaySong(i)
     end)
     
     musicY += 40
 end
 
 -- ==========================================================
--- DRAG & OPEN/CLOSE (MAIN MENU)
+-- DRAG & OPEN/CLOSE
 -- ==========================================================
 MakeDraggable(ToggleBtn, ToggleBtn); MakeDraggable(MainFrame, ToggleBtn) 
 
@@ -589,13 +621,13 @@ _G.OnePieceMenuOpen = false
 function ToggleMenu()
     _G.OnePieceMenuOpen = not _G.OnePieceMenuOpen
     if _G.OnePieceMenuOpen then
-        MainFrame.Visible = true; menuScale.Scale = 0.85
+        MainFrame.Visible = true; ShadowFrame.Visible = true; menuScale.Scale = 0.85
         TweenService:Create(menuScale, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Scale = math.clamp(math.min(Camera.ViewportSize.X, Camera.ViewportSize.Y) / 460, 0.6, 1)}):Play()
         ToggleBtn.Text = "✕ CERRAR"; PlaySound("open")
         if not currentTab then SwitchTab("ESP") end
     else
         local t = TweenService:Create(menuScale, TweenInfo.new(0.2), {Scale = 0.85})
-        t:Play(); t.Completed:Connect(function() MainFrame.Visible = false; UpdateScale() end)
+        t:Play(); t.Completed:Connect(function() MainFrame.Visible = false; ShadowFrame.Visible = false; UpdateScale() end)
         ToggleBtn.Text = "🏴‍☠️ ONE PIECE"; PlaySound("close")
     end
 end
@@ -613,4 +645,4 @@ RunService.RenderStepped:Connect(function()
     pcall(UpdateAimbot)
 end)
 
-print("[ONE PIECE HUB v19.0] ¡Interfaz PRO cargada sin nombres! 🏴‍☠️")
+print("[ONE PIECE HUB v20.0] ¡Sistema PRO cargado con barra de progreso musical! 🏴‍☠️")
