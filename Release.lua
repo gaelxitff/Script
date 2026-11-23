@@ -1,28 +1,4 @@
---// SERVICIOS
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UIS = game:GetService("UserInputService")
-local Lighting = game:GetService("Lighting")
-local TweenService = game:GetService("TweenService")
 
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
-local IsMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
-local GuiParent = (gethui and gethui()) or game:GetService("CoreGui")
-
---// CANAL OFICIAL DE WHATSAPP
-local WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029VbCHjR7LNSaCqoxB7P10"
-local SHOW_WHATSAPP_ON_OPEN = true
-
---------------------------------------------------
--- 🧊 UI CRISTAL - 𝐊𝐢𝐧𝐠 𝐆𝐚𝐞𝐥
---------------------------------------------------
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "King_Gael_Crystal_V2"
-ScreenGui.IgnoreGuiInset = true
-ScreenGui.ResetOnSpawn = false
-ScreenGui.DisplayOrder = 100
-ScreenGui.Parent = GuiParent
 
 -- Notificaciones cristalinas
 local NotifyHolder = Instance.new("Frame")
