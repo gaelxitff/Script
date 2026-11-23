@@ -1,13 +1,78 @@
+--// SERVICIOS
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local TweenService = game:GetService("TweenService")
 
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local IsMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
 
--- Notificaciones cristalinas
+local function getGuiRoot()
+    local ok, res = pcall(function()
+        if gethui then return gethui() end
+        return game:GetService("CoreGui")
+    end)
+    if ok and res then return res end
+    return LocalPlayer:WaitForChild("PlayerGui")
+end
+
+local GuiParent = getGuiRoot()
+
+--// CONFIGURACIÓN COMUNIDAD
+local WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029VbCHjR7LNSaCqoxB7P10"
+local SHOW_WHATSAPP_ON_OPEN = true
+
+--// ESTADO GLOBAL COMPARTIDO
+local State = {
+    MenuOpen = true,
+    Particles = true,
+    QuickBtn = true,
+    Fly = false,
+    InfiniteJump = false,
+    Noclip = false,
+    WalkSpeed = 16,
+    SilentAim = false,
+    SoftLock = false,
+    MaxDistance = 500,
+    FovEnabled = false,
+    FovLevel = 3,
+    Chams = false,
+    Tracers = false,
+    BoxEsp = false,
+    TopLine = false,
+    Marker = false,
+    Fullbright = false
+}
+
+--------------------------------------------------
+-- 🩸 UI CRISTAL ROJO PROFESIONAL - KING GAEL
+--------------------------------------------------
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "KING_GAEL_PRO_RED"
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 200
+ScreenGui.Parent = GuiParent
+
+local EspOverlay = Instance.new("Frame")
+EspOverlay.Name = "EspOverlay"
+EspOverlay.Size = UDim2.new(1, 0, 1, 0)
+EspOverlay.BackgroundTransparency = 1
+EspOverlay.Active = false
+EspOverlay.ZIndex = 10
+EspOverlay.Parent = ScreenGui
+
+-- Contenedor de notificaciones
 local NotifyHolder = Instance.new("Frame")
 NotifyHolder.Name = "Notifications"
 NotifyHolder.AnchorPoint = Vector2.new(1, 1)
 NotifyHolder.Position = UDim2.new(1, -18, 1, -18)
-NotifyHolder.Size = UDim2.new(0, IsMobile and 245 or 305, 0, 230)
+NotifyHolder.Size = UDim2.new(0, IsMobile and 250 or 310, 0, 240)
 NotifyHolder.BackgroundTransparency = 1
-NotifyHolder.ZIndex = 130
+NotifyHolder.Active = false
+NotifyHolder.ZIndex = 170
 NotifyHolder.Parent = ScreenGui
 
 local NotifyLayout = Instance.new("UIListLayout")
@@ -20,54 +85,66 @@ NotifyLayout.Parent = NotifyHolder
 local function Notify(title, text, duration)
     duration = duration or 3.2
     local card = Instance.new("Frame")
-    card.Size = UDim2.new(1, 0, 0, 60)
-    card.BackgroundColor3 = Color3.fromRGB(10, 15, 26)
-    card.BackgroundTransparency = 0.18
+    card.Size = UDim2.new(1, 0, 0, 62)
+    card.BackgroundColor3 = Color3.fromRGB(20, 7, 11)
+    card.BackgroundTransparency = 0.14
     card.BorderSizePixel = 0
-    card.ZIndex = 131
+    card.ZIndex = 171
     card.Parent = NotifyHolder
 
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 13)
+    corner.CornerRadius = UDim.new(0, 12)
     corner.Parent = card
 
     local stroke = Instance.new("UIStroke")
     stroke.Thickness = 1.3
-    stroke.Transparency = 0.25
-    stroke.Color = Color3.fromRGB(115, 215, 255)
+    stroke.Transparency = 0.2
+    stroke.Color = Color3.fromRGB(255, 65, 85)
     stroke.Parent = card
 
+    local accentBar = Instance.new("Frame")
+    accentBar.Position = UDim2.new(0, 0, 0, 8)
+    accentBar.Size = UDim2.new(0, 3, 1, -16)
+    accentBar.BackgroundColor3 = Color3.fromRGB(255, 50, 75)
+    accentBar.BorderSizePixel = 0
+    accentBar.ZIndex = 172
+    accentBar.Parent = card
+
+    local barCorner = Instance.new("UICorner")
+    barCorner.CornerRadius = UDim.new(1, 0)
+    barCorner.Parent = accentBar
+
     local tLbl = Instance.new("TextLabel")
-    tLbl.Position = UDim2.new(0, 13, 0, 8)
-    tLbl.Size = UDim2.new(1, -26, 0, 18)
+    tLbl.Position = UDim2.new(0, 14, 0, 7)
+    tLbl.Size = UDim2.new(1, -24, 0, 18)
     tLbl.BackgroundTransparency = 1
     tLbl.Text = title
-    tLbl.TextColor3 = Color3.fromRGB(245, 250, 255)
+    tLbl.TextColor3 = Color3.fromRGB(255, 240, 243)
     tLbl.Font = Enum.Font.GothamBlack
     tLbl.TextSize = 13
     tLbl.TextXAlignment = Enum.TextXAlignment.Left
-    tLbl.ZIndex = 132
+    tLbl.ZIndex = 172
     tLbl.Parent = card
 
     local bLbl = Instance.new("TextLabel")
-    bLbl.Position = UDim2.new(0, 13, 0, 27)
-    bLbl.Size = UDim2.new(1, -26, 0, 26)
+    bLbl.Position = UDim2.new(0, 14, 0, 26)
+    bLbl.Size = UDim2.new(1, -24, 0, 28)
     bLbl.BackgroundTransparency = 1
     bLbl.Text = text
-    bLbl.TextColor3 = Color3.fromRGB(190, 215, 240)
+    bLbl.TextColor3 = Color3.fromRGB(245, 195, 202)
     bLbl.Font = Enum.Font.GothamMedium
     bLbl.TextSize = 11
     bLbl.TextXAlignment = Enum.TextXAlignment.Left
     bLbl.TextWrapped = true
-    bLbl.ZIndex = 132
+    bLbl.ZIndex = 172
     bLbl.Parent = card
 
     task.delay(duration, function()
         if card and card.Parent then
-            local tw = TweenService:Create(card, TweenInfo.new(0.25), {BackgroundTransparency = 1})
+            local tw = TweenService:Create(card, TweenInfo.new(0.24), {BackgroundTransparency = 1})
             tw:Play()
             tw.Completed:Wait()
-            card:Destroy()
+            if card and card.Parent then card:Destroy() end
         end
     end)
 end
@@ -79,26 +156,28 @@ local function CopyToClipboard(txt)
         elseif toclipboard then
             toclipboard(txt)
         else
-            error("No clipboard API")
+            error("Clipboard unavailable")
         end
     end)
     return ok
 end
 
--- Ventana principal estilo cristal
-local winW = IsMobile and math.clamp(Camera.ViewportSize.X * 0.89, 330, 490) or 585
-local winH = IsMobile and math.clamp(Camera.ViewportSize.Y * 0.8, 270, 370) or 400
+-- Ventana principal cristal rojo
+local vpNow = Camera.ViewportSize
+local winW = IsMobile and math.clamp(vpNow.X * 0.9, 335, 500) or 600
+local winH = IsMobile and math.clamp(vpNow.Y * 0.82, 275, 380) or 410
 
 local MainWindow = Instance.new("Frame")
-MainWindow.Name = "King_Gael_MainWindow"
+MainWindow.Name = "KING_GAEL_WINDOW"
 MainWindow.AnchorPoint = Vector2.new(0.5, 0.5)
 MainWindow.Position = UDim2.new(0.5, 0, 0.5, 0)
 MainWindow.Size = UDim2.new(0, winW, 0, winH)
-MainWindow.BackgroundColor3 = Color3.fromRGB(10, 14, 24)
-MainWindow.BackgroundTransparency = 0.2
+MainWindow.BackgroundColor3 = Color3.fromRGB(16, 5, 9)
+MainWindow.BackgroundTransparency = 0.18
 MainWindow.BorderSizePixel = 0
 MainWindow.ClipsDescendants = true
 MainWindow.Active = true
+MainWindow.ZIndex = 30
 MainWindow.Parent = ScreenGui
 
 local WinCorner = Instance.new("UICorner")
@@ -106,21 +185,21 @@ WinCorner.CornerRadius = UDim.new(0, 18)
 WinCorner.Parent = MainWindow
 
 local WinStroke = Instance.new("UIStroke")
-WinStroke.Thickness = 1.7
-WinStroke.Transparency = 0.18
+WinStroke.Thickness = 1.8
+WinStroke.Transparency = 0.15
+WinStroke.Color = Color3.fromRGB(255, 45, 70)
 WinStroke.Parent = MainWindow
 
-local GlassGradient = Instance.new("UIGradient")
-GlassGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(175, 215, 250)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(95, 135, 185))
+local GlassGrad = Instance.new("UIGradient")
+GlassGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 200, 210)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(220, 60, 82)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(105, 12, 24))
 })
-GlassGradient.Rotation = 125
-GlassGradient.Parent = MainWindow
+GlassGrad.Rotation = 130
+GlassGrad.Parent = MainWindow
 
 -- Partículas cayendo estrictamente dentro de MainWindow
-local particlesEnabled = true
 local MenuParticlesBox = Instance.new("Frame")
 MenuParticlesBox.Name = "InsideMenuParticles"
 MenuParticlesBox.Size = UDim2.new(1, 0, 1, 0)
@@ -128,21 +207,22 @@ MenuParticlesBox.Position = UDim2.new(0, 0, 0, 0)
 MenuParticlesBox.BackgroundTransparency = 1
 MenuParticlesBox.BorderSizePixel = 0
 MenuParticlesBox.ClipsDescendants = true
-MenuParticlesBox.ZIndex = 2
+MenuParticlesBox.ZIndex = 31
 MenuParticlesBox.Active = false
 MenuParticlesBox.Parent = MainWindow
 
 local menuParticles = {}
-local particleTotal = IsMobile and 26 or 44
+local particleTotal = IsMobile and 28 or 46
 
 for i = 1, particleTotal do
     local pFrame = Instance.new("Frame")
     local sz = math.random(3, 7)
     pFrame.Size = UDim2.new(0, sz, 0, sz)
-    pFrame.Position = UDim2.new(0, math.random(4, math.max(8, winW - 8)), 0, -math.random(6, winH))
+    pFrame.Position = UDim2.new(0, math.random(6, math.max(10, winW - 10)), 0, -math.random(6, winH))
+    pFrame.BackgroundColor3 = Color3.fromRGB(255, math.random(50, 125), math.random(70, 135))
     pFrame.BackgroundTransparency = math.random(22, 62) / 100
     pFrame.BorderSizePixel = 0
-    pFrame.ZIndex = 2
+    pFrame.ZIndex = 31
     pFrame.Active = false
     pFrame.Parent = MenuParticlesBox
 
@@ -152,120 +232,118 @@ for i = 1, particleTotal do
 
     table.insert(menuParticles, {
         obj = pFrame,
-        speedY = math.random(32, 84),
+        speedY = math.random(34, 88),
         sway = math.random(10, 24),
         phase = math.random() * math.pi * 2
     })
 end
 
--- Header cristalino
+-- Header superior KING GAEL
 local Header = Instance.new("Frame")
 Header.Name = "Header"
-Header.Size = UDim2.new(1, 0, 0, 46)
-Header.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Header.BackgroundTransparency = 0.91
+Header.Size = UDim2.new(1, 0, 0, 48)
+Header.BackgroundColor3 = Color3.fromRGB(255, 45, 70)
+Header.BackgroundTransparency = 0.84
 Header.BorderSizePixel = 0
-Header.ZIndex = 5
+Header.ZIndex = 35
 Header.Parent = MainWindow
 
 local HeaderLine = Instance.new("Frame")
 HeaderLine.AnchorPoint = Vector2.new(0, 1)
 HeaderLine.Position = UDim2.new(0, 0, 1, 0)
 HeaderLine.Size = UDim2.new(1, 0, 0, 1)
-HeaderLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-HeaderLine.BackgroundTransparency = 0.76
+HeaderLine.BackgroundColor3 = Color3.fromRGB(255, 85, 105)
+HeaderLine.BackgroundTransparency = 0.5
 HeaderLine.BorderSizePixel = 0
-HeaderLine.ZIndex = 5
+HeaderLine.ZIndex = 35
 HeaderLine.Parent = Header
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Position = UDim2.new(0, 16, 0, 0)
+TitleLabel.Position = UDim2.new(0, 14, 0, 0)
 TitleLabel.Size = UDim2.new(0, 130, 1, 0)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "𝐊𝐢𝐧𝐠 𝐆𝐚𝐞𝐥"
-TitleLabel.TextColor3 = Color3.fromRGB(248, 252, 255)
+TitleLabel.Text = "KING GAEL"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 246, 248)
 TitleLabel.Font = Enum.Font.GothamBlack
 TitleLabel.TextSize = IsMobile and 16 or 18
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-TitleLabel.ZIndex = 6
+TitleLabel.ZIndex = 36
 TitleLabel.Parent = Header
 
 local SubTag = Instance.new("TextLabel")
-SubTag.Position = UDim2.new(0, 128, 0, 1)
-SubTag.Size = UDim2.new(0, 180, 1, 0)
+SubTag.Position = UDim2.new(0, 134, 0, 1)
+SubTag.Size = UDim2.new(0, 195, 1, 0)
 SubTag.BackgroundTransparency = 1
-SubTag.Text = IsMobile and "GLASS • MOBILE EDITION" or "GLASS • PRO EDITION"
-SubTag.TextColor3 = Color3.fromRGB(135, 215, 255)
+SubTag.Text = IsMobile and "RED CRYSTAL • MOBILE PRO" or "RED CRYSTAL • PRO EDITION"
+SubTag.TextColor3 = Color3.fromRGB(255, 120, 140)
 SubTag.Font = Enum.Font.GothamBold
 SubTag.TextSize = 10
 SubTag.TextXAlignment = Enum.TextXAlignment.Left
-SubTag.ZIndex = 6
+SubTag.ZIndex = 36
 SubTag.Parent = Header
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.AnchorPoint = Vector2.new(1, 0.5)
 CloseBtn.Position = UDim2.new(1, -12, 0.5, 0)
 CloseBtn.Size = UDim2.new(0, 28, 0, 28)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.BackgroundTransparency = 0.86
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 55, 80)
+CloseBtn.BackgroundTransparency = 0.5
 CloseBtn.Text = "×"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextSize = 18
-CloseBtn.ZIndex = 6
+CloseBtn.ZIndex = 36
 CloseBtn.Parent = Header
 
 local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(1, 0)
 CloseCorner.Parent = CloseBtn
 
--- Arrastrar ventana (Mouse + Touch)
-do
-    local dragging = false
-    local dragInput, dragStart, startPos
+-- Control centralizado de arrastre (evita listeners duplicados)
+local activeDrag = nil
 
-    Header.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = MainWindow.Position
+Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        activeDrag = {
+            kind = "window",
+            startPos = input.Position,
+            origin = MainWindow.Position
+        }
+    end
+end)
 
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-
-    Header.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-
-    UIS.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            local delta = input.Position - dragStart
+UIS.InputChanged:Connect(function(input)
+    if not activeDrag then return end
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        if activeDrag.kind == "window" then
+            local delta = input.Position - activeDrag.startPos
             MainWindow.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
+                activeDrag.origin.X.Scale,
+                activeDrag.origin.X.Offset + delta.X,
+                activeDrag.origin.Y.Scale,
+                activeDrag.origin.Y.Offset + delta.Y
             )
+        elseif activeDrag.kind == "slider" and activeDrag.onMove then
+            activeDrag.onMove(input.Position.X)
         end
-    end)
-end
+    end
+end)
 
--- Barra lateral y contenedor
-local sideW = IsMobile and 106 or 136
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        activeDrag = nil
+    end
+end)
+
+-- Barra lateral y contenedor de pestañas
+local sideW = IsMobile and 110 or 140
 local Sidebar = Instance.new("Frame")
-Sidebar.Position = UDim2.new(0, 0, 0, 46)
-Sidebar.Size = UDim2.new(0, sideW, 1, -46)
-Sidebar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Sidebar.BackgroundTransparency = 0.95
+Sidebar.Position = UDim2.new(0, 0, 0, 48)
+Sidebar.Size = UDim2.new(0, sideW, 1, -48)
+Sidebar.BackgroundColor3 = Color3.fromRGB(255, 50, 75)
+Sidebar.BackgroundTransparency = 0.92
 Sidebar.BorderSizePixel = 0
-Sidebar.ZIndex = 4
+Sidebar.ZIndex = 34
 Sidebar.Parent = MainWindow
 
 local SideList = Instance.new("UIListLayout")
@@ -280,10 +358,10 @@ SidePad.PaddingRight = UDim.new(0, 8)
 SidePad.Parent = Sidebar
 
 local ContentHolder = Instance.new("Frame")
-ContentHolder.Position = UDim2.new(0, sideW + 8, 0, 54)
-ContentHolder.Size = UDim2.new(1, -(sideW + 16), 1, -62)
+ContentHolder.Position = UDim2.new(0, sideW + 8, 0, 56)
+ContentHolder.Size = UDim2.new(1, -(sideW + 16), 1, -64)
 ContentHolder.BackgroundTransparency = 1
-ContentHolder.ZIndex = 4
+ContentHolder.ZIndex = 34
 ContentHolder.Parent = MainWindow
 
 local tabs = {}
@@ -291,13 +369,13 @@ local tabs = {}
 local function CreateTab(name)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, IsMobile and 34 or 36)
-    btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    btn.BackgroundTransparency = 0.92
+    btn.BackgroundColor3 = Color3.fromRGB(255, 50, 75)
+    btn.BackgroundTransparency = 0.85
     btn.Text = name
-    btn.TextColor3 = Color3.fromRGB(190, 212, 238)
+    btn.TextColor3 = Color3.fromRGB(245, 195, 202)
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = IsMobile and 12 or 13
-    btn.ZIndex = 5
+    btn.ZIndex = 35
     btn.Parent = Sidebar
 
     local bCorner = Instance.new("UICorner")
@@ -309,11 +387,11 @@ local function CreateTab(name)
     page.BackgroundTransparency = 1
     page.BorderSizePixel = 0
     page.ScrollBarThickness = 3
-    page.ScrollBarImageColor3 = Color3.fromRGB(145, 215, 255)
+    page.ScrollBarImageColor3 = Color3.fromRGB(255, 75, 95)
     page.CanvasSize = UDim2.new(0, 0, 0, 0)
     page.AutomaticCanvasSize = Enum.AutomaticSize.Y
     page.Visible = false
-    page.ZIndex = 5
+    page.ZIndex = 35
     page.Parent = ContentHolder
 
     local layout = Instance.new("UIListLayout")
@@ -325,22 +403,24 @@ local function CreateTab(name)
     pad.PaddingBottom = UDim.new(0, 8)
     pad.Parent = page
 
-    btn.MouseButton1Click:Connect(function()
+    local function selectTab()
         for _, t in pairs(tabs) do
             t.page.Visible = false
-            t.btn.BackgroundTransparency = 0.92
-            t.btn.TextColor3 = Color3.fromRGB(190, 212, 238)
+            t.btn.BackgroundTransparency = 0.85
+            t.btn.BackgroundColor3 = Color3.fromRGB(255, 50, 75)
+            t.btn.TextColor3 = Color3.fromRGB(245, 195, 202)
         end
         page.Visible = true
-        btn.BackgroundTransparency = 0.7
+        btn.BackgroundColor3 = Color3.fromRGB(235, 35, 60)
+        btn.BackgroundTransparency = 0.32
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    end)
+    end
+
+    btn.MouseButton1Click:Connect(selectTab)
 
     table.insert(tabs, {btn = btn, page = page})
     if #tabs == 1 then
-        page.Visible = true
-        btn.BackgroundTransparency = 0.7
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        selectTab()
     end
 
     return page
@@ -351,11 +431,11 @@ local function AddSection(page, text)
     lbl.Size = UDim2.new(1, 0, 0, 22)
     lbl.BackgroundTransparency = 1
     lbl.Text = string.upper(text)
-    lbl.TextColor3 = Color3.fromRGB(130, 208, 255)
+    lbl.TextColor3 = Color3.fromRGB(255, 110, 130)
     lbl.Font = Enum.Font.GothamBold
     lbl.TextSize = 11
     lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.ZIndex = 6
+    lbl.ZIndex = 36
     lbl.Parent = page
 end
 
@@ -363,10 +443,10 @@ local function AddToggle(page, text, defaultVal, callback)
     local state = defaultVal or false
     local row = Instance.new("Frame")
     row.Size = UDim2.new(1, 0, 0, 38)
-    row.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    row.BackgroundTransparency = 0.9
+    row.BackgroundColor3 = Color3.fromRGB(255, 65, 85)
+    row.BackgroundTransparency = 0.88
     row.BorderSizePixel = 0
-    row.ZIndex = 6
+    row.ZIndex = 36
     row.Parent = page
 
     local rCorner = Instance.new("UICorner")
@@ -375,8 +455,8 @@ local function AddToggle(page, text, defaultVal, callback)
 
     local rStroke = Instance.new("UIStroke")
     rStroke.Thickness = 1
-    rStroke.Transparency = 0.74
-    rStroke.Color = Color3.fromRGB(220, 242, 255)
+    rStroke.Transparency = 0.65
+    rStroke.Color = Color3.fromRGB(255, 95, 115)
     rStroke.Parent = row
 
     local lbl = Instance.new("TextLabel")
@@ -384,24 +464,24 @@ local function AddToggle(page, text, defaultVal, callback)
     lbl.Size = UDim2.new(1, -68, 1, 0)
     lbl.BackgroundTransparency = 1
     lbl.Text = text
-    lbl.TextColor3 = Color3.fromRGB(242, 249, 255)
+    lbl.TextColor3 = Color3.fromRGB(255, 242, 245)
     lbl.Font = Enum.Font.GothamMedium
     lbl.TextSize = IsMobile and 12 or 13
     lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.ZIndex = 7
+    lbl.ZIndex = 37
     lbl.Parent = row
 
     local pill = Instance.new("TextButton")
     pill.AnchorPoint = Vector2.new(1, 0.5)
     pill.Position = UDim2.new(1, -10, 0.5, 0)
     pill.Size = UDim2.new(0, 44, 0, 22)
-    pill.BackgroundColor3 = state and Color3.fromRGB(65, 190, 255) or Color3.fromRGB(45, 55, 75)
-    pill.BackgroundTransparency = state and 0.14 or 0.45
+    pill.BackgroundColor3 = state and Color3.fromRGB(240, 35, 60) or Color3.fromRGB(48, 20, 28)
+    pill.BackgroundTransparency = state and 0.15 or 0.35
     pill.Text = state and "ON" or "OFF"
     pill.TextColor3 = Color3.fromRGB(255, 255, 255)
     pill.Font = Enum.Font.GothamBold
     pill.TextSize = 10
-    pill.ZIndex = 7
+    pill.ZIndex = 37
     pill.Parent = row
 
     local pCorner = Instance.new("UICorner")
@@ -411,8 +491,8 @@ local function AddToggle(page, text, defaultVal, callback)
     local function setVal(v)
         state = v
         pill.Text = state and "ON" or "OFF"
-        pill.BackgroundColor3 = state and Color3.fromRGB(65, 190, 255) or Color3.fromRGB(45, 55, 75)
-        pill.BackgroundTransparency = state and 0.14 or 0.45
+        pill.BackgroundColor3 = state and Color3.fromRGB(240, 35, 60) or Color3.fromRGB(48, 20, 28)
+        pill.BackgroundTransparency = state and 0.15 or 0.35
         if callback then callback(state) end
     end
 
@@ -427,10 +507,10 @@ local function AddSlider(page, text, minV, maxV, step, defaultV, suffix, callbac
     local val = defaultV or minV
     local row = Instance.new("Frame")
     row.Size = UDim2.new(1, 0, 0, 48)
-    row.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    row.BackgroundTransparency = 0.9
+    row.BackgroundColor3 = Color3.fromRGB(255, 65, 85)
+    row.BackgroundTransparency = 0.88
     row.BorderSizePixel = 0
-    row.ZIndex = 6
+    row.ZIndex = 36
     row.Parent = page
 
     local rCorner = Instance.new("UICorner")
@@ -439,8 +519,8 @@ local function AddSlider(page, text, minV, maxV, step, defaultV, suffix, callbac
 
     local rStroke = Instance.new("UIStroke")
     rStroke.Thickness = 1
-    rStroke.Transparency = 0.74
-    rStroke.Color = Color3.fromRGB(220, 242, 255)
+    rStroke.Transparency = 0.65
+    rStroke.Color = Color3.fromRGB(255, 95, 115)
     rStroke.Parent = row
 
     local topLbl = Instance.new("TextLabel")
@@ -448,11 +528,11 @@ local function AddSlider(page, text, minV, maxV, step, defaultV, suffix, callbac
     topLbl.Size = UDim2.new(1, -24, 0, 18)
     topLbl.BackgroundTransparency = 1
     topLbl.Text = string.format("%s: %s%s", text, tostring(val), suffix or "")
-    topLbl.TextColor3 = Color3.fromRGB(242, 249, 255)
+    topLbl.TextColor3 = Color3.fromRGB(255, 242, 245)
     topLbl.Font = Enum.Font.GothamMedium
     topLbl.TextSize = IsMobile and 12 or 12.5
     topLbl.TextXAlignment = Enum.TextXAlignment.Left
-    topLbl.ZIndex = 7
+    topLbl.ZIndex = 37
     topLbl.Parent = row
 
     local barBg = Instance.new("Frame")
@@ -461,7 +541,7 @@ local function AddSlider(page, text, minV, maxV, step, defaultV, suffix, callbac
     barBg.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     barBg.BackgroundTransparency = 0.82
     barBg.BorderSizePixel = 0
-    barBg.ZIndex = 7
+    barBg.ZIndex = 37
     barBg.Parent = row
 
     local barCorner = Instance.new("UICorner")
@@ -471,16 +551,15 @@ local function AddSlider(page, text, minV, maxV, step, defaultV, suffix, callbac
     local initRatio = math.clamp((val - minV) / (maxV - minV), 0, 1)
     local fill = Instance.new("Frame")
     fill.Size = UDim2.new(initRatio, 0, 1, 0)
-    fill.BackgroundColor3 = Color3.fromRGB(110, 208, 255)
+    fill.BackgroundColor3 = Color3.fromRGB(255, 55, 80)
     fill.BorderSizePixel = 0
-    fill.ZIndex = 8
+    fill.ZIndex = 38
     fill.Parent = barBg
 
     local fillCorner = Instance.new("UICorner")
     fillCorner.CornerRadius = UDim.new(1, 0)
     fillCorner.Parent = fill
 
-    local sliding = false
     local function updateFromX(xPos)
         local absX = barBg.AbsolutePosition.X
         local absW = math.max(barBg.AbsoluteSize.X, 1)
@@ -497,20 +576,11 @@ local function AddSlider(page, text, minV, maxV, step, defaultV, suffix, callbac
 
     barBg.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            sliding = true
             updateFromX(input.Position.X)
-        end
-    end)
-
-    UIS.InputChanged:Connect(function(input)
-        if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            updateFromX(input.Position.X)
-        end
-    end)
-
-    UIS.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            sliding = false
+            activeDrag = {
+                kind = "slider",
+                onMove = updateFromX
+            }
         end
     end)
 end
@@ -518,13 +588,13 @@ end
 local function AddButton(page, text, callback)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 38)
-    btn.BackgroundColor3 = Color3.fromRGB(85, 190, 255)
+    btn.BackgroundColor3 = Color3.fromRGB(220, 30, 55)
     btn.BackgroundTransparency = 0.22
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = IsMobile and 12.5 or 13
-    btn.ZIndex = 7
+    btn.ZIndex = 37
     btn.Parent = page
 
     local bCorner = Instance.new("UICorner")
@@ -533,8 +603,8 @@ local function AddButton(page, text, callback)
 
     local bStroke = Instance.new("UIStroke")
     bStroke.Thickness = 1.2
-    bStroke.Transparency = 0.3
-    bStroke.Color = Color3.fromRGB(225, 245, 255)
+    bStroke.Transparency = 0.25
+    bStroke.Color = Color3.fromRGB(255, 130, 145)
     bStroke.Parent = btn
 
     btn.MouseButton1Click:Connect(function()
@@ -542,17 +612,17 @@ local function AddButton(page, text, callback)
     end)
 end
 
--- Tarjeta de invitación al canal de 𝐊𝐢𝐧𝐠 𝐆𝐚𝐞𝐥 en WhatsApp
+-- Tarjeta de invitación al canal de KING GAEL en WhatsApp
 local WaBanner = Instance.new("Frame")
 WaBanner.Name = "WhatsAppInviteCard"
 WaBanner.AnchorPoint = Vector2.new(0.5, 0.5)
 WaBanner.Position = UDim2.new(0.5, 0, 0.5, 0)
-WaBanner.Size = UDim2.new(0, IsMobile and 300 or 365, 0, 184)
-WaBanner.BackgroundColor3 = Color3.fromRGB(11, 20, 30)
-WaBanner.BackgroundTransparency = 0.1
+WaBanner.Size = UDim2.new(0, IsMobile and 305 or 370, 0, 188)
+WaBanner.BackgroundColor3 = Color3.fromRGB(20, 7, 11)
+WaBanner.BackgroundTransparency = 0.08
 WaBanner.BorderSizePixel = 0
 WaBanner.Visible = SHOW_WHATSAPP_ON_OPEN
-WaBanner.ZIndex = 70
+WaBanner.ZIndex = 80
 WaBanner.Parent = MainWindow
 
 local WaCorner = Instance.new("UICorner")
@@ -560,49 +630,47 @@ WaCorner.CornerRadius = UDim.new(0, 16)
 WaCorner.Parent = WaBanner
 
 local WaStroke = Instance.new("UIStroke")
-WaStroke.Thickness = 1.6
-WaStroke.Color = Color3.fromRGB(55, 225, 125)
+WaStroke.Thickness = 1.7
+WaStroke.Color = Color3.fromRGB(255, 55, 80)
 WaStroke.Parent = WaBanner
 
 local WaTitle = Instance.new("TextLabel")
 WaTitle.Position = UDim2.new(0, 16, 0, 14)
 WaTitle.Size = UDim2.new(1, -32, 0, 22)
 WaTitle.BackgroundTransparency = 1
-WaTitle.Text = "Sigue el canal de 𝐊𝐢𝐧𝐠 𝐆𝐚𝐞𝐥"
-WaTitle.TextColor3 = Color3.fromRGB(115, 250, 168)
+WaTitle.Text = "Canal WhatsApp • KING GAEL"
+WaTitle.TextColor3 = Color3.fromRGB(255, 115, 135)
 WaTitle.Font = Enum.Font.GothamBlack
 WaTitle.TextSize = IsMobile and 13.5 or 15
 WaTitle.TextXAlignment = Enum.TextXAlignment.Left
-WaTitle.ZIndex = 71
+WaTitle.ZIndex = 81
 WaTitle.Parent = WaBanner
 
 local WaDesc = Instance.new("TextLabel")
 WaDesc.Position = UDim2.new(0, 16, 0, 38)
 WaDesc.Size = UDim2.new(1, -32, 0, 38)
 WaDesc.BackgroundTransparency = 1
-WaDesc.Text = "Únete al canal oficial de WhatsApp para novedades, scripts y actualizaciones de 𝐊𝐢𝐧𝐠 𝐆𝐚𝐞𝐥."
-WaDesc.TextColor3 = Color3.fromRGB(228, 240, 250)
+WaDesc.Text = "Sigue el canal de KING GAEL en WhatsApp para actualizaciones, scripts y avisos."
+WaDesc.TextColor3 = Color3.fromRGB(255, 235, 238)
 WaDesc.Font = Enum.Font.Gotham
 WaDesc.TextSize = IsMobile and 11 or 12
 WaDesc.TextXAlignment = Enum.TextXAlignment.Left
 WaDesc.TextWrapped = true
-WaDesc.ZIndex = 71
-WaTitle.ZIndex = 71
-WaBanner.ZIndex = 70
+WaDesc.ZIndex = 81
 WaDesc.Parent = WaBanner
 
 local WaLinkBox = Instance.new("TextBox")
 WaLinkBox.Position = UDim2.new(0, 16, 0, 82)
 WaLinkBox.Size = UDim2.new(1, -32, 0, 30)
-WaLinkBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-WaLinkBox.BackgroundTransparency = 0.9
+WaLinkBox.BackgroundColor3 = Color3.fromRGB(255, 55, 80)
+WaLinkBox.BackgroundTransparency = 0.84
 WaLinkBox.Text = WHATSAPP_CHANNEL_URL
-WaLinkBox.TextColor3 = Color3.fromRGB(165, 245, 198)
+WaLinkBox.TextColor3 = Color3.fromRGB(255, 195, 205)
 WaLinkBox.Font = Enum.Font.GothamMedium
 WaLinkBox.TextSize = IsMobile and 10 or 11
 WaLinkBox.ClearTextOnFocus = false
 WaLinkBox.TextEditable = false
-WaLinkBox.ZIndex = 71
+WaLinkBox.ZIndex = 81
 WaLinkBox.Parent = WaBanner
 
 local WaBoxCorner = Instance.new("UICorner")
@@ -612,13 +680,13 @@ WaBoxCorner.Parent = WaLinkBox
 local CopyWaBtn = Instance.new("TextButton")
 CopyWaBtn.Position = UDim2.new(0, 16, 1, -46)
 CopyWaBtn.Size = UDim2.new(0.56, -20, 0, 34)
-CopyWaBtn.BackgroundColor3 = Color3.fromRGB(37, 211, 102)
+CopyWaBtn.BackgroundColor3 = Color3.fromRGB(230, 30, 55)
 CopyWaBtn.BackgroundTransparency = 0.12
-CopyWaBtn.Text = "Copiar Canal"
+CopyWaBtn.Text = "Copiar Enlace"
 CopyWaBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CopyWaBtn.Font = Enum.Font.GothamBold
 CopyWaBtn.TextSize = 12
-CopyWaBtn.ZIndex = 71
+CopyWaBtn.ZIndex = 81
 CopyWaBtn.Parent = WaBanner
 
 local CopyWaCorner = Instance.new("UICorner")
@@ -630,11 +698,11 @@ CloseWaBtn.Position = UDim2.new(0.56, 4, 1, -46)
 CloseWaBtn.Size = UDim2.new(0.44, -20, 0, 34)
 CloseWaBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 CloseWaBtn.BackgroundTransparency = 0.86
-CloseWaBtn.Text = "Entrar al Menú"
-CloseWaBtn.TextColor3 = Color3.fromRGB(238, 246, 255)
+CloseWaBtn.Text = "Entrar"
+CloseWaBtn.TextColor3 = Color3.fromRGB(255, 240, 244)
 CloseWaBtn.Font = Enum.Font.GothamBold
-CloseWaBtn.TextSize = 11.5
-CloseWaBtn.ZIndex = 71
+CloseWaBtn.TextSize = 12
+CloseWaBtn.ZIndex = 81
 CloseWaBtn.Parent = WaBanner
 
 local CloseWaCorner = Instance.new("UICorner")
@@ -643,9 +711,9 @@ CloseWaCorner.Parent = CloseWaBtn
 
 CopyWaBtn.MouseButton1Click:Connect(function()
     if CopyToClipboard(WHATSAPP_CHANNEL_URL) then
-        Notify("𝐊𝐢𝐧𝐠 𝐆𝐚𝐞𝐥 • WhatsApp", "Enlace del canal copiado al portapapeles.", 3.2)
+        Notify("KING GAEL • WhatsApp", "Enlace copiado al portapapeles.", 3.2)
     else
-        Notify("𝐊𝐢𝐧𝐠 𝐆𝐚𝐞𝐥 • WhatsApp", WHATSAPP_CHANNEL_URL, 5)
+        Notify("KING GAEL • WhatsApp", WHATSAPP_CHANNEL_URL, 5)
     end
 end)
 
@@ -653,19 +721,19 @@ CloseWaBtn.MouseButton1Click:Connect(function()
     WaBanner.Visible = false
 end)
 
--- Botón flotante para reabrir / alternar menú (móvil y PC)
+-- Botón flotante para abrir/cerrar KING GAEL
 local QuickBtn = Instance.new("TextButton")
-QuickBtn.Name = "King_Gael_Toggle"
-QuickBtn.Size = IsMobile and UDim2.new(0, 88, 0, 34) or UDim2.new(0, 84, 0, 30)
+QuickBtn.Name = "KING_GAEL_TOGGLE"
+QuickBtn.Size = IsMobile and UDim2.new(0, 92, 0, 34) or UDim2.new(0, 88, 0, 30)
 QuickBtn.Position = IsMobile and UDim2.new(0, 14, 0.5, -17) or UDim2.new(0, 14, 0, 14)
-QuickBtn.BackgroundColor3 = Color3.fromRGB(12, 16, 28)
-QuickBtn.BackgroundTransparency = 0.22
-QuickBtn.Text = "𝐊𝐢𝐧𝐠 𝐆𝐚𝐞𝐥"
-QuickBtn.TextColor3 = Color3.fromRGB(245, 250, 255)
-QuickBtn.Font = Enum.Font.GothamBold
-QuickBtn.TextSize = IsMobile and 12 or 11.5
-QuickBtn.Visible = true
-QuickBtn.ZIndex = 115
+QuickBtn.BackgroundColor3 = Color3.fromRGB(22, 7, 11)
+QuickBtn.BackgroundTransparency = 0.2
+QuickBtn.Text = "KING GAEL"
+QuickBtn.TextColor3 = Color3.fromRGB(255, 245, 248)
+QuickBtn.Font = Enum.Font.GothamBlack
+QuickBtn.TextSize = IsMobile and 11.5 or 11
+QuickBtn.Visible = State.QuickBtn
+QuickBtn.ZIndex = 150
 QuickBtn.Parent = ScreenGui
 
 local qCorner = Instance.new("UICorner")
@@ -673,12 +741,14 @@ qCorner.CornerRadius = UDim.new(0, 10)
 qCorner.Parent = QuickBtn
 
 local qStroke = Instance.new("UIStroke")
-qStroke.Thickness = 1.4
-qStroke.Transparency = 0.22
+qStroke.Thickness = 1.5
+qStroke.Transparency = 0.2
+qStroke.Color = Color3.fromRGB(255, 50, 75)
 qStroke.Parent = QuickBtn
 
 local function ToggleWindow(forceState)
     local nextState = (forceState ~= nil) and forceState or (not MainWindow.Visible)
+    State.MenuOpen = nextState
     MainWindow.Visible = nextState
 end
 
@@ -732,46 +802,64 @@ end
 local PlayerTab = CreateTab("Jugador")
 AddSection(PlayerTab, "Movimiento")
 
-local flying, infiniteJump, noclip = false, false, false
-
-local function Fly()
-    local char = LocalPlayer.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    local bv = Instance.new("BodyVelocity")
-    bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-    bv.Parent = hrp
-
-    while flying do
-        local move = Vector3.zero
-        if UIS:IsKeyDown(Enum.KeyCode.W) then move += Camera.CFrame.LookVector end
-        if UIS:IsKeyDown(Enum.KeyCode.S) then move -= Camera.CFrame.LookVector end
-        if UIS:IsKeyDown(Enum.KeyCode.A) then move -= Camera.CFrame.RightVector end
-        if UIS:IsKeyDown(Enum.KeyCode.D) then move += Camera.CFrame.RightVector end
-        if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0, 1, 0) end
-        if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then move -= Vector3.new(0, 1, 0) end
-        bv.Velocity = move * 60
-        task.wait()
-    end
-
-    if bv and bv.Parent then
-        bv:Destroy()
+local function applyWalkSpeed(char)
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.WalkSpeed = State.WalkSpeed
     end
 end
 
+local function clearFlyVelocity()
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        local existing = hrp:FindFirstChild("KingGaelFlyVel")
+        if existing then existing:Destroy() end
+    end
+end
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    task.wait(0.2)
+    applyWalkSpeed(char)
+    if State.Fly then
+        task.spawn(function()
+            -- Se relanza el bucle de vuelo limpio en el nuevo personaje
+            while State.Fly do
+                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if not hrp then break end
+                local bv = hrp:FindFirstChild("KingGaelFlyVel")
+                if not bv then
+                    bv = Instance.new("BodyVelocity")
+                    bv.Name = "KingGaelFlyVel"
+                    bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+                    bv.Parent = hrp
+                end
+                local move = Vector3.zero
+                if UIS:IsKeyDown(Enum.KeyCode.W) then move += Camera.CFrame.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.S) then move -= Camera.CFrame.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.A) then move -= Camera.CFrame.RightVector end
+                if UIS:IsKeyDown(Enum.KeyCode.D) then move += Camera.CFrame.RightVector end
+                if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0, 1, 0) end
+                if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then move -= Vector3.new(0, 1, 0) end
+                bv.Velocity = move * 65
+                task.wait()
+            end
+            clearFlyVelocity()
+        end)
+    end
+end)
+
 UIS.JumpRequest:Connect(function()
-    if infiniteJump then
+    if State.InfiniteJump then
         local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if h then
-            h:ChangeState("Jumping")
+            h:ChangeState(Enum.HumanoidStateType.Jumping)
         end
     end
 end)
 
 RunService.Stepped:Connect(function()
-    if noclip and LocalPlayer.Character then
+    if State.Noclip and LocalPlayer.Character then
         for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
             if v:IsA("BasePart") then
                 v.CanCollide = false
@@ -781,22 +869,68 @@ RunService.Stepped:Connect(function()
 end)
 
 AddToggle(PlayerTab, "Fly", false, function(v)
-    flying = v
-    if v then task.spawn(Fly) end
+    State.Fly = v
+    if v then
+        LocalPlayer:LoadCharacter() -- asegura bucle activo si ya está vivo
+    else
+        clearFlyVelocity()
+    end
+end)
+
+-- Fix rápido para Fly sin forzar respawn si ya tiene personaje
+local flyLoopRunning = false
+local function startFlyLoop()
+    if flyLoopRunning then return end
+    flyLoopRunning = true
+    task.spawn(function()
+        while State.Fly do
+            local char = LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local bv = hrp:FindFirstChild("KingGaelFlyVel")
+                if not bv then
+                    bv = Instance.new("BodyVelocity")
+                    bv.Name = "KingGaelFlyVel"
+                    bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+                    bv.Parent = hrp
+                end
+                local move = Vector3.zero
+                if UIS:IsKeyDown(Enum.KeyCode.W) then move += Camera.CFrame.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.S) then move -= Camera.CFrame.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.A) then move -= Camera.CFrame.RightVector end
+                if UIS:IsKeyDown(Enum.KeyCode.D) then move += Camera.CFrame.RightVector end
+                if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0, 1, 0) end
+                if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then move -= Vector3.new(0, 1, 0) end
+                bv.Velocity = move * 65
+            end
+            task.wait()
+        end
+        clearFlyVelocity()
+        flyLoopRunning = false
+    end)
+end
+
+-- Reemplaza el callback del toggle Fly para no recargar personaje
+AddToggle(PlayerTab, "Fly Mode", false, function(v)
+    State.Fly = v
+    if v then
+        startFlyLoop()
+    else
+        clearFlyVelocity()
+    end
 end)
 
 AddToggle(PlayerTab, "Infinite Jump", false, function(v)
-    infiniteJump = v
+    State.InfiniteJump = v
 end)
 
 AddToggle(PlayerTab, "Noclip", false, function(v)
-    noclip = v
+    State.Noclip = v
 end)
 
 AddSlider(PlayerTab, "WalkSpeed", 16, 200, 1, 16, " WS", function(v)
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = v
-    end
+    State.WalkSpeed = v
+    applyWalkSpeed(LocalPlayer.Character)
 end)
 
 --------------------------------------------------
@@ -805,32 +939,33 @@ end)
 local CombatTab = CreateTab("Combate")
 AddSection(CombatTab, "Apuntado y Objetivos")
 
-local maxDistance = 500
+local fovScale = IsMobile and 48 or 60
+local calculatedRadius = State.FovLevel * fovScale
 getgenv().SilentAimEnabled = false
 getgenv().SoftLockEnabled = false
-local fovEnabled = false
-local fovScale = IsMobile and 48 or 60
-local calculatedRadius = 3 * fovScale
 
 AddToggle(CombatTab, "Silent Aim (Full Range)", false, function(v)
+    State.SilentAim = v
     getgenv().SilentAimEnabled = v
 end)
 
 AddToggle(CombatTab, "Soft Lock (FOV Only)", false, function(v)
+    State.SoftLock = v
     getgenv().SoftLockEnabled = v
 end)
 
 AddSlider(CombatTab, "Max Distance", 100, 2000, 50, 500, " studs", function(v)
-    maxDistance = v
+    State.MaxDistance = v
 end)
 
 AddSection(CombatTab, "Configuración FOV")
 
 AddToggle(CombatTab, "Show FOV Circle", false, function(v)
-    fovEnabled = v
+    State.FovEnabled = v
 end)
 
 AddSlider(CombatTab, "FOV Level (1-10)", 1, 10, 1, 3, "x", function(v)
+    State.FovLevel = v
     calculatedRadius = v * fovScale
 end)
 
@@ -845,6 +980,7 @@ fovCircle.Parent = ScreenGui
 
 local fovStroke = Instance.new("UIStroke")
 fovStroke.Thickness = IsMobile and 2.5 or 2
+fovStroke.Color = Color3.fromRGB(255, 50, 75)
 fovStroke.Parent = fovCircle
 
 local fovCorner = Instance.new("UICorner")
@@ -852,83 +988,124 @@ fovCorner.CornerRadius = UDim.new(1, 0)
 fovCorner.Parent = fovCircle
 
 --------------------------------------------------
--- 👁️ PESTAÑA: ESP
+-- 👁️ PESTAÑA: ESP (CHAMS, TRACERS, BOX, TOP LINE, MARKER)
 --------------------------------------------------
 local ESPTab = CreateTab("ESP")
 AddSection(ESPTab, "Visuales Enemigos")
 
-local chamsEnabled = false
-local tracersEnabled = false
-local boxEnabled = false
-local topLineEnabled = false
-local markerEnabled = false
-
 local espObjects = {}
 
+local function makeLineFrame(thickness)
+    local f = Instance.new("Frame")
+    f.AnchorPoint = Vector2.new(0.5, 0.5)
+    f.BorderSizePixel = 0
+    f.Size = UDim2.new(0, 1, 0, thickness or 2)
+    f.Visible = false
+    f.Active = false
+    f.ZIndex = 12
+    f.Parent = EspOverlay
+    return f
+end
+
+local function positionLineFrame(frame, p1, p2, color, thickness)
+    local dx = p2.X - p1.X
+    local dy = p2.Y - p1.Y
+    local dist = math.sqrt(dx * dx + dy * dy)
+    if dist < 1 then
+        frame.Visible = false
+        return
+    end
+    local cx = (p1.X + p2.X) * 0.5
+    local cy = (p1.Y + p2.Y) * 0.5
+    local angle = math.deg(math.atan2(dy, dx))
+    frame.Position = UDim2.new(0, cx, 0, cy)
+    frame.Size = UDim2.new(0, dist, 0, thickness or 2)
+    frame.Rotation = angle
+    frame.BackgroundColor3 = color
+    frame.Visible = true
+end
+
 AddToggle(ESPTab, "Enemy Chams", false, function(v)
-    chamsEnabled = v
+    State.Chams = v
 end)
 
 AddToggle(ESPTab, "Crosshair Tracers (Torso)", false, function(v)
-    tracersEnabled = v
+    State.Tracers = v
 end)
 
 AddToggle(ESPTab, "Box ESP", false, function(v)
-    boxEnabled = v
+    State.BoxEsp = v
 end)
 
 AddToggle(ESPTab, "Top Line (Desde Arriba)", false, function(v)
-    topLineEnabled = v
+    State.TopLine = v
 end)
 
 AddToggle(ESPTab, "Player Marker", false, function(v)
-    markerEnabled = v
+    State.Marker = v
 end)
 
 local function createEspForPlayer(plr)
     if plr == LocalPlayer or espObjects[plr] then return end
+    local thick = IsMobile and 2 or 1.6
 
-    local tracer = Drawing.new("Line")
-    tracer.Thickness = IsMobile and 2 or 1.5
-    tracer.Transparency = 1
-    tracer.Visible = false
+    local tracerUi = makeLineFrame(thick)
+    local topLineUi = makeLineFrame(thick)
 
-    local topLine = Drawing.new("Line")
-    topLine.Thickness = IsMobile and 2 or 1.5
-    topLine.Transparency = 1
-    topLine.Visible = false
+    local boxUi = Instance.new("Frame")
+    boxUi.BackgroundTransparency = 1
+    boxUi.BorderSizePixel = 0
+    boxUi.Visible = false
+    boxUi.Active = false
+    boxUi.ZIndex = 12
+    boxUi.Parent = EspOverlay
 
-    local box = Drawing.new("Square")
-    box.Thickness = IsMobile and 2 or 1.5
-    box.Filled = false
-    box.Transparency = 1
-    box.Visible = false
+    local boxStroke = Instance.new("UIStroke")
+    boxStroke.Thickness = thick
+    boxStroke.Color = Color3.fromRGB(255, 50, 75)
+    boxStroke.Parent = boxUi
 
-    local marker = Drawing.new("Circle")
-    marker.Thickness = 2
-    marker.NumSides = 16
-    marker.Radius = IsMobile and 6 or 5
-    marker.Filled = true
-    marker.Transparency = 1
-    marker.Visible = false
+    local markerUi = Instance.new("Frame")
+    markerUi.AnchorPoint = Vector2.new(0.5, 0.5)
+    markerUi.Size = UDim2.new(0, IsMobile and 12 or 10, 0, IsMobile and 12 or 10)
+    markerUi.BackgroundColor3 = Color3.fromRGB(255, 50, 75)
+    markerUi.BorderSizePixel = 0
+    markerUi.Visible = false
+    markerUi.Active = false
+    markerUi.ZIndex = 13
+    markerUi.Parent = EspOverlay
+
+    local mCorner = Instance.new("UICorner")
+    mCorner.CornerRadius = UDim.new(1, 0)
+    mCorner.Parent = markerUi
 
     espObjects[plr] = {
-        tracer = tracer,
-        topLine = topLine,
-        box = box,
-        marker = marker
+        tracerUi = tracerUi,
+        topLineUi = topLineUi,
+        boxUi = boxUi,
+        boxStroke = boxStroke,
+        markerUi = markerUi,
+        thick = thick
     }
+end
+
+local function hideEspData(data)
+    if not data then return end
+    data.tracerUi.Visible = false
+    data.topLineUi.Visible = false
+    data.boxUi.Visible = false
+    data.markerUi.Visible = false
 end
 
 local function removeEspForPlayer(plr)
     local data = espObjects[plr]
     if data then
-        for _, obj in pairs(data) do
-            pcall(function()
-                obj.Visible = false
-                obj:Remove()
-            end)
-        end
+        pcall(function()
+            data.tracerUi:Destroy()
+            data.topLineUi:Destroy()
+            data.boxUi:Destroy()
+            data.markerUi:Destroy()
+        end)
         espObjects[plr] = nil
     end
 end
@@ -945,17 +1122,19 @@ Players.PlayerRemoving:Connect(removeEspForPlayer)
 local activeTargetPos = nil
 
 RunService.RenderStepped:Connect(function(dt)
-    local rgb = Color3.fromHSV((tick() % 5) / 5, 1, 1)
-    local vp = Camera.ViewportSize
-    local screenCenter = vp / 2
-    local topCenter = Vector2.new(vp.X / 2, 0)
+    local pulse = (math.sin(tick() * 3) + 1) * 0.5
+    local redAccent = Color3.fromRGB(255, math.floor(35 + pulse * 45), math.floor(55 + pulse * 45))
 
-    WinStroke.Color = rgb
-    qStroke.Color = rgb
+    local vp = Camera.ViewportSize
+    local screenCenter = vp * 0.5
+    local topCenter = Vector2.new(vp.X * 0.5, 0)
+
+    WinStroke.Color = redAccent
+    qStroke.Color = redAccent
 
     -- Partículas cayendo estrictamente dentro de MainWindow
-    MenuParticlesBox.Visible = particlesEnabled and MainWindow.Visible
-    if particlesEnabled and MainWindow.Visible then
+    MenuParticlesBox.Visible = State.Particles and MainWindow.Visible
+    if State.Particles and MainWindow.Visible then
         local boxW = math.max(MenuParticlesBox.AbsoluteSize.X, 10)
         local boxH = math.max(MenuParticlesBox.AbsoluteSize.Y, 10)
 
@@ -974,15 +1153,15 @@ RunService.RenderStepped:Connect(function(dt)
             end
 
             p.obj.Position = UDim2.new(0, x, 0, y)
-            p.obj.BackgroundColor3 = rgb
+            p.obj.BackgroundColor3 = redAccent
         end
     end
 
     -- Círculo FOV
-    fovCircle.Visible = fovEnabled
-    if fovEnabled then
+    fovCircle.Visible = State.FovEnabled
+    if State.FovEnabled then
         fovCircle.Size = UDim2.new(0, calculatedRadius * 2, 0, calculatedRadius * 2)
-        fovStroke.Color = rgb
+        fovStroke.Color = redAccent
     end
 
     local bestHead = nil
@@ -996,51 +1175,60 @@ RunService.RenderStepped:Connect(function(dt)
             local head = char:FindFirstChild("Head")
             local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("HumanoidRootPart")
             local hrp = char:FindFirstChild("HumanoidRootPart") or torso
-            local highlight = char:FindFirstChild("Highlight") or Instance.new("Highlight", char)
+            local highlight = char:FindFirstChild("Highlight")
+
+            if State.Chams and not highlight then
+                highlight = Instance.new("Highlight")
+                highlight.Parent = char
+            end
 
             if head and torso and hrp then
                 local distFromMe = (head.Position - Camera.CFrame.Position).Magnitude
-                local inRange = distFromMe <= maxDistance
+                local inRange = distFromMe <= State.MaxDistance
                 local headPos, headOnScreen = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 0.55, 0))
                 local footPos = Camera:WorldToViewportPoint(hrp.Position - Vector3.new(0, 2.8, 0))
                 local torsoPos, torsoOnScreen = Camera:WorldToViewportPoint(torso.Position)
                 local fovDist = (Vector2.new(headPos.X, headPos.Y) - screenCenter).Magnitude
 
-                highlight.Enabled = chamsEnabled
-                highlight.FillColor = rgb
-                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-
-                data.tracer.Visible = (tracersEnabled and torsoOnScreen and inRange)
-                if data.tracer.Visible then
-                    data.tracer.From = screenCenter
-                    data.tracer.To = Vector2.new(torsoPos.X, torsoPos.Y)
-                    data.tracer.Color = rgb
+                if highlight then
+                    highlight.Enabled = State.Chams
+                    highlight.FillColor = redAccent
+                    highlight.OutlineColor = Color3.fromRGB(255, 225, 230)
                 end
 
-                data.topLine.Visible = (topLineEnabled and headOnScreen and inRange)
-                if data.topLine.Visible then
-                    data.topLine.From = topCenter
-                    data.topLine.To = Vector2.new(headPos.X, headPos.Y)
-                    data.topLine.Color = rgb
+                if State.Tracers and torsoOnScreen and inRange then
+                    positionLineFrame(data.tracerUi, screenCenter, Vector2.new(torsoPos.X, torsoPos.Y), redAccent, data.thick)
+                else
+                    data.tracerUi.Visible = false
                 end
 
-                data.box.Visible = (boxEnabled and headOnScreen and inRange)
-                if data.box.Visible then
-                    local boxHeight = math.clamp(math.abs(footPos.Y - headPos.Y), 14, 320)
-                    local boxWidth = math.clamp(boxHeight * 0.58, 10, 220)
-                    data.box.Size = Vector2.new(boxWidth, boxHeight)
-                    data.box.Position = Vector2.new(headPos.X - boxWidth / 2, headPos.Y)
-                    data.box.Color = rgb
+                if State.TopLine and headOnScreen and inRange then
+                    positionLineFrame(data.topLineUi, topCenter, Vector2.new(headPos.X, headPos.Y), redAccent, data.thick)
+                else
+                    data.topLineUi.Visible = false
                 end
 
-                data.marker.Visible = (markerEnabled and headOnScreen and inRange)
-                if data.marker.Visible then
-                    data.marker.Position = Vector2.new(headPos.X, math.max(8, headPos.Y - 10))
-                    data.marker.Color = rgb
+                if State.BoxEsp and headOnScreen and inRange then
+                    local boxHeight = math.clamp(math.abs(footPos.Y - headPos.Y), 16, 340)
+                    local boxWidth = math.clamp(boxHeight * 0.58, 12, 230)
+                    data.boxUi.Size = UDim2.new(0, boxWidth, 0, boxHeight)
+                    data.boxUi.Position = UDim2.new(0, headPos.X - boxWidth * 0.5, 0, headPos.Y)
+                    data.boxStroke.Color = redAccent
+                    data.boxUi.Visible = true
+                else
+                    data.boxUi.Visible = false
+                end
+
+                if State.Marker and headOnScreen and inRange then
+                    data.markerUi.Position = UDim2.new(0, headPos.X, 0, math.max(10, headPos.Y - 10))
+                    data.markerUi.BackgroundColor3 = redAccent
+                    data.markerUi.Visible = true
+                else
+                    data.markerUi.Visible = false
                 end
 
                 if headOnScreen and inRange then
-                    if getgenv().SoftLockEnabled then
+                    if State.SoftLock then
                         if fovDist <= calculatedRadius and fovDist < shortestDist then
                             local valid = getValidHead(char)
                             if valid then
@@ -1048,7 +1236,7 @@ RunService.RenderStepped:Connect(function(dt)
                                 bestHead = valid
                             end
                         end
-                    elseif getgenv().SilentAimEnabled then
+                    elseif State.SilentAim then
                         if fovDist < shortestDist then
                             local valid = getValidHead(char)
                             if valid then
@@ -1059,16 +1247,10 @@ RunService.RenderStepped:Connect(function(dt)
                     end
                 end
             else
-                data.tracer.Visible = false
-                data.topLine.Visible = false
-                data.box.Visible = false
-                data.marker.Visible = false
+                hideEspData(data)
             end
-        elseif data then
-            data.tracer.Visible = false
-            data.topLine.Visible = false
-            data.box.Visible = false
-            data.marker.Visible = false
+        else
+            hideEspData(data)
         end
     end
 
@@ -1077,7 +1259,7 @@ end)
 
 local old
 old = hookmetamethod(game, "__index", newcclosure(function(self, idx)
-    if (getgenv().SilentAimEnabled or getgenv().SoftLockEnabled) and activeTargetPos and not checkcaller() and idx == "ViewportSize" and self == Camera then
+    if (State.SilentAim or State.SoftLock) and activeTargetPos and not checkcaller() and idx == "ViewportSize" and self == Camera then
         local pos, on = Camera:WorldToViewportPoint(activeTargetPos)
         if on then
             return Vector2.new(pos.X * 2, pos.Y * 2)
@@ -1092,11 +1274,11 @@ end))
 local VisualTab = CreateTab("Visuales")
 AddSection(VisualTab, "Comunidad y Estilo")
 
-AddButton(VisualTab, "Canal WhatsApp 𝐊𝐢𝐧𝐠 𝐆𝐚𝐞𝐥 (Copiar)", function()
+AddButton(VisualTab, "Canal WhatsApp KING GAEL (Copiar)", function()
     if CopyToClipboard(WHATSAPP_CHANNEL_URL) then
-        Notify("𝐊𝐢𝐧𝐠 𝐆𝐚𝐞𝐥 • WhatsApp", "Enlace copiado al portapapeles.", 3.2)
+        Notify("KING GAEL • WhatsApp", "Enlace copiado al portapapeles.", 3.2)
     else
-        Notify("𝐊𝐢𝐧𝐠 𝐆𝐚𝐞𝐥 • WhatsApp", WHATSAPP_CHANNEL_URL, 5)
+        Notify("KING GAEL • WhatsApp", WHATSAPP_CHANNEL_URL, 5)
     end
 end)
 
@@ -1105,16 +1287,18 @@ AddButton(VisualTab, "Mostrar Tarjeta de WhatsApp", function()
 end)
 
 AddToggle(VisualTab, "Menu Particles", true, function(v)
-    particlesEnabled = v
+    State.Particles = v
 end)
 
 AddToggle(VisualTab, "Quick Button", true, function(v)
+    State.QuickBtn = v
     QuickBtn.Visible = v
 end)
 
 AddSection(VisualTab, "Iluminación y Rendimiento")
 
 AddToggle(VisualTab, "Fullbright", false, function(v)
+    State.Fullbright = v
     Lighting.Brightness = v and 2 or 1
     Lighting.ClockTime = v and 14 or 12
     Lighting.GlobalShadows = not v
@@ -1137,7 +1321,7 @@ AddButton(VisualTab, "EXTREME FPS BOOST", function()
         end
     end
 
-    Notify("𝐊𝐢𝐧𝐠 𝐆𝐚𝐞𝐥 • FPS Boost", "Texturas, VFX y post-procesado optimizados.", 3.5)
+    Notify("KING GAEL • FPS Boost", "Texturas, VFX y post-procesado optimizados.", 3.5)
 end)
 
-Notify("𝐊𝐢𝐧𝐠 𝐆𝐚𝐞𝐥", IsMobile and "Menú cristal cargado en modo móvil." or "Menú cristal cargado correctamente.", 3.5)
+Notify("KING GAEL", IsMobile and "Menú cristal rojo PRO cargado en móvil." or "Menú cristal rojo PRO cargado.", 3.5)
