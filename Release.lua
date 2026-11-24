@@ -5,6 +5,7 @@ local UIS = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
+local MarketplaceService = game:GetService("MarketplaceService")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -13,12 +14,26 @@ local IsMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
 local TARGET_PLACE_ID = 17625359962
 local WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029VbCHjR7LNSaCqoxB7P10"
 
+local BG_IDS = {
+    [1] = 138183089864109, -- IMG0197
+    [2] = 138351747140128
+}
+
+local LOGO_IDS = {
+    [1] = 129596142963991, -- IMG0199
+    [2] = 124340778722653
+}
+
 local State = {
     MenuOpen = true,
     Particles = true,
     QuickBtn = true,
     Sounds = true,
     SoundVolume = 0.85,
+    CustomBgEnabled = true,
+    BgSlot = 1,
+    CustomLogoEnabled = true,
+    LogoSlot = 1,
     LeapGlide = false,
     LeapLocked = false,
     TpBtnEnabled = false,
@@ -44,15 +59,73 @@ local State = {
     Fullbright = false
 }
 
-local ScreenGui, MainWindow, MenuParticlesBox, EspOverlay, WaBanner, QuickBtn
+local ScreenGui, MainWindow, BgImageLabel, LogoImageLabel, MenuParticlesBox, EspOverlay, WaBanner, QuickBtn
 local LeapDock, LeapBtn, LeapLockBtn, LeapTimerLbl
 local TpDock, TpBtn, TpLockBtn
 local FovCircle, FovStroke
-local Notify, PlayUiSound, CreateTab, AddSection, AddToggle, AddSlider, AddButton, teleportToEnemy
+local Notify, PlayUiSound, CreateTab, AddSection, AddToggle, AddSlider, AddButton, teleportToEnemy, triggerLeapGlide
 
 local function getRainbowColor(offset)
-    local hue = ((tick() * 0.22) + (offset or 0)) % 1
-    return Color3.fromHSV(hue, 0.85, 1)
+    local hue = ((tick() * 0.24) + (offset or 0)) % 1
+    return Color3.fromHSV(hue, 0.88, 1)
+end
+
+local resolvedIdCache = {}
+local function applyAssetToImageLabel(imgLabel, rawId, labelTag, silent)
+    if not imgLabel or not rawId then return end
+    local numId = tonumber(rawId)
+    if not numId then return end
+
+    if resolvedIdCache[numId] then
+        imgLabel.Image = "rbxassetid://" .. tostring(resolvedIdCache[numId])
+        return
+    end
+
+    imgLabel.Image = "rbxassetid://" .. tostring(numId)
+
+    task.spawn(function()
+        task.wait(0.85)
+        if not imgLabel or not imgLabel.Parent then return end
+        if imgLabel.IsLoaded then
+            resolvedIdCache[numId] = numId
+            return
+        end
+
+        local ok, info = pcall(function()
+            return MarketplaceService:GetProductInfo(numId, Enum.InfoType.Asset)
+        end)
+
+        if ok and info and type(info.Description) == "string" then
+            local extracted = string.match(info.Description, "%d%d%d%d%d%d+")
+            if extracted then
+                local candidate = tonumber(extracted)
+                if candidate and candidate ~= numId then
+                    resolvedIdCache[numId] = candidate
+                    imgLabel.Image = "rbxassetid://" .. tostring(candidate)
+                    return
+                end
+            end
+        end
+
+        if not silent and not imgLabel.IsLoaded and Notify then
+            Notify("KING GAEL • " .. tostring(labelTag or "Asset"), "ID " .. tostring(numId) .. " aún no carga (revisa visibilidad/moderación).", 3.2)
+        end
+    end)
+end
+
+local function refreshCustomVisuals(silent)
+    if BgImageLabel then
+        BgImageLabel.Visible = State.CustomBgEnabled
+        if State.CustomBgEnabled then
+            applyAssetToImageLabel(BgImageLabel, BG_IDS[State.BgSlot] or BG_IDS[1], "Fondo", silent)
+        end
+    end
+    if LogoImageLabel then
+        LogoImageLabel.Visible = State.CustomLogoEnabled
+        if State.CustomLogoEnabled then
+            applyAssetToImageLabel(LogoImageLabel, LOGO_IDS[State.LogoSlot] or LOGO_IDS[1], "Logo", silent)
+        end
+    end
 end
 
 --------------------------------------------------
@@ -230,6 +303,18 @@ do
     mStroke.Parent = MainWindow
     table.insert(uiRainbowStrokes, {stroke = mStroke, phase = 0})
 
+    BgImageLabel = Instance.new("ImageLabel")
+    BgImageLabel.Name = "KING_GAEL_BG_IMG0197"
+    BgImageLabel.Size = UDim2.new(1, 0, 1, 0)
+    BgImageLabel.Position = UDim2.new(0, 0, 0, 0)
+    BgImageLabel.BackgroundTransparency = 1
+    BgImageLabel.Image = "rbxassetid://" .. tostring(BG_IDS[State.BgSlot])
+    BgImageLabel.ImageTransparency = 0.52
+    BgImageLabel.ScaleType = Enum.ScaleType.Crop
+    BgImageLabel.ZIndex = 30
+    BgImageLabel.Active = false
+    BgImageLabel.Parent = MainWindow
+
     local grad = Instance.new("UIGradient")
     grad.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 95, 130)),
@@ -246,33 +331,56 @@ do
     MenuParticlesBox.BackgroundTransparency = 1
     MenuParticlesBox.BorderSizePixel = 0
     MenuParticlesBox.ClipsDescendants = true
-    MenuParticlesBox.ZIndex = 31
+    MenuParticlesBox.ZIndex = 32
     MenuParticlesBox.Active = false
     MenuParticlesBox.Parent = MainWindow
 
     local header = Instance.new("Frame")
     header.Size = UDim2.new(1, 0, 0, 44)
-    header.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    header.BackgroundTransparency = 0.92
+    header.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+    header.BackgroundTransparency = 0.45
     header.BorderSizePixel = 0
     header.ZIndex = 35
     header.Parent = MainWindow
 
+    LogoImageLabel = Instance.new("ImageLabel")
+    LogoImageLabel.Name = "KING_GAEL_LOGO_IMG0199"
+    LogoImageLabel.AnchorPoint = Vector2.new(0, 0.5)
+    LogoImageLabel.Position = UDim2.new(0, 10, 0.5, 0)
+    LogoImageLabel.Size = UDim2.new(0, 30, 0, 30)
+    LogoImageLabel.BackgroundColor3 = Color3.fromRGB(24, 26, 40)
+    LogoImageLabel.BackgroundTransparency = 0.25
+    LogoImageLabel.Image = "rbxassetid://" .. tostring(LOGO_IDS[State.LogoSlot])
+    LogoImageLabel.ScaleType = Enum.ScaleType.Fit
+    LogoImageLabel.ZIndex = 36
+    LogoImageLabel.Active = false
+    LogoImageLabel.Parent = header
+
+    local lgCorner = Instance.new("UICorner")
+    lgCorner.CornerRadius = UDim.new(0, 8)
+    lgCorner.Parent = LogoImageLabel
+
+    local lgStroke = Instance.new("UIStroke")
+    lgStroke.Thickness = 1.4
+    lgStroke.Color = getRainbowColor(0.2)
+    lgStroke.Parent = LogoImageLabel
+    table.insert(uiRainbowStrokes, {stroke = lgStroke, phase = 0.2})
+
     local title = Instance.new("TextLabel")
-    title.Position = UDim2.new(0, 14, 0, 0)
+    title.Position = UDim2.new(0, 46, 0, 0)
     title.Size = UDim2.new(0.42, 0, 1, 0)
     title.BackgroundTransparency = 1
     title.Text = "KING GAEL"
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
     title.Font = Enum.Font.GothamBlack
-    title.TextSize = IsMobile and 16 or 18
+    title.TextSize = IsMobile and 15.5 or 17.5
     title.TextXAlignment = Enum.TextXAlignment.Left
     title.ZIndex = 36
     title.Parent = header
 
     local sub = Instance.new("TextLabel")
-    sub.Position = UDim2.new(0, IsMobile and 118 or 134, 0, 1)
-    sub.Size = UDim2.new(0.45, 0, 1, 0)
+    sub.Position = UDim2.new(0, IsMobile and 144 or 158, 0, 1)
+    sub.Size = UDim2.new(0.42, 0, 1, 0)
     sub.BackgroundTransparency = 1
     sub.Text = "RIVALS • RAINBOW PRO"
     sub.TextColor3 = getRainbowColor(0.3)
@@ -315,9 +423,14 @@ do
                 MainWindow.Position = UDim2.new(drag.origin.X.Scale, drag.origin.X.Offset + d.X, drag.origin.Y.Scale, drag.origin.Y.Offset + d.Y)
             elseif drag.kind == "dock" and drag.target and not drag.isLocked() then
                 local d = inp.Position - drag.start
-                local nx = math.clamp(drag.origin.X.Offset + d.X, 10, math.max(10, Camera.ViewportSize.X - drag.target.AbsoluteSize.X - 10))
-                local ny = math.clamp(drag.origin.Y.Offset + d.Y, 10, math.max(10, Camera.ViewportSize.Y - drag.target.AbsoluteSize.Y - 10))
-                drag.target.Position = UDim2.new(0, nx, 0, ny)
+                if d.Magnitude > 6 then
+                    drag.moved = true
+                end
+                if drag.moved then
+                    local nx = math.clamp(drag.origin.X.Offset + d.X, 8, math.max(8, Camera.ViewportSize.X - drag.target.AbsoluteSize.X - 8))
+                    local ny = math.clamp(drag.origin.Y.Offset + d.Y, 8, math.max(8, Camera.ViewportSize.Y - drag.target.AbsoluteSize.Y - 8))
+                    drag.target.Position = UDim2.new(0, nx, 0, ny)
+                end
             elseif drag.kind == "slider" and drag.fn then
                 drag.fn(inp.Position.X)
             end
@@ -326,6 +439,9 @@ do
 
     UIS.InputEnded:Connect(function(inp)
         if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+            if drag and drag.kind == "dock" and not drag.moved and drag.onTap then
+                drag.onTap()
+            end
             drag = nil
         end
     end)
@@ -334,8 +450,8 @@ do
     local sidebar = Instance.new("Frame")
     sidebar.Position = UDim2.new(0, 0, 0, 44)
     sidebar.Size = UDim2.new(0, sideW, 1, -44)
-    sidebar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    sidebar.BackgroundTransparency = 0.95
+    sidebar.BackgroundColor3 = Color3.fromRGB(16, 18, 28)
+    sidebar.BackgroundTransparency = 0.55
     sidebar.BorderSizePixel = 0
     sidebar.ZIndex = 34
     sidebar.Parent = MainWindow
@@ -436,7 +552,7 @@ do
         local row = Instance.new("Frame")
         row.Size = UDim2.new(1, 0, 0, 36)
         row.BackgroundColor3 = Color3.fromRGB(26, 28, 42)
-        row.BackgroundTransparency = 0.28
+        row.BackgroundTransparency = 0.32
         row.BorderSizePixel = 0
         row.ZIndex = 36
         row.Parent = page
@@ -488,7 +604,7 @@ do
         local row = Instance.new("Frame")
         row.Size = UDim2.new(1, 0, 0, 46)
         row.BackgroundColor3 = Color3.fromRGB(26, 28, 42)
-        row.BackgroundTransparency = 0.28
+        row.BackgroundTransparency = 0.32
         row.BorderSizePixel = 0
         row.ZIndex = 36
         row.Parent = page
@@ -556,7 +672,7 @@ do
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(1, 0, 0, 36)
         btn.BackgroundColor3 = Color3.fromRGB(38, 42, 66)
-        btn.BackgroundTransparency = 0.15
+        btn.BackgroundTransparency = 0.18
         btn.Text = text
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
         btn.Font = Enum.Font.GothamBold
@@ -707,36 +823,37 @@ do
     qStroke.Parent = QuickBtn
     table.insert(uiRainbowStrokes, {stroke = qStroke, phase = 0.15})
 
-    local function createFloatingDock(name, emoji, initX, initY, strokePhase, lockPhase, onLockToggle, isLockedFn)
+    local function createFloatingDock(name, emoji, initX, initY, strokePhase, lockPhase, onTapFn, onLockToggle, isLockedFn)
         local dock = Instance.new("Frame")
         dock.Name = name .. "_DOCK"
-        dock.Size = UDim2.new(0, 86, 0, 50)
+        dock.Size = UDim2.new(0, 92, 0, 52)
         dock.Position = UDim2.new(0, initX, 0, initY)
         dock.BackgroundTransparency = 1
-        dock.Active = true
+        dock.Active = false
         dock.Visible = false
         dock.ZIndex = 155
         dock.Parent = ScreenGui
 
         local mainBtn = Instance.new("TextButton")
         mainBtn.Name = name .. "_BTN"
-        mainBtn.Size = UDim2.new(0, 50, 0, 50)
+        mainBtn.Size = UDim2.new(0, 52, 0, 52)
         mainBtn.Position = UDim2.new(0, 0, 0, 0)
         mainBtn.BackgroundColor3 = Color3.fromRGB(20, 22, 34)
-        mainBtn.BackgroundTransparency = 0.14
+        mainBtn.BackgroundTransparency = 0.12
         mainBtn.Text = emoji
         mainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
         mainBtn.Font = Enum.Font.GothamBold
-        mainBtn.TextSize = 24
+        mainBtn.TextSize = 25
+        mainBtn.Active = true
         mainBtn.ZIndex = 156
         mainBtn.Parent = dock
 
         local bCorner = Instance.new("UICorner")
-        bCorner.CornerRadius = UDim.new(0, 12)
+        bCorner.CornerRadius = UDim.new(0, 13)
         bCorner.Parent = mainBtn
 
         local bStroke = Instance.new("UIStroke")
-        bStroke.Thickness = 1.8
+        bStroke.Thickness = 1.9
         bStroke.Color = getRainbowColor(strokePhase)
         bStroke.Parent = mainBtn
         table.insert(uiRainbowStrokes, {stroke = bStroke, phase = strokePhase})
@@ -755,36 +872,38 @@ do
 
         local lockBtn = Instance.new("TextButton")
         lockBtn.Name = name .. "_LOCK"
-        lockBtn.Size = UDim2.new(0, 30, 0, 30)
-        lockBtn.Position = UDim2.new(0, 55, 0, 10)
+        lockBtn.Size = UDim2.new(0, 32, 0, 32)
+        lockBtn.Position = UDim2.new(0, 58, 0, 10)
         lockBtn.BackgroundColor3 = Color3.fromRGB(24, 26, 40)
-        lockBtn.BackgroundTransparency = 0.18
+        lockBtn.BackgroundTransparency = 0.15
         lockBtn.Text = "🔓"
         lockBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
         lockBtn.Font = Enum.Font.GothamBold
-        lockBtn.TextSize = 14
+        lockBtn.TextSize = 15
+        lockBtn.Active = true
         lockBtn.ZIndex = 156
         lockBtn.Parent = dock
 
         local lkCorner = Instance.new("UICorner")
-        lkCorner.CornerRadius = UDim.new(0, 9)
+        lkCorner.CornerRadius = UDim.new(0, 10)
         lkCorner.Parent = lockBtn
 
         local lkStroke = Instance.new("UIStroke")
-        lkStroke.Thickness = 1.4
+        lkStroke.Thickness = 1.5
         lkStroke.Color = getRainbowColor(lockPhase)
         lkStroke.Parent = lockBtn
         table.insert(uiRainbowStrokes, {stroke = lkStroke, phase = lockPhase})
 
-        dock.InputBegan:Connect(function(inp)
-            if isLockedFn() then return end
+        mainBtn.InputBegan:Connect(function(inp)
             if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
                 drag = {
                     kind = "dock",
                     target = dock,
                     start = inp.Position,
                     origin = dock.Position,
-                    isLocked = isLockedFn
+                    moved = false,
+                    isLocked = isLockedFn,
+                    onTap = onTapFn
                 }
             end
         end)
@@ -796,7 +915,7 @@ do
         return dock, mainBtn, lockBtn, timerLbl
     end
 
-    local startX = math.max(16, Camera.ViewportSize.X - 110)
+    local startX = math.max(16, Camera.ViewportSize.X - 116)
     local startY = math.max(16, math.floor(Camera.ViewportSize.Y * 0.62))
 
     LeapDock, LeapBtn, LeapLockBtn, LeapTimerLbl = createFloatingDock(
@@ -807,11 +926,14 @@ do
         0.5,
         0.75,
         function()
+            if triggerLeapGlide then triggerLeapGlide() end
+        end,
+        function()
             State.LeapLocked = not State.LeapLocked
             LeapLockBtn.Text = State.LeapLocked and "🔒" or "🔓"
             LeapLockBtn.BackgroundColor3 = State.LeapLocked and Color3.fromRGB(70, 195, 130) or Color3.fromRGB(24, 26, 40)
             PlayUiSound(State.LeapLocked and "on" or "off")
-            Notify("KING GAEL • 🦘", State.LeapLocked and "Botón 🦘 bloqueado." or "Botón 🦘 desbloqueado.", 2.2)
+            Notify("KING GAEL • 🦘", State.LeapLocked and "Posición de 🦘 bloqueada." or "Posición de 🦘 desbloqueada.", 2.2)
         end,
         function() return State.LeapLocked end
     )
@@ -820,15 +942,18 @@ do
         "KING_GAEL_TP",
         "⚡",
         startX,
-        math.max(16, startY - 62),
+        math.max(16, startY - 64),
         0.65,
         0.85,
+        function()
+            if teleportToEnemy then teleportToEnemy() end
+        end,
         function()
             State.TpLocked = not State.TpLocked
             TpLockBtn.Text = State.TpLocked and "🔒" or "🔓"
             TpLockBtn.BackgroundColor3 = State.TpLocked and Color3.fromRGB(70, 195, 130) or Color3.fromRGB(24, 26, 40)
             PlayUiSound(State.TpLocked and "on" or "off")
-            Notify("KING GAEL • ⚡", State.TpLocked and "Botón ⚡ TP bloqueado." or "Botón ⚡ TP desbloqueado.", 2.2)
+            Notify("KING GAEL • ⚡", State.TpLocked and "Posición de ⚡ bloqueada." or "Posición de ⚡ desbloqueada.", 2.2)
         end,
         function() return State.TpLocked end
     )
@@ -847,24 +972,24 @@ do
 end
 
 --------------------------------------------------
--- 🌧️ PARTÍCULAS ARCOÍRIS DENTRO DEL MENÚ
+-- ✨ PARTÍCULAS ARCOÍRIS PRO DENTRO DEL MENÚ
 --------------------------------------------------
 local updateParticles
 do
     local list = {}
-    local count = IsMobile and 16 or 24
+    local count = IsMobile and 24 or 36
     local w = MainWindow.AbsoluteSize.X > 0 and MainWindow.AbsoluteSize.X or 500
     local h = MainWindow.AbsoluteSize.Y > 0 and MainWindow.AbsoluteSize.Y or 360
 
     for i = 1, count do
         local p = Instance.new("Frame")
-        local sz = math.random(3, 6)
+        local sz = math.random(4, 8)
         p.Size = UDim2.new(0, sz, 0, sz)
-        p.Position = UDim2.new(0, math.random(6, math.max(12, w - 10)), 0, -math.random(6, h))
+        p.Position = UDim2.new(0, math.random(6, math.max(12, w - 10)), 0, math.random(-h, h))
         p.BackgroundColor3 = getRainbowColor(i / count)
-        p.BackgroundTransparency = math.random(25, 60) / 100
+        p.BackgroundTransparency = math.random(18, 52) / 100
         p.BorderSizePixel = 0
-        p.ZIndex = 31
+        p.ZIndex = 32
         p.Active = false
         p.Parent = MenuParticlesBox
 
@@ -872,9 +997,19 @@ do
         c.CornerRadius = UDim.new(1, 0)
         c.Parent = p
 
+        local pStroke = Instance.new("UIStroke")
+        pStroke.Thickness = 1
+        pStroke.Transparency = 0.45
+        pStroke.Color = getRainbowColor((i / count) + 0.12)
+        pStroke.Parent = p
+
         table.insert(list, {
             f = p,
-            vy = math.random(35, 78),
+            stroke = pStroke,
+            baseSize = sz,
+            vy = math.random(42, 92),
+            swayAmp = math.random(10, 24),
+            swayFreq = math.random(18, 35) / 10,
             phase = math.random() * 6.28,
             hueOff = i / count
         })
@@ -890,18 +1025,28 @@ do
         for i = 1, #list do
             local item = list[i]
             local pos = item.f.Position
-            local x = pos.X.Offset + math.sin(t * 2 + item.phase) * 10 * dt
+            local x = pos.X.Offset + math.cos(t * item.swayFreq + item.phase) * item.swayAmp * dt
             local y = pos.Y.Offset + item.vy * dt
 
-            if y > bh + 4 then
-                y = -math.random(6, 20)
-                x = math.random(6, math.max(10, bw - 10))
+            if y > bh + 8 then
+                y = -math.random(8, 24)
+                x = math.random(8, math.max(12, bw - 12))
             else
-                x = math.clamp(x, 4, bw - 8)
+                x = math.clamp(x, 4, bw - 10)
             end
 
+            local pulse = 0.85 + ((math.sin(t * 4 + item.phase) + 1) * 0.25)
+            local curSz = math.clamp(math.floor(item.baseSize * pulse + 0.5), 3, 11)
+            item.f.Size = UDim2.new(0, curSz, 0, curSz)
             item.f.Position = UDim2.new(0, x, 0, y)
-            item.f.BackgroundColor3 = getRainbowColor(item.hueOff)
+
+            local c1 = getRainbowColor(item.hueOff)
+            local c2 = getRainbowColor(item.hueOff + 0.15)
+            item.f.BackgroundColor3 = c1
+            item.f.BackgroundTransparency = 0.22 + ((math.sin(t * 3 + item.phase) + 1) * 0.16)
+            if item.stroke then
+                item.stroke.Color = c2
+            end
         end
     end
 end
@@ -1051,70 +1196,69 @@ local function processWeaponContainer(container)
     end
 end
 
+local leapRunning = false
+triggerLeapGlide = function()
+    if leapRunning then return end
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not hrp or not hum or hum.Health <= 0 then
+        Notify("KING GAEL • 🦘", "Personaje no disponible.", 2.5)
+        return
+    end
+
+    leapRunning = true
+    PlayUiSound("boost")
+
+    local bv = hrp:FindFirstChild("KingGaelLeapGlide")
+    if not bv then
+        bv = Instance.new("BodyVelocity")
+        bv.Name = "KingGaelLeapGlide"
+        bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+        bv.Parent = hrp
+    end
+
+    local startT = os.clock()
+    local duration = 4.0
+
+    task.spawn(function()
+        while (os.clock() - startT) < duration do
+            local curChar = LocalPlayer.Character
+            local curHrp = curChar and curChar:FindFirstChild("HumanoidRootPart")
+            local curHum = curChar and curChar:FindFirstChildOfClass("Humanoid")
+            if not curHrp or not curHum or curHum.Health <= 0 then break end
+
+            local elapsed = os.clock() - startT
+            local left = math.max(0, duration - elapsed)
+            if LeapTimerLbl then
+                LeapTimerLbl.Text = string.format("%.1fs", left)
+            end
+
+            local fwd = Camera.CFrame.LookVector
+            local flatFwd = Vector3.new(fwd.X, 0, fwd.Z)
+            if flatFwd.Magnitude > 0.01 then
+                flatFwd = flatFwd.Unit
+            else
+                flatFwd = curHrp.CFrame.LookVector
+            end
+
+            local yVel = (elapsed < 0.45) and 64 or 8
+            bv.Velocity = flatFwd * 58 + Vector3.new(0, yVel, 0)
+            task.wait()
+        end
+
+        local oldBv = hrp and hrp:FindFirstChild("KingGaelLeapGlide")
+        if oldBv then oldBv:Destroy() end
+        if LeapTimerLbl then
+            LeapTimerLbl.Text = ""
+        end
+        leapRunning = false
+    end)
+end
+
 do
     local pTab = CreateTab("Jugador")
     AddSection(pTab, "Movimiento y Impulso")
-
-    local leapRunning = false
-    local function triggerLeapGlide()
-        if leapRunning then return end
-        local char = LocalPlayer.Character
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-        if not hrp or not hum or hum.Health <= 0 then
-            Notify("KING GAEL • 🦘", "Personaje no disponible.", 2.5)
-            return
-        end
-
-        leapRunning = true
-        PlayUiSound("boost")
-
-        local bv = hrp:FindFirstChild("KingGaelLeapGlide")
-        if not bv then
-            bv = Instance.new("BodyVelocity")
-            bv.Name = "KingGaelLeapGlide"
-            bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-            bv.Parent = hrp
-        end
-
-        local startT = os.clock()
-        local duration = 4.0
-
-        task.spawn(function()
-            while (os.clock() - startT) < duration do
-                local curChar = LocalPlayer.Character
-                local curHrp = curChar and curChar:FindFirstChild("HumanoidRootPart")
-                local curHum = curChar and curChar:FindFirstChildOfClass("Humanoid")
-                if not curHrp or not curHum or curHum.Health <= 0 then break end
-
-                local elapsed = os.clock() - startT
-                local left = math.max(0, duration - elapsed)
-                LeapTimerLbl.Text = string.format("%.1fs", left)
-
-                local fwd = Camera.CFrame.LookVector
-                local flatFwd = Vector3.new(fwd.X, 0, fwd.Z)
-                if flatFwd.Magnitude > 0.01 then
-                    flatFwd = flatFwd.Unit
-                else
-                    flatFwd = curHrp.CFrame.LookVector
-                end
-
-                local yVel = (elapsed < 0.45) and 64 or 8
-                bv.Velocity = flatFwd * 58 + Vector3.new(0, yVel, 0)
-                task.wait()
-            end
-
-            local oldBv = hrp and hrp:FindFirstChild("KingGaelLeapGlide")
-            if oldBv then oldBv:Destroy() end
-            LeapTimerLbl.Text = ""
-            leapRunning = false
-        end)
-    end
-
-    LeapBtn.MouseButton1Click:Connect(triggerLeapGlide)
-    TpBtn.MouseButton1Click:Connect(function()
-        teleportToEnemy()
-    end)
 
     local flyActive = false
     local function stopFly()
@@ -1404,6 +1548,57 @@ end
 
 do
     local vTab = CreateTab("Visuales")
+    AddSection(vTab, "Fondo y Logo Custom")
+
+    AddToggle(vTab, "Fondo Custom", true, function(v)
+        State.CustomBgEnabled = v
+        refreshCustomVisuals(false)
+    end)
+
+    AddButton(vTab, "Fondo: IMG0197 (138183089864109)", function()
+        State.BgSlot = 1
+        State.CustomBgEnabled = true
+        PlayUiSound("click")
+        refreshCustomVisuals(false)
+        Notify("KING GAEL • Fondo", "Cargando IMG0197 (138183089864109).", 2.5)
+    end)
+
+    AddButton(vTab, "Fondo Alterno: 138351747140128", function()
+        State.BgSlot = 2
+        State.CustomBgEnabled = true
+        PlayUiSound("click")
+        refreshCustomVisuals(false)
+        Notify("KING GAEL • Fondo", "Cargando 138351747140128.", 2.5)
+    end)
+
+    AddToggle(vTab, "Logo Custom", true, function(v)
+        State.CustomLogoEnabled = v
+        refreshCustomVisuals(false)
+    end)
+
+    AddButton(vTab, "Logo: IMG0199 (129596142963991)", function()
+        State.LogoSlot = 1
+        State.CustomLogoEnabled = true
+        PlayUiSound("click")
+        refreshCustomVisuals(false)
+        Notify("KING GAEL • Logo", "Cargando IMG0199 (129596142963991).", 2.5)
+    end)
+
+    AddButton(vTab, "Logo Alterno: 124340778722653", function()
+        State.LogoSlot = 2
+        State.CustomLogoEnabled = true
+        PlayUiSound("click")
+        refreshCustomVisuals(false)
+        Notify("KING GAEL • Logo", "Cargando 124340778722653.", 2.5)
+    end)
+
+    AddButton(vTab, "Reintentar Cargar Fondo y Logo", function()
+        PlayUiSound("boost")
+        resolvedIdCache = {}
+        refreshCustomVisuals(false)
+        Notify("KING GAEL", "Reintentando cargar IMG0197 e IMG0199...", 2.5)
+    end)
+
     AddSection(vTab, "Comunidad y Sonido")
     AddButton(vTab, "Copiar Canal WhatsApp", function()
         PlayUiSound("boost")
@@ -1450,6 +1645,8 @@ do
         Notify("KING GAEL", "Optimización aplicada para Rivals.", 3)
     end)
 end
+
+refreshCustomVisuals(true)
 
 --------------------------------------------------
 -- 🌈 BUCLE PRINCIPAL LIGERO
