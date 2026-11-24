@@ -20,6 +20,9 @@ local State = {
     Sounds = true,
     SoundVolume = 0.85,
     LeapGlide = false,
+    LeapLocked = false,
+    TpBtnEnabled = false,
+    TpLocked = false,
     Fly = false,
     SpeedRun = false,
     SpeedRunValue = 45,
@@ -27,6 +30,7 @@ local State = {
     Noclip = false,
     WalkSpeed = 16,
     InfiniteAmmo = false,
+    FastReload = true,
     SilentAim = false,
     SoftLock = false,
     MaxDistance = 600,
@@ -40,8 +44,16 @@ local State = {
     Fullbright = false
 }
 
-local ScreenGui, MainWindow, MenuParticlesBox, EspOverlay, WaBanner, QuickBtn, LeapBtn, FovCircle, FovStroke
-local Notify, PlayUiSound, CreateTab, AddSection, AddToggle, AddSlider, AddButton
+local ScreenGui, MainWindow, MenuParticlesBox, EspOverlay, WaBanner, QuickBtn
+local LeapDock, LeapBtn, LeapLockBtn, LeapTimerLbl
+local TpDock, TpBtn, TpLockBtn
+local FovCircle, FovStroke
+local Notify, PlayUiSound, CreateTab, AddSection, AddToggle, AddSlider, AddButton, teleportToEnemy
+
+local function getRainbowColor(offset)
+    local hue = ((tick() * 0.22) + (offset or 0)) % 1
+    return Color3.fromHSV(hue, 0.85, 1)
+end
 
 --------------------------------------------------
 -- 🔊 SISTEMA DE SONIDO PRO - KING GAEL
@@ -49,7 +61,7 @@ local Notify, PlayUiSound, CreateTab, AddSection, AddToggle, AddSlider, AddButto
 local sfxList = {}
 do
     local sfxFolder = Instance.new("Folder")
-    sfxFolder.Name = "KING_GAEL_SFX_PRO"
+    sfxFolder.Name = "KING_GAEL_SFX_RAINBOW"
     sfxFolder.Parent = SoundService
 
     local function createSfx(name, assetId, mult, pitch)
@@ -95,8 +107,11 @@ local function syncSfxVolumes()
 end
 
 --------------------------------------------------
--- 🩸 UI CRISTAL ROJO PRO - KING GAEL
+-- 🌈 UI ARCOÍRIS PROFESIONAL - KING GAEL
 --------------------------------------------------
+local uiRainbowStrokes = {}
+local uiRainbowAccents = {}
+
 do
     local okRoot, root = pcall(function()
         return (gethui and gethui()) or game:GetService("CoreGui")
@@ -104,7 +119,7 @@ do
     local parent = (okRoot and root) or LocalPlayer:WaitForChild("PlayerGui")
 
     ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "KING_GAEL_RIVALS_PRO"
+    ScreenGui.Name = "KING_GAEL_RIVALS_RAINBOW"
     ScreenGui.IgnoreGuiInset = true
     ScreenGui.ResetOnSpawn = false
     ScreenGui.DisplayOrder = 200
@@ -137,8 +152,8 @@ do
         dur = dur or 3.2
         local card = Instance.new("Frame")
         card.Size = UDim2.new(1, 0, 0, 58)
-        card.BackgroundColor3 = Color3.fromRGB(22, 6, 10)
-        card.BackgroundTransparency = 0.14
+        card.BackgroundColor3 = Color3.fromRGB(15, 16, 24)
+        card.BackgroundTransparency = 0.12
         card.BorderSizePixel = 0
         card.ZIndex = 171
         card.Parent = notifyHolder
@@ -148,16 +163,17 @@ do
         cCorner.Parent = card
 
         local cStroke = Instance.new("UIStroke")
-        cStroke.Thickness = 1.3
-        cStroke.Color = Color3.fromRGB(255, 55, 78)
+        cStroke.Thickness = 1.4
+        cStroke.Color = getRainbowColor(0.1)
         cStroke.Parent = card
+        table.insert(uiRainbowStrokes, {stroke = cStroke, phase = 0.1})
 
         local tLbl = Instance.new("TextLabel")
         tLbl.Position = UDim2.new(0, 12, 0, 6)
         tLbl.Size = UDim2.new(1, -24, 0, 18)
         tLbl.BackgroundTransparency = 1
         tLbl.Text = title
-        tLbl.TextColor3 = Color3.fromRGB(255, 244, 246)
+        tLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
         tLbl.Font = Enum.Font.GothamBlack
         tLbl.TextSize = 12.5
         tLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -169,7 +185,7 @@ do
         bLbl.Size = UDim2.new(1, -24, 0, 28)
         bLbl.BackgroundTransparency = 1
         bLbl.Text = text
-        bLbl.TextColor3 = Color3.fromRGB(248, 195, 204)
+        bLbl.TextColor3 = Color3.fromRGB(225, 228, 245)
         bLbl.Font = Enum.Font.GothamMedium
         bLbl.TextSize = 11
         bLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -188,16 +204,16 @@ do
     end
 
     local vp = Camera.ViewportSize
-    local w = IsMobile and math.clamp(vp.X * 0.9, 330, 495) or 585
-    local h = IsMobile and math.clamp(vp.Y * 0.82, 275, 375) or 405
+    local w = IsMobile and math.clamp(vp.X * 0.9, 330, 500) or 590
+    local h = IsMobile and math.clamp(vp.Y * 0.82, 275, 380) or 410
 
     MainWindow = Instance.new("Frame")
     MainWindow.Name = "KING_GAEL_WINDOW"
     MainWindow.AnchorPoint = Vector2.new(0.5, 0.5)
     MainWindow.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainWindow.Size = UDim2.new(0, w, 0, h)
-    MainWindow.BackgroundColor3 = Color3.fromRGB(16, 5, 9)
-    MainWindow.BackgroundTransparency = 0.18
+    MainWindow.BackgroundColor3 = Color3.fromRGB(13, 14, 22)
+    MainWindow.BackgroundTransparency = 0.16
     MainWindow.BorderSizePixel = 0
     MainWindow.ClipsDescendants = true
     MainWindow.Active = true
@@ -209,17 +225,20 @@ do
     mCorner.Parent = MainWindow
 
     local mStroke = Instance.new("UIStroke")
-    mStroke.Thickness = 1.7
-    mStroke.Color = Color3.fromRGB(255, 48, 72)
+    mStroke.Thickness = 2
+    mStroke.Color = getRainbowColor(0)
     mStroke.Parent = MainWindow
+    table.insert(uiRainbowStrokes, {stroke = mStroke, phase = 0})
 
     local grad = Instance.new("UIGradient")
     grad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 200, 210)),
-        ColorSequenceKeypoint.new(0.55, Color3.fromRGB(215, 55, 78)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 10, 22))
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 95, 130)),
+        ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 210, 90)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(95, 255, 165)),
+        ColorSequenceKeypoint.new(0.75, Color3.fromRGB(100, 185, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(205, 115, 255))
     })
-    grad.Rotation = 125
+    grad.Rotation = 135
     grad.Parent = MainWindow
 
     MenuParticlesBox = Instance.new("Frame")
@@ -233,8 +252,8 @@ do
 
     local header = Instance.new("Frame")
     header.Size = UDim2.new(1, 0, 0, 44)
-    header.BackgroundColor3 = Color3.fromRGB(255, 45, 70)
-    header.BackgroundTransparency = 0.84
+    header.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    header.BackgroundTransparency = 0.92
     header.BorderSizePixel = 0
     header.ZIndex = 35
     header.Parent = MainWindow
@@ -244,7 +263,7 @@ do
     title.Size = UDim2.new(0.42, 0, 1, 0)
     title.BackgroundTransparency = 1
     title.Text = "KING GAEL"
-    title.TextColor3 = Color3.fromRGB(255, 245, 248)
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
     title.Font = Enum.Font.GothamBlack
     title.TextSize = IsMobile and 16 or 18
     title.TextXAlignment = Enum.TextXAlignment.Left
@@ -255,20 +274,21 @@ do
     sub.Position = UDim2.new(0, IsMobile and 118 or 134, 0, 1)
     sub.Size = UDim2.new(0.45, 0, 1, 0)
     sub.BackgroundTransparency = 1
-    sub.Text = "RIVALS • PRO RED"
-    sub.TextColor3 = Color3.fromRGB(255, 115, 135)
+    sub.Text = "RIVALS • RAINBOW PRO"
+    sub.TextColor3 = getRainbowColor(0.3)
     sub.Font = Enum.Font.GothamBold
     sub.TextSize = 10
     sub.TextXAlignment = Enum.TextXAlignment.Left
     sub.ZIndex = 36
     sub.Parent = header
+    table.insert(uiRainbowAccents, {obj = sub, prop = "TextColor3", phase = 0.3})
 
     local closeBtn = Instance.new("TextButton")
     closeBtn.AnchorPoint = Vector2.new(1, 0.5)
     closeBtn.Position = UDim2.new(1, -12, 0.5, 0)
     closeBtn.Size = UDim2.new(0, 26, 0, 26)
-    closeBtn.BackgroundColor3 = Color3.fromRGB(255, 55, 80)
-    closeBtn.BackgroundTransparency = 0.5
+    closeBtn.BackgroundColor3 = Color3.fromRGB(30, 32, 46)
+    closeBtn.BackgroundTransparency = 0.25
     closeBtn.Text = "×"
     closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     closeBtn.Font = Enum.Font.GothamBold
@@ -293,6 +313,11 @@ do
             if drag.kind == "win" then
                 local d = inp.Position - drag.start
                 MainWindow.Position = UDim2.new(drag.origin.X.Scale, drag.origin.X.Offset + d.X, drag.origin.Y.Scale, drag.origin.Y.Offset + d.Y)
+            elseif drag.kind == "dock" and drag.target and not drag.isLocked() then
+                local d = inp.Position - drag.start
+                local nx = math.clamp(drag.origin.X.Offset + d.X, 10, math.max(10, Camera.ViewportSize.X - drag.target.AbsoluteSize.X - 10))
+                local ny = math.clamp(drag.origin.Y.Offset + d.Y, 10, math.max(10, Camera.ViewportSize.Y - drag.target.AbsoluteSize.Y - 10))
+                drag.target.Position = UDim2.new(0, nx, 0, ny)
             elseif drag.kind == "slider" and drag.fn then
                 drag.fn(inp.Position.X)
             end
@@ -309,8 +334,8 @@ do
     local sidebar = Instance.new("Frame")
     sidebar.Position = UDim2.new(0, 0, 0, 44)
     sidebar.Size = UDim2.new(0, sideW, 1, -44)
-    sidebar.BackgroundColor3 = Color3.fromRGB(255, 50, 75)
-    sidebar.BackgroundTransparency = 0.92
+    sidebar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    sidebar.BackgroundTransparency = 0.95
     sidebar.BorderSizePixel = 0
     sidebar.ZIndex = 34
     sidebar.Parent = MainWindow
@@ -338,10 +363,10 @@ do
     CreateTab = function(name)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(1, 0, 0, IsMobile and 33 or 35)
-        btn.BackgroundColor3 = Color3.fromRGB(255, 50, 75)
-        btn.BackgroundTransparency = 0.86
+        btn.BackgroundColor3 = Color3.fromRGB(28, 30, 44)
+        btn.BackgroundTransparency = 0.35
         btn.Text = name
-        btn.TextColor3 = Color3.fromRGB(245, 195, 202)
+        btn.TextColor3 = Color3.fromRGB(215, 220, 240)
         btn.Font = Enum.Font.GothamBold
         btn.TextSize = IsMobile and 12 or 13
         btn.ZIndex = 35
@@ -356,7 +381,7 @@ do
         page.BackgroundTransparency = 1
         page.BorderSizePixel = 0
         page.ScrollBarThickness = 2
-        page.ScrollBarImageColor3 = Color3.fromRGB(255, 75, 95)
+        page.ScrollBarImageColor3 = getRainbowColor(0.5)
         page.CanvasSize = UDim2.new(0, 0, 0, 0)
         page.AutomaticCanvasSize = Enum.AutomaticSize.Y
         page.Visible = false
@@ -375,13 +400,13 @@ do
         local function openThis(playSfx)
             for _, t in pairs(tabs) do
                 t.page.Visible = false
-                t.btn.BackgroundColor3 = Color3.fromRGB(255, 50, 75)
-                t.btn.BackgroundTransparency = 0.86
-                t.btn.TextColor3 = Color3.fromRGB(245, 195, 202)
+                t.btn.BackgroundColor3 = Color3.fromRGB(28, 30, 44)
+                t.btn.BackgroundTransparency = 0.35
+                t.btn.TextColor3 = Color3.fromRGB(215, 220, 240)
             end
             page.Visible = true
-            btn.BackgroundColor3 = Color3.fromRGB(230, 32, 58)
-            btn.BackgroundTransparency = 0.3
+            btn.BackgroundColor3 = Color3.fromRGB(65, 70, 105)
+            btn.BackgroundTransparency = 0.15
             btn.TextColor3 = Color3.fromRGB(255, 255, 255)
             if playSfx and PlayUiSound then PlayUiSound("click") end
         end
@@ -397,20 +422,21 @@ do
         lbl.Size = UDim2.new(1, 0, 0, 20)
         lbl.BackgroundTransparency = 1
         lbl.Text = string.upper(text)
-        lbl.TextColor3 = Color3.fromRGB(255, 110, 130)
+        lbl.TextColor3 = getRainbowColor(0.2)
         lbl.Font = Enum.Font.GothamBold
         lbl.TextSize = 11
         lbl.TextXAlignment = Enum.TextXAlignment.Left
         lbl.ZIndex = 36
         lbl.Parent = page
+        table.insert(uiRainbowAccents, {obj = lbl, prop = "TextColor3", phase = 0.2})
     end
 
     AddToggle = function(page, text, def, cb)
         local on = def or false
         local row = Instance.new("Frame")
         row.Size = UDim2.new(1, 0, 0, 36)
-        row.BackgroundColor3 = Color3.fromRGB(255, 65, 85)
-        row.BackgroundTransparency = 0.88
+        row.BackgroundColor3 = Color3.fromRGB(26, 28, 42)
+        row.BackgroundTransparency = 0.28
         row.BorderSizePixel = 0
         row.ZIndex = 36
         row.Parent = page
@@ -424,7 +450,7 @@ do
         lbl.Size = UDim2.new(1, -66, 1, 0)
         lbl.BackgroundTransparency = 1
         lbl.Text = text
-        lbl.TextColor3 = Color3.fromRGB(255, 242, 245)
+        lbl.TextColor3 = Color3.fromRGB(245, 247, 255)
         lbl.Font = Enum.Font.GothamMedium
         lbl.TextSize = IsMobile and 12 or 12.5
         lbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -435,8 +461,8 @@ do
         pill.AnchorPoint = Vector2.new(1, 0.5)
         pill.Position = UDim2.new(1, -10, 0.5, 0)
         pill.Size = UDim2.new(0, 42, 0, 21)
-        pill.BackgroundColor3 = on and Color3.fromRGB(240, 35, 60) or Color3.fromRGB(48, 20, 28)
-        pill.BackgroundTransparency = on and 0.15 or 0.35
+        pill.BackgroundColor3 = on and Color3.fromRGB(70, 195, 130) or Color3.fromRGB(52, 55, 75)
+        pill.BackgroundTransparency = 0.15
         pill.Text = on and "ON" or "OFF"
         pill.TextColor3 = Color3.fromRGB(255, 255, 255)
         pill.Font = Enum.Font.GothamBold
@@ -451,8 +477,7 @@ do
         pill.MouseButton1Click:Connect(function()
             on = not on
             pill.Text = on and "ON" or "OFF"
-            pill.BackgroundColor3 = on and Color3.fromRGB(240, 35, 60) or Color3.fromRGB(48, 20, 28)
-            pill.BackgroundTransparency = on and 0.15 or 0.35
+            pill.BackgroundColor3 = on and Color3.fromRGB(70, 195, 130) or Color3.fromRGB(52, 55, 75)
             if PlayUiSound then PlayUiSound(on and "on" or "off") end
             if cb then cb(on) end
         end)
@@ -462,8 +487,8 @@ do
         local val = def or minV
         local row = Instance.new("Frame")
         row.Size = UDim2.new(1, 0, 0, 46)
-        row.BackgroundColor3 = Color3.fromRGB(255, 65, 85)
-        row.BackgroundTransparency = 0.88
+        row.BackgroundColor3 = Color3.fromRGB(26, 28, 42)
+        row.BackgroundTransparency = 0.28
         row.BorderSizePixel = 0
         row.ZIndex = 36
         row.Parent = page
@@ -477,7 +502,7 @@ do
         topLbl.Size = UDim2.new(1, -24, 0, 17)
         topLbl.BackgroundTransparency = 1
         topLbl.Text = string.format("%s: %s%s", text, tostring(val), suffix or "")
-        topLbl.TextColor3 = Color3.fromRGB(255, 242, 245)
+        topLbl.TextColor3 = Color3.fromRGB(245, 247, 255)
         topLbl.Font = Enum.Font.GothamMedium
         topLbl.TextSize = 12
         topLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -488,7 +513,7 @@ do
         barBg.Position = UDim2.new(0, 12, 0, 28)
         barBg.Size = UDim2.new(1, -24, 0, 7)
         barBg.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        barBg.BackgroundTransparency = 0.82
+        barBg.BackgroundTransparency = 0.84
         barBg.BorderSizePixel = 0
         barBg.ZIndex = 37
         barBg.Parent = row
@@ -499,10 +524,11 @@ do
 
         local fill = Instance.new("Frame")
         fill.Size = UDim2.new(math.clamp((val - minV) / (maxV - minV), 0, 1), 0, 1, 0)
-        fill.BackgroundColor3 = Color3.fromRGB(255, 55, 80)
+        fill.BackgroundColor3 = getRainbowColor(0.4)
         fill.BorderSizePixel = 0
         fill.ZIndex = 38
         fill.Parent = barBg
+        table.insert(uiRainbowAccents, {obj = fill, prop = "BackgroundColor3", phase = 0.4})
 
         local fCorner = Instance.new("UICorner")
         fCorner.CornerRadius = UDim.new(1, 0)
@@ -529,8 +555,8 @@ do
     AddButton = function(page, text, cb)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(1, 0, 0, 36)
-        btn.BackgroundColor3 = Color3.fromRGB(220, 30, 55)
-        btn.BackgroundTransparency = 0.22
+        btn.BackgroundColor3 = Color3.fromRGB(38, 42, 66)
+        btn.BackgroundTransparency = 0.15
         btn.Text = text
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
         btn.Font = Enum.Font.GothamBold
@@ -542,6 +568,12 @@ do
         bCorner.CornerRadius = UDim.new(0, 10)
         bCorner.Parent = btn
 
+        local bStroke = Instance.new("UIStroke")
+        bStroke.Thickness = 1.2
+        bStroke.Color = getRainbowColor(0.6)
+        bStroke.Parent = btn
+        table.insert(uiRainbowStrokes, {stroke = bStroke, phase = 0.6})
+
         btn.MouseButton1Click:Connect(function()
             if cb then cb() end
         end)
@@ -551,7 +583,7 @@ do
     WaBanner.AnchorPoint = Vector2.new(0.5, 0.5)
     WaBanner.Position = UDim2.new(0.5, 0, 0.5, 0)
     WaBanner.Size = UDim2.new(0, IsMobile and 295 or 355, 0, 176)
-    WaBanner.BackgroundColor3 = Color3.fromRGB(20, 7, 11)
+    WaBanner.BackgroundColor3 = Color3.fromRGB(16, 17, 26)
     WaBanner.BackgroundTransparency = 0.08
     WaBanner.BorderSizePixel = 0
     WaBanner.Visible = true
@@ -564,15 +596,16 @@ do
 
     local waStroke = Instance.new("UIStroke")
     waStroke.Thickness = 1.6
-    waStroke.Color = Color3.fromRGB(255, 55, 80)
+    waStroke.Color = getRainbowColor(0.25)
     waStroke.Parent = WaBanner
+    table.insert(uiRainbowStrokes, {stroke = waStroke, phase = 0.25})
 
     local waTitle = Instance.new("TextLabel")
     waTitle.Position = UDim2.new(0, 14, 0, 12)
     waTitle.Size = UDim2.new(1, -28, 0, 20)
     waTitle.BackgroundTransparency = 1
     waTitle.Text = "Canal WhatsApp • KING GAEL"
-    waTitle.TextColor3 = Color3.fromRGB(255, 115, 135)
+    waTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
     waTitle.Font = Enum.Font.GothamBlack
     waTitle.TextSize = 14
     waTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -584,7 +617,7 @@ do
     waDesc.Size = UDim2.new(1, -28, 0, 34)
     waDesc.BackgroundTransparency = 1
     waDesc.Text = "Sigue el canal de KING GAEL en WhatsApp para actualizaciones y scripts de Rivals."
-    waDesc.TextColor3 = Color3.fromRGB(255, 235, 238)
+    waDesc.TextColor3 = Color3.fromRGB(225, 228, 245)
     waDesc.Font = Enum.Font.Gotham
     waDesc.TextSize = 11.5
     waDesc.TextXAlignment = Enum.TextXAlignment.Left
@@ -595,10 +628,10 @@ do
     local waBox = Instance.new("TextBox")
     waBox.Position = UDim2.new(0, 14, 0, 74)
     waBox.Size = UDim2.new(1, -28, 0, 28)
-    waBox.BackgroundColor3 = Color3.fromRGB(255, 55, 80)
-    waBox.BackgroundTransparency = 0.85
+    waBox.BackgroundColor3 = Color3.fromRGB(35, 38, 56)
+    waBox.BackgroundTransparency = 0.25
     waBox.Text = WHATSAPP_CHANNEL_URL
-    waBox.TextColor3 = Color3.fromRGB(255, 195, 205)
+    waBox.TextColor3 = Color3.fromRGB(240, 245, 255)
     waBox.Font = Enum.Font.GothamMedium
     waBox.TextSize = 10.5
     waBox.ClearTextOnFocus = false
@@ -609,7 +642,7 @@ do
     local copyBtn = Instance.new("TextButton")
     copyBtn.Position = UDim2.new(0, 14, 1, -44)
     copyBtn.Size = UDim2.new(0.55, -18, 0, 32)
-    copyBtn.BackgroundColor3 = Color3.fromRGB(230, 30, 55)
+    copyBtn.BackgroundColor3 = Color3.fromRGB(65, 75, 125)
     copyBtn.Text = "Copiar Enlace"
     copyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     copyBtn.Font = Enum.Font.GothamBold
@@ -624,10 +657,10 @@ do
     local enterBtn = Instance.new("TextButton")
     enterBtn.Position = UDim2.new(0.55, 4, 1, -44)
     enterBtn.Size = UDim2.new(0.45, -18, 0, 32)
-    enterBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    enterBtn.BackgroundTransparency = 0.86
+    enterBtn.BackgroundColor3 = Color3.fromRGB(36, 39, 58)
+    enterBtn.BackgroundTransparency = 0.2
     enterBtn.Text = "Entrar"
-    enterBtn.TextColor3 = Color3.fromRGB(255, 240, 244)
+    enterBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     enterBtn.Font = Enum.Font.GothamBold
     enterBtn.TextSize = 12
     enterBtn.ZIndex = 81
@@ -653,12 +686,12 @@ do
     end)
 
     QuickBtn = Instance.new("TextButton")
-    QuickBtn.Size = IsMobile and UDim2.new(0, 90, 0, 32) or UDim2.new(0, 86, 0, 28)
+    QuickBtn.Size = IsMobile and UDim2.new(0, 92, 0, 32) or UDim2.new(0, 88, 0, 28)
     QuickBtn.Position = IsMobile and UDim2.new(0, 12, 0.5, -16) or UDim2.new(0, 12, 0, 12)
-    QuickBtn.BackgroundColor3 = Color3.fromRGB(20, 6, 10)
-    QuickBtn.BackgroundTransparency = 0.2
+    QuickBtn.BackgroundColor3 = Color3.fromRGB(16, 17, 26)
+    QuickBtn.BackgroundTransparency = 0.16
     QuickBtn.Text = "KING GAEL"
-    QuickBtn.TextColor3 = Color3.fromRGB(255, 245, 248)
+    QuickBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     QuickBtn.Font = Enum.Font.GothamBlack
     QuickBtn.TextSize = 11
     QuickBtn.ZIndex = 150
@@ -669,33 +702,136 @@ do
     qCorner.Parent = QuickBtn
 
     local qStroke = Instance.new("UIStroke")
-    qStroke.Thickness = 1.4
-    qStroke.Color = Color3.fromRGB(255, 50, 75)
+    qStroke.Thickness = 1.5
+    qStroke.Color = getRainbowColor(0.15)
     qStroke.Parent = QuickBtn
+    table.insert(uiRainbowStrokes, {stroke = qStroke, phase = 0.15})
 
-    -- Botón flotante para salto alto + planeo/vuelo de 4 segundos
-    LeapBtn = Instance.new("TextButton")
-    LeapBtn.Name = "KING_GAEL_LEAP_BTN"
-    LeapBtn.Size = IsMobile and UDim2.new(0, 104, 0, 38) or UDim2.new(0, 108, 0, 36)
-    LeapBtn.Position = IsMobile and UDim2.new(1, -120, 0.62, 0) or UDim2.new(1, -130, 0.68, 0)
-    LeapBtn.BackgroundColor3 = Color3.fromRGB(225, 28, 56)
-    LeapBtn.BackgroundTransparency = 0.12
-    LeapBtn.Text = "LEAP 4s"
-    LeapBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    LeapBtn.Font = Enum.Font.GothamBlack
-    LeapBtn.TextSize = IsMobile and 12 or 12.5
-    LeapBtn.Visible = false
-    LeapBtn.ZIndex = 155
-    LeapBtn.Parent = ScreenGui
+    local function createFloatingDock(name, emoji, initX, initY, strokePhase, lockPhase, onLockToggle, isLockedFn)
+        local dock = Instance.new("Frame")
+        dock.Name = name .. "_DOCK"
+        dock.Size = UDim2.new(0, 86, 0, 50)
+        dock.Position = UDim2.new(0, initX, 0, initY)
+        dock.BackgroundTransparency = 1
+        dock.Active = true
+        dock.Visible = false
+        dock.ZIndex = 155
+        dock.Parent = ScreenGui
 
-    local lCorner = Instance.new("UICorner")
-    lCorner.CornerRadius = UDim.new(0, 11)
-    lCorner.Parent = LeapBtn
+        local mainBtn = Instance.new("TextButton")
+        mainBtn.Name = name .. "_BTN"
+        mainBtn.Size = UDim2.new(0, 50, 0, 50)
+        mainBtn.Position = UDim2.new(0, 0, 0, 0)
+        mainBtn.BackgroundColor3 = Color3.fromRGB(20, 22, 34)
+        mainBtn.BackgroundTransparency = 0.14
+        mainBtn.Text = emoji
+        mainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        mainBtn.Font = Enum.Font.GothamBold
+        mainBtn.TextSize = 24
+        mainBtn.ZIndex = 156
+        mainBtn.Parent = dock
 
-    local lStroke = Instance.new("UIStroke")
-    lStroke.Thickness = 1.6
-    lStroke.Color = Color3.fromRGB(255, 110, 130)
-    lStroke.Parent = LeapBtn
+        local bCorner = Instance.new("UICorner")
+        bCorner.CornerRadius = UDim.new(0, 12)
+        bCorner.Parent = mainBtn
+
+        local bStroke = Instance.new("UIStroke")
+        bStroke.Thickness = 1.8
+        bStroke.Color = getRainbowColor(strokePhase)
+        bStroke.Parent = mainBtn
+        table.insert(uiRainbowStrokes, {stroke = bStroke, phase = strokePhase})
+
+        local timerLbl = Instance.new("TextLabel")
+        timerLbl.AnchorPoint = Vector2.new(0.5, 1)
+        timerLbl.Position = UDim2.new(0.5, 0, 1, -3)
+        timerLbl.Size = UDim2.new(1, -4, 0, 13)
+        timerLbl.BackgroundTransparency = 1
+        timerLbl.Text = ""
+        timerLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+        timerLbl.Font = Enum.Font.GothamBlack
+        timerLbl.TextSize = 9.5
+        timerLbl.ZIndex = 157
+        timerLbl.Parent = mainBtn
+
+        local lockBtn = Instance.new("TextButton")
+        lockBtn.Name = name .. "_LOCK"
+        lockBtn.Size = UDim2.new(0, 30, 0, 30)
+        lockBtn.Position = UDim2.new(0, 55, 0, 10)
+        lockBtn.BackgroundColor3 = Color3.fromRGB(24, 26, 40)
+        lockBtn.BackgroundTransparency = 0.18
+        lockBtn.Text = "🔓"
+        lockBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        lockBtn.Font = Enum.Font.GothamBold
+        lockBtn.TextSize = 14
+        lockBtn.ZIndex = 156
+        lockBtn.Parent = dock
+
+        local lkCorner = Instance.new("UICorner")
+        lkCorner.CornerRadius = UDim.new(0, 9)
+        lkCorner.Parent = lockBtn
+
+        local lkStroke = Instance.new("UIStroke")
+        lkStroke.Thickness = 1.4
+        lkStroke.Color = getRainbowColor(lockPhase)
+        lkStroke.Parent = lockBtn
+        table.insert(uiRainbowStrokes, {stroke = lkStroke, phase = lockPhase})
+
+        dock.InputBegan:Connect(function(inp)
+            if isLockedFn() then return end
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                drag = {
+                    kind = "dock",
+                    target = dock,
+                    start = inp.Position,
+                    origin = dock.Position,
+                    isLocked = isLockedFn
+                }
+            end
+        end)
+
+        lockBtn.MouseButton1Click:Connect(function()
+            onLockToggle()
+        end)
+
+        return dock, mainBtn, lockBtn, timerLbl
+    end
+
+    local startX = math.max(16, Camera.ViewportSize.X - 110)
+    local startY = math.max(16, math.floor(Camera.ViewportSize.Y * 0.62))
+
+    LeapDock, LeapBtn, LeapLockBtn, LeapTimerLbl = createFloatingDock(
+        "KING_GAEL_LEAP",
+        "🦘",
+        startX,
+        startY,
+        0.5,
+        0.75,
+        function()
+            State.LeapLocked = not State.LeapLocked
+            LeapLockBtn.Text = State.LeapLocked and "🔒" or "🔓"
+            LeapLockBtn.BackgroundColor3 = State.LeapLocked and Color3.fromRGB(70, 195, 130) or Color3.fromRGB(24, 26, 40)
+            PlayUiSound(State.LeapLocked and "on" or "off")
+            Notify("KING GAEL • 🦘", State.LeapLocked and "Botón 🦘 bloqueado." or "Botón 🦘 desbloqueado.", 2.2)
+        end,
+        function() return State.LeapLocked end
+    )
+
+    TpDock, TpBtn, TpLockBtn = createFloatingDock(
+        "KING_GAEL_TP",
+        "⚡",
+        startX,
+        math.max(16, startY - 62),
+        0.65,
+        0.85,
+        function()
+            State.TpLocked = not State.TpLocked
+            TpLockBtn.Text = State.TpLocked and "🔒" or "🔓"
+            TpLockBtn.BackgroundColor3 = State.TpLocked and Color3.fromRGB(70, 195, 130) or Color3.fromRGB(24, 26, 40)
+            PlayUiSound(State.TpLocked and "on" or "off")
+            Notify("KING GAEL • ⚡", State.TpLocked and "Botón ⚡ TP bloqueado." or "Botón ⚡ TP desbloqueado.", 2.2)
+        end,
+        function() return State.TpLocked end
+    )
 
     local function toggleMenu(force)
         State.MenuOpen = (force ~= nil) and force or (not MainWindow.Visible)
@@ -711,7 +847,7 @@ do
 end
 
 --------------------------------------------------
--- 🌧️ PARTÍCULAS DENTRO DEL MENÚ
+-- 🌧️ PARTÍCULAS ARCOÍRIS DENTRO DEL MENÚ
 --------------------------------------------------
 local updateParticles
 do
@@ -725,8 +861,8 @@ do
         local sz = math.random(3, 6)
         p.Size = UDim2.new(0, sz, 0, sz)
         p.Position = UDim2.new(0, math.random(6, math.max(12, w - 10)), 0, -math.random(6, h))
-        p.BackgroundColor3 = Color3.fromRGB(255, 65, 85)
-        p.BackgroundTransparency = math.random(25, 65) / 100
+        p.BackgroundColor3 = getRainbowColor(i / count)
+        p.BackgroundTransparency = math.random(25, 60) / 100
         p.BorderSizePixel = 0
         p.ZIndex = 31
         p.Active = false
@@ -739,11 +875,12 @@ do
         table.insert(list, {
             f = p,
             vy = math.random(35, 78),
-            phase = math.random() * 6.28
+            phase = math.random() * 6.28,
+            hueOff = i / count
         })
     end
 
-    updateParticles = function(dt, color)
+    updateParticles = function(dt)
         MenuParticlesBox.Visible = State.Particles and State.MenuOpen
         if not (State.Particles and State.MenuOpen) then return end
         local bw = math.max(MenuParticlesBox.AbsoluteSize.X, 10)
@@ -764,7 +901,7 @@ do
             end
 
             item.f.Position = UDim2.new(0, x, 0, y)
-            item.f.BackgroundColor3 = color
+            item.f.BackgroundColor3 = getRainbowColor(item.hueOff)
         end
     end
 end
@@ -828,25 +965,25 @@ local function findClosestEnemyTarget()
     return closestEnemy, closestDist
 end
 
-local function teleportToEnemy()
+teleportToEnemy = function()
     local myChar = LocalPlayer.Character
     local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
     local myHum = myChar and myChar:FindFirstChildOfClass("Humanoid")
 
     if not myHrp or not myHum or myHum.Health <= 0 then
-        Notify("KING GAEL • Rivals", "Espera a tener tu personaje vivo en la ronda.", 2.8)
+        Notify("KING GAEL • ⚡ TP", "Espera a tener tu personaje vivo en la ronda.", 2.8)
         return
     end
 
     local targetPlr, dist = findClosestEnemyTarget()
     if not targetPlr or not targetPlr.Character then
-        Notify("KING GAEL • Rivals", "No hay enemigos vivos cerca para teletransportarte.", 3)
+        Notify("KING GAEL • ⚡ TP", "No hay enemigos vivos cerca para teletransportarte.", 3)
         return
     end
 
     local enemyHrp = targetPlr.Character:FindFirstChild("HumanoidRootPart")
     if not enemyHrp then
-        Notify("KING GAEL • Rivals", "Objetivo sin posición válida.", 2.5)
+        Notify("KING GAEL • ⚡ TP", "Objetivo sin posición válida.", 2.5)
         return
     end
 
@@ -860,28 +997,55 @@ local function teleportToEnemy()
 
     if ok then
         PlayUiSound("boost")
-        Notify("KING GAEL • TP", string.format("Movido donde está %s (%.0fm).", targetPlr.DisplayName, dist), 3)
+        Notify("KING GAEL • ⚡ TP", string.format("Movido donde está %s (%.0fm).", targetPlr.DisplayName, dist), 3)
     else
-        Notify("KING GAEL • TP", "El juego bloqueó el teletransporte.", 3)
+        Notify("KING GAEL • ⚡ TP", "El juego bloqueó el teletransporte.", 3)
     end
 end
 
-local function refillAmmoInContainer(container)
+local function processWeaponContainer(container)
     if not container then return end
     for _, desc in ipairs(container:GetDescendants()) do
-        if desc:IsA("NumberValue") or desc:IsA("IntValue") then
+        if State.InfiniteAmmo and (desc:IsA("NumberValue") or desc:IsA("IntValue")) then
             local n = string.lower(desc.Name)
-            if string.find(n, "ammo") or string.find(n, "mag") or string.find(n, "clip") or string.find(n, "bullet") or string.find(n, "reserve") then
-                local maxVal = desc:GetAttribute("MaxAmmo") or desc:GetAttribute("Max") or 999
-                desc.Value = tonumber(maxVal) or 999
+            if string.find(n, "ammo") or string.find(n, "mag") or string.find(n, "clip") or string.find(n, "bullet") or string.find(n, "reserve") or string.find(n, "shell") then
+                local maxVal = desc:GetAttribute("MaxAmmo") or desc:GetAttribute("MaxMag") or desc:GetAttribute("Max") or 999
+                local targetNum = tonumber(maxVal) or 999
+                if desc.Value < targetNum then
+                    desc.Value = targetNum
+                end
             end
-        elseif desc:IsA("Tool") then
+        end
+
+        if desc:IsA("Tool") or desc:IsA("Model") or desc:IsA("Configuration") or desc:IsA("Folder") then
             for attrName, attrVal in pairs(desc:GetAttributes()) do
                 local low = string.lower(attrName)
-                if type(attrVal) == "number" and (string.find(low, "ammo") or string.find(low, "mag") or string.find(low, "clip") or string.find(low, "bullet") or string.find(low, "reserve")) then
-                    local maxAttr = desc:GetAttribute("Max" .. attrName) or 999
-                    desc:SetAttribute(attrName, tonumber(maxAttr) or 999)
+                if State.InfiniteAmmo and type(attrVal) == "number" and (string.find(low, "ammo") or string.find(low, "mag") or string.find(low, "clip") or string.find(low, "bullet") or string.find(low, "reserve") or string.find(low, "shell")) then
+                    local maxAttr = desc:GetAttribute("Max" .. attrName) or desc:GetAttribute("MaxAmmo") or desc:GetAttribute("MaxMag") or 999
+                    local targetAttr = tonumber(maxAttr) or 999
+                    if attrVal < targetAttr then
+                        desc:SetAttribute(attrName, targetAttr)
+                    end
+                elseif State.FastReload then
+                    if type(attrVal) == "boolean" and (string.find(low, "reload") or string.find(low, "reloading")) and attrVal == true then
+                        desc:SetAttribute(attrName, false)
+                    elseif type(attrVal) == "number" and (string.find(low, "reloadtime") or string.find(low, "cooldown") or string.find(low, "reloadspeed")) then
+                        if string.find(low, "speed") then
+                            desc:SetAttribute(attrName, math.max(attrVal, 3))
+                        elseif attrVal > 0.05 then
+                            desc:SetAttribute(attrName, 0.05)
+                        end
+                    end
                 end
+            end
+        end
+
+        if State.FastReload and (desc:IsA("BoolValue") or desc:IsA("NumberValue") or desc:IsA("IntValue")) then
+            local n = string.lower(desc.Name)
+            if desc:IsA("BoolValue") and (string.find(n, "reload") or string.find(n, "reloading")) and desc.Value == true then
+                desc.Value = false
+            elseif (desc:IsA("NumberValue") or desc:IsA("IntValue")) and (string.find(n, "reloadtime") or string.find(n, "cooldown")) and desc.Value > 0.05 then
+                desc.Value = 0.05
             end
         end
     end
@@ -898,13 +1062,12 @@ do
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         if not hrp or not hum or hum.Health <= 0 then
-            Notify("KING GAEL • Leap", "Personaje no disponible.", 2.5)
+            Notify("KING GAEL • 🦘", "Personaje no disponible.", 2.5)
             return
         end
 
         leapRunning = true
         PlayUiSound("boost")
-        Notify("KING GAEL • Leap", "Salto + planeo activado por 4 segundos.", 2.5)
 
         local bv = hrp:FindFirstChild("KingGaelLeapGlide")
         if not bv then
@@ -926,7 +1089,7 @@ do
 
                 local elapsed = os.clock() - startT
                 local left = math.max(0, duration - elapsed)
-                LeapBtn.Text = string.format("LEAP %.1fs", left)
+                LeapTimerLbl.Text = string.format("%.1fs", left)
 
                 local fwd = Camera.CFrame.LookVector
                 local flatFwd = Vector3.new(fwd.X, 0, fwd.Z)
@@ -936,19 +1099,22 @@ do
                     flatFwd = curHrp.CFrame.LookVector
                 end
 
-                local yVel = (elapsed < 0.45) and 62 or 7
-                bv.Velocity = flatFwd * 56 + Vector3.new(0, yVel, 0)
+                local yVel = (elapsed < 0.45) and 64 or 8
+                bv.Velocity = flatFwd * 58 + Vector3.new(0, yVel, 0)
                 task.wait()
             end
 
             local oldBv = hrp and hrp:FindFirstChild("KingGaelLeapGlide")
             if oldBv then oldBv:Destroy() end
-            LeapBtn.Text = "LEAP 4s"
+            LeapTimerLbl.Text = ""
             leapRunning = false
         end)
     end
 
     LeapBtn.MouseButton1Click:Connect(triggerLeapGlide)
+    TpBtn.MouseButton1Click:Connect(function()
+        teleportToEnemy()
+    end)
 
     local flyActive = false
     local function stopFly()
@@ -1016,9 +1182,26 @@ do
         end
     end)
 
-    AddToggle(pTab, "Botón Leap + Vuelo (4s)", false, function(v)
+    AddToggle(pTab, "Botón ⚡ TP Enemigo", false, function(v)
+        State.TpBtnEnabled = v
+        TpDock.Visible = v
+    end)
+
+    AddToggle(pTab, "Bloquear Posición ⚡", false, function(v)
+        State.TpLocked = v
+        TpLockBtn.Text = v and "🔒" or "🔓"
+        TpLockBtn.BackgroundColor3 = v and Color3.fromRGB(70, 195, 130) or Color3.fromRGB(24, 26, 40)
+    end)
+
+    AddToggle(pTab, "Botón 🦘 Leap (4s)", false, function(v)
         State.LeapGlide = v
-        LeapBtn.Visible = v
+        LeapDock.Visible = v
+    end)
+
+    AddToggle(pTab, "Bloquear Posición 🦘", false, function(v)
+        State.LeapLocked = v
+        LeapLockBtn.Text = v and "🔒" or "🔓"
+        LeapLockBtn.BackgroundColor3 = v and Color3.fromRGB(70, 195, 130) or Color3.fromRGB(24, 26, 40)
     end)
 
     AddButton(pTab, "TP Donde Está el Enemigo", function()
@@ -1059,20 +1242,39 @@ do
     local cTab = CreateTab("Combate")
     AddSection(cTab, "Munición y Apuntado")
 
-    AddToggle(cTab, "Infinite Ammo", false, function(v)
+    local ammoLoopRunning = false
+    local function startAmmoWatchdog()
+        if ammoLoopRunning then return end
+        ammoLoopRunning = true
+        task.spawn(function()
+            while State.InfiniteAmmo or State.FastReload do
+                pcall(function()
+                    processWeaponContainer(LocalPlayer.Character)
+                    processWeaponContainer(LocalPlayer:FindFirstChild("Backpack"))
+                end)
+                task.wait(0.05)
+            end
+            ammoLoopRunning = false
+        end)
+    end
+
+    AddToggle(cTab, "Infinite Ammo Pro", false, function(v)
         State.InfiniteAmmo = v
         if v then
-            task.spawn(function()
-                while State.InfiniteAmmo do
-                    pcall(function()
-                        refillAmmoInContainer(LocalPlayer.Character)
-                        refillAmmoInContainer(LocalPlayer:FindFirstChild("Backpack"))
-                    end)
-                    task.wait(0.15)
-                end
+            pcall(function()
+                processWeaponContainer(LocalPlayer.Character)
+                processWeaponContainer(LocalPlayer:FindFirstChild("Backpack"))
             end)
+            startAmmoWatchdog()
         end
     end)
+
+    AddToggle(cTab, "Fast Reload Boost", true, function(v)
+        State.FastReload = v
+        if v then startAmmoWatchdog() end
+    end)
+
+    startAmmoWatchdog()
 
     AddToggle(cTab, "Silent Aim (Full Range)", false, function(v)
         State.SilentAim = v
@@ -1100,7 +1302,7 @@ do
 
     FovStroke = Instance.new("UIStroke")
     FovStroke.Thickness = IsMobile and 2.2 or 1.8
-    FovStroke.Color = Color3.fromRGB(255, 50, 75)
+    FovStroke.Color = getRainbowColor(0)
     FovStroke.Parent = FovCircle
 
     local fc = Instance.new("UICorner")
@@ -1156,7 +1358,7 @@ do
 
         local bs = Instance.new("UIStroke")
         bs.Thickness = th
-        bs.Color = Color3.fromRGB(255, 50, 75)
+        bs.Color = getRainbowColor(0)
         bs.Parent = box
 
         local mk = Instance.new("Frame")
@@ -1250,15 +1452,28 @@ do
 end
 
 --------------------------------------------------
--- 🔥 BUCLE PRINCIPAL LIGERO
+-- 🌈 BUCLE PRINCIPAL LIGERO
 --------------------------------------------------
 local activeTargetPos = nil
 
 RunService.RenderStepped:Connect(function(dt)
-    local pulse = (math.sin(tick() * 3) + 1) * 0.5
-    local col = Color3.fromRGB(255, math.floor(38 + pulse * 40), math.floor(58 + pulse * 40))
+    local col = getRainbowColor(0)
 
-    updateParticles(dt, col)
+    for i = 1, #uiRainbowStrokes do
+        local item = uiRainbowStrokes[i]
+        if item.stroke and item.stroke.Parent then
+            item.stroke.Color = getRainbowColor(item.phase)
+        end
+    end
+
+    for i = 1, #uiRainbowAccents do
+        local item = uiRainbowAccents[i]
+        if item.obj and item.obj.Parent then
+            item.obj[item.prop] = getRainbowColor(item.phase)
+        end
+    end
+
+    updateParticles(dt)
 
     local vp = Camera.ViewportSize
     local center = vp * 0.5
@@ -1274,8 +1489,11 @@ RunService.RenderStepped:Connect(function(dt)
     local bestHead = nil
     local bestDist = 9e9
     local camPos = Camera.CFrame.Position
+    local idx = 0
 
     for plr, d in pairs(espMap) do
+        idx += 1
+        local pCol = getRainbowColor(idx * 0.14)
         local char = plr.Character
         local head = char and char:FindFirstChild("Head")
         local torso = char and (char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("HumanoidRootPart"))
@@ -1292,19 +1510,19 @@ RunService.RenderStepped:Connect(function(dt)
             if State.Chams then
                 if not hl then hl = Instance.new("Highlight", char) end
                 hl.Enabled = true
-                hl.FillColor = col
+                hl.FillColor = pCol
             elseif hl then
                 hl.Enabled = false
             end
 
             if State.Tracers and tOn and inRange then
-                setLine(d.tracer, center, Vector2.new(tPos.X, tPos.Y), col, d.th)
+                setLine(d.tracer, center, Vector2.new(tPos.X, tPos.Y), pCol, d.th)
             else
                 d.tracer.Visible = false
             end
 
             if State.TopLine and hOn and inRange then
-                setLine(d.top, top, Vector2.new(hPos.X, hPos.Y), col, d.th)
+                setLine(d.top, top, Vector2.new(hPos.X, hPos.Y), pCol, d.th)
             else
                 d.top.Visible = false
             end
@@ -1314,7 +1532,7 @@ RunService.RenderStepped:Connect(function(dt)
                 local bw = math.clamp(bh * 0.58, 10, 220)
                 d.box.Size = UDim2.new(0, bw, 0, bh)
                 d.box.Position = UDim2.new(0, hPos.X - bw * 0.5, 0, hPos.Y)
-                d.bs.Color = col
+                d.bs.Color = pCol
                 d.box.Visible = true
             else
                 d.box.Visible = false
@@ -1322,7 +1540,7 @@ RunService.RenderStepped:Connect(function(dt)
 
             if State.Marker and hOn and inRange then
                 d.mk.Position = UDim2.new(0, hPos.X, 0, math.max(10, hPos.Y - 10))
-                d.mk.BackgroundColor3 = col
+                d.mk.BackgroundColor3 = pCol
                 d.mk.Visible = true
             else
                 d.mk.Visible = false
@@ -1363,7 +1581,7 @@ end))
 
 PlayUiSound("on")
 if game.PlaceId == TARGET_PLACE_ID then
-    Notify("KING GAEL", "Cargado para RIVALS (17625359962).", 3.5)
+    Notify("KING GAEL", "Rainbow PRO cargado para RIVALS (17625359962).", 3.5)
 else
-    Notify("KING GAEL", "Menú cargado (PlaceId: " .. tostring(game.PlaceId) .. ").", 3.5)
+    Notify("KING GAEL", "Rainbow PRO cargado (PlaceId: " .. tostring(game.PlaceId) .. ").", 3.5)
 end
