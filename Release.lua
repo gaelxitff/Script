@@ -18,7 +18,7 @@ local State = {
     Particles = true,
     QuickBtn = true,
     Sounds = true,
-    SoundVolume = 0.75,
+    SoundVolume = 0.8,
     Fly = false,
     SpeedRun = false,
     SpeedRunValue = 45,
@@ -42,58 +42,58 @@ local ScreenGui, MainWindow, MenuParticlesBox, EspOverlay, WaBanner, QuickBtn, F
 local Notify, PlayUiSound, CreateTab, AddSection, AddToggle, AddSlider, AddButton
 
 --------------------------------------------------
--- 🔊 SISTEMA DE SONIDO POTENTE - KING GAEL
+-- 🔊 SONIDOS DE INTERFAZ - KING GAEL
 --------------------------------------------------
 local sfxList = {}
 do
     local sfxFolder = Instance.new("Folder")
-    sfxFolder.Name = "KING_GAEL_SFX_RIVALS"
+    sfxFolder.Name = "KING_GAEL_SFX_PRO"
     sfxFolder.Parent = SoundService
 
-    local function makeSound(name, id, volMult, pitch)
+    local function createSfx(name, assetId, mult, pitch)
         local s = Instance.new("Sound")
         s.Name = name
-        s.SoundId = "rbxassetid://" .. tostring(id)
-        s.Volume = math.clamp(State.SoundVolume * (volMult or 1), 0, 1)
+        s.SoundId = "rbxassetid://" .. tostring(assetId)
+        s.Volume = math.clamp(State.SoundVolume * (mult or 1), 0, 1)
         s.PlaybackSpeed = pitch or 1
         s.Parent = sfxFolder
-        table.insert(sfxList, {snd = s, mult = volMult or 1})
+        table.insert(sfxList, {sound = s, mult = mult or 1})
         return s
     end
 
-    local sndOn = makeSound("ToggleOn", 6042053626, 1.0, 1.08)
-    local sndOff = makeSound("ToggleOff", 6042053363, 0.85, 0.92)
-    local sndClick = makeSound("Click", 6895079853, 0.95, 1.0)
-    local sndAction = makeSound("Action", 4612375233, 1.0, 1.05)
+    local sndOn = createSfx("ToggleOn", 6042053626, 1.0, 1.1)
+    local sndOff = createSfx("ToggleOff", 6042053363, 0.85, 0.9)
+    local sndClick = createSfx("Click", 6895079853, 0.95, 1.02)
+    local sndTp = createSfx("Teleport", 4612375233, 1.0, 1.12)
 
     PlayUiSound = function(kind)
         if not State.Sounds then return end
-        local chosen = sndClick
+        local target = sndClick
         if kind == "on" then
-            chosen = sndOn
+            target = sndOn
         elseif kind == "off" then
-            chosen = sndOff
-        elseif kind == "action" then
-            chosen = sndAction
+            target = sndOff
+        elseif kind == "tp" then
+            target = sndTp
         end
         pcall(function()
-            chosen.Volume = math.clamp(State.SoundVolume * 1.0, 0, 1)
-            chosen.TimePosition = 0
-            chosen:Play()
+            target.Volume = math.clamp(State.SoundVolume, 0, 1)
+            target.TimePosition = 0
+            target:Play()
         end)
     end
 end
 
-local function refreshSfxVolumes()
-    for _, item in ipairs(sfxList) do
-        if item.snd then
-            item.snd.Volume = math.clamp(State.SoundVolume * item.mult, 0, 1)
+local function syncSfxVolumes()
+    for _, entry in ipairs(sfxList) do
+        if entry.sound then
+            entry.sound.Volume = math.clamp(State.SoundVolume * entry.mult, 0, 1)
         end
     end
 end
 
 --------------------------------------------------
--- 🩸 UI CRISTAL ROJO RIVALS - KING GAEL
+-- 🩸 UI CRISTAL ROJO PRO - KING GAEL
 --------------------------------------------------
 do
     local okRoot, root = pcall(function()
@@ -102,7 +102,7 @@ do
     local parent = (okRoot and root) or LocalPlayer:WaitForChild("PlayerGui")
 
     ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "KING_GAEL_RIVALS_UI"
+    ScreenGui.Name = "KING_GAEL_RIVALS_PRO"
     ScreenGui.IgnoreGuiInset = true
     ScreenGui.ResetOnSpawn = false
     ScreenGui.DisplayOrder = 200
@@ -253,7 +253,7 @@ do
     sub.Position = UDim2.new(0, IsMobile and 118 or 134, 0, 1)
     sub.Size = UDim2.new(0.45, 0, 1, 0)
     sub.BackgroundTransparency = 1
-    sub.Text = "RIVALS • RED CRYSTAL"
+    sub.Text = "RIVALS • PRO RED"
     sub.TextColor3 = Color3.fromRGB(255, 115, 135)
     sub.Font = Enum.Font.GothamBold
     sub.TextSize = 10
@@ -541,7 +541,6 @@ do
         bCorner.Parent = btn
 
         btn.MouseButton1Click:Connect(function()
-            if PlayUiSound then PlayUiSound("action") end
             if cb then cb() end
         end)
     end
@@ -637,7 +636,7 @@ do
     eBtnCorner.Parent = enterBtn
 
     copyBtn.MouseButton1Click:Connect(function()
-        if PlayUiSound then PlayUiSound("action") end
+        if PlayUiSound then PlayUiSound("tp") end
         local ok = pcall(function()
             if setclipboard then setclipboard(WHATSAPP_CHANNEL_URL)
             elseif toclipboard then toclipboard(WHATSAPP_CHANNEL_URL)
@@ -686,7 +685,7 @@ do
 end
 
 --------------------------------------------------
--- 🌧️ PARTÍCULAS LIGERAS DENTRO DEL MENÚ
+-- 🌧️ PARTÍCULAS DENTRO DEL MENÚ
 --------------------------------------------------
 local updateParticles
 do
@@ -763,6 +762,13 @@ local function isEnemy(plr)
     return true
 end
 
+local function isCharacterAlive(char)
+    if not char or not char.Parent then return false end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    return hum ~= nil and hrp ~= nil and hum.Health > 0
+end
+
 local function hasLineOfSight(char)
     local head = char and char:FindFirstChild("Head")
     if not head then return nil end
@@ -773,85 +779,72 @@ local function hasLineOfSight(char)
     return (not hit or hit.Instance:IsDescendantOf(char)) and head or nil
 end
 
-local function findRivalsEnemySpawn()
+-- Ubica directamente la posición actual del enemigo vivo más cercano
+local function findClosestEnemyTarget()
     local myHrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    local myPos = myHrp and myHrp.Position or Camera.CFrame.Position
-    local myTeamName = LocalPlayer.Team and string.lower(tostring(LocalPlayer.Team)) or ""
-    local myTeamId = tostring(LocalPlayer:GetAttribute("Team") or LocalPlayer:GetAttribute("TeamId") or LocalPlayer:GetAttribute("TeamID") or "")
+    local originPos = myHrp and myHrp.Position or Camera.CFrame.Position
 
-    local bestPos = nil
-    local bestScore = -1e9
+    local closestEnemy = nil
+    local closestDist = math.huge
 
-    -- Busca spawns o marcadores de base en el mapa (evitando caer en medio de una pelea)
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("SpawnLocation") or obj:IsA("BasePart") then
-            local low = string.lower(obj.Name)
-            local pLow = obj.Parent and string.lower(obj.Parent.Name) or ""
-            local isSpawnLike = obj:IsA("SpawnLocation") or string.find(low, "spawn") or string.find(low, "base") or string.find(pLow, "spawn") or string.find(pLow, "base")
-
-            if isSpawnLike then
-                local pos = obj.Position + Vector3.new(0, 4, 0)
-                local score = 0
-                local attrTeam = tostring(obj:GetAttribute("Team") or obj:GetAttribute("TeamId") or obj:GetAttribute("TeamID") or (obj.Parent and (obj.Parent:GetAttribute("Team") or obj.Parent:GetAttribute("TeamId"))) or "")
-
-                if attrTeam ~= "" and myTeamId ~= "" and attrTeam ~= myTeamId then
-                    score += 120
-                elseif attrTeam ~= "" and myTeamId ~= "" and attrTeam == myTeamId then
-                    score -= 200
-                end
-
-                if myTeamName ~= "" then
-                    if string.find(low, myTeamName, 1, true) or string.find(pLow, myTeamName, 1, true) then
-                        score -= 200
-                    end
-                end
-
-                if string.find(low, "enemy") or string.find(low, "enemig") then
-                    score += 80
-                end
-
-                -- Prioriza el spawn más alejado de tu posición actual en el mapa
-                score += (pos - myPos).Magnitude
-
-                if score > bestScore then
-                    bestScore = score
-                    bestPos = pos
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if isEnemy(plr) and isCharacterAlive(plr.Character) then
+            local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local dist = (hrp.Position - originPos).Magnitude
+                if dist < closestDist then
+                    closestDist = dist
+                    closestEnemy = plr
                 end
             end
         end
     end
 
-    return bestPos
+    return closestEnemy, closestDist
 end
 
-local function teleportRivalsEnemyBase()
-    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then
-        Notify("KING GAEL • Rivals", "Personaje no disponible.", 2.5)
+local function teleportToEnemy()
+    local myChar = LocalPlayer.Character
+    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    local myHum = myChar and myChar:FindFirstChildOfClass("Humanoid")
+
+    if not myHrp or not myHum or myHum.Health <= 0 then
+        Notify("KING GAEL • Rivals", "Espera a tener tu personaje vivo en la ronda.", 2.8)
         return
     end
 
-    local pos = findRivalsEnemySpawn()
-    if not pos then
-        Notify("KING GAEL • Rivals", "No se detectó spawn de base enemigo en este mapa.", 3)
+    local targetPlr, dist = findClosestEnemyTarget()
+    if not targetPlr or not targetPlr.Character then
+        Notify("KING GAEL • Rivals", "No hay enemigos vivos cerca para teletransportarte.", 3)
         return
     end
+
+    local enemyHrp = targetPlr.Character:FindFirstChild("HumanoidRootPart")
+    if not enemyHrp then
+        Notify("KING GAEL • Rivals", "Objetivo sin posición válida.", 2.5)
+        return
+    end
+
+    -- Se coloca ligeramente detrás/al lado del enemigo mirando hacia él para no encimarse dentro de su hitbox
+    local behindOffset = -enemyHrp.CFrame.LookVector * 3.5 + Vector3.new(0, 1.5, 0)
+    local destPos = enemyHrp.Position + behindOffset
 
     local ok = pcall(function()
-        hrp.CFrame = CFrame.new(pos)
+        myHrp.AssemblyLinearVelocity = Vector3.zero
+        myHrp.CFrame = CFrame.lookAt(destPos, enemyHrp.Position)
     end)
 
     if ok then
-        PlayUiSound("action")
-        Notify("KING GAEL • Rivals", "Movido a la zona de base enemiga.", 2.8)
+        PlayUiSound("tp")
+        Notify("KING GAEL • TP", string.format("Movido donde está %s (%.0fm).", targetPlr.DisplayName, dist), 3)
     else
-        Notify("KING GAEL • Rivals", "El juego bloqueó el movimiento.", 3)
+        Notify("KING GAEL • TP", "El juego bloqueó el teletransporte.", 3)
     end
 end
 
 do
     local pTab = CreateTab("Jugador")
-    AddSection(pTab, "Movimiento Rivals")
+    AddSection(pTab, "Movimiento y Teleport")
 
     local flyActive = false
     local function stopFly()
@@ -919,6 +912,10 @@ do
         end
     end)
 
+    AddButton(pTab, "TP Donde Está el Enemigo", function()
+        teleportToEnemy()
+    end)
+
     AddToggle(pTab, "Speed Run", false, function(v)
         State.SpeedRun = v
         applySpeed()
@@ -931,10 +928,6 @@ do
 
     AddToggle(pTab, "Traspasar Paredes", false, function(v)
         State.Noclip = v
-    end)
-
-    AddButton(pTab, "Teleport Base Enemiga", function()
-        teleportRivalsEnemyBase()
     end)
 
     AddToggle(pTab, "Fly", false, function(v)
@@ -1087,6 +1080,7 @@ do
     local vTab = CreateTab("Visuales")
     AddSection(vTab, "Comunidad y Sonido")
     AddButton(vTab, "Copiar Canal WhatsApp", function()
+        PlayUiSound("tp")
         local ok = pcall(function()
             if setclipboard then setclipboard(WHATSAPP_CHANNEL_URL)
             elseif toclipboard then toclipboard(WHATSAPP_CHANNEL_URL)
@@ -1094,11 +1088,14 @@ do
         end)
         Notify("KING GAEL", ok and "Enlace copiado." or WHATSAPP_CHANNEL_URL, 3)
     end)
-    AddButton(vTab, "Mostrar Tarjeta WhatsApp", function() WaBanner.Visible = true end)
+    AddButton(vTab, "Mostrar Tarjeta WhatsApp", function()
+        PlayUiSound("on")
+        WaBanner.Visible = true
+    end)
     AddToggle(vTab, "Menu Sounds", true, function(v) State.Sounds = v end)
-    AddSlider(vTab, "Sound Volume", 10, 100, 5, 75, "%", function(v)
+    AddSlider(vTab, "Sound Volume", 10, 100, 5, 80, "%", function(v)
         State.SoundVolume = v / 100
-        refreshSfxVolumes()
+        syncSfxVolumes()
     end)
     AddToggle(vTab, "Menu Particles", true, function(v) State.Particles = v end)
     AddToggle(vTab, "Quick Button", true, function(v) State.QuickBtn = v QuickBtn.Visible = v end)
@@ -1111,6 +1108,7 @@ do
         Lighting.GlobalShadows = not v
     end)
     AddButton(vTab, "EXTREME FPS BOOST", function()
+        PlayUiSound("on")
         for _, v in ipairs(workspace:GetDescendants()) do
             if v:IsA("BasePart") and not v:IsAncestorOf(LocalPlayer.Character) then
                 v.Material = Enum.Material.SmoothPlastic
@@ -1159,7 +1157,7 @@ RunService.RenderStepped:Connect(function(dt)
         local torso = char and (char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("HumanoidRootPart"))
         local hrp = char and (char:FindFirstChild("HumanoidRootPart") or torso)
 
-        if head and torso and hrp and isEnemy(plr) then
+        if head and torso and hrp and isEnemy(plr) and isCharacterAlive(char) then
             local dist = (head.Position - camPos).Magnitude
             local inRange = dist <= State.MaxDistance
             local hPos, hOn = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 0.5, 0))
@@ -1243,5 +1241,5 @@ PlayUiSound("on")
 if game.PlaceId == TARGET_PLACE_ID then
     Notify("KING GAEL", "Cargado para RIVALS (17625359962).", 3.5)
 else
-    Notify("KING GAEL", "Menú cargado (PlaceId actual: " .. tostring(game.PlaceId) .. ").", 3.5)
+    Notify("KING GAEL", "Menú cargado (PlaceId: " .. tostring(game.PlaceId) .. ").", 3.5)
 end
