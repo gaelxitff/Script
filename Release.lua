@@ -4,6 +4,7 @@ local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
 local TweenService = game:GetService("TweenService")
+local SoundService = game:GetService("SoundService")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -15,10 +16,14 @@ local State = {
     MenuOpen = true,
     Particles = true,
     QuickBtn = true,
+    Sounds = true,
     Fly = false,
+    SpeedRun = false,
+    SpeedRunValue = 48,
     InfiniteJump = false,
     Noclip = false,
     WalkSpeed = 16,
+    RapidFire = false,
     SilentAim = false,
     SoftLock = false,
     MaxDistance = 500,
@@ -33,10 +38,46 @@ local State = {
 }
 
 local ScreenGui, MainWindow, MenuParticlesBox, EspOverlay, WaBanner, QuickBtn, FovCircle, FovStroke
-local Notify, CreateTab, AddSection, AddToggle, AddSlider, AddButton
+local Notify, PlayUiSound, CreateTab, AddSection, AddToggle, AddSlider, AddButton
 
 --------------------------------------------------
--- 🩸 UI CRISTAL ROJO LIGERA - KING GAEL
+-- 🔊 EFECTOS DE SONIDO AL ACTIVAR OPCIONES
+--------------------------------------------------
+do
+    local sfxFolder = Instance.new("Folder")
+    sfxFolder.Name = "KING_GAEL_SFX"
+    sfxFolder.Parent = SoundService
+
+    local toggleOnSound = Instance.new("Sound")
+    toggleOnSound.Name = "ToggleOn"
+    toggleOnSound.SoundId = "rbxassetid://6042053626"
+    toggleOnSound.Volume = 0.55
+    toggleOnSound.Parent = sfxFolder
+
+    local toggleOffSound = Instance.new("Sound")
+    toggleOffSound.Name = "ToggleOff"
+    toggleOffSound.SoundId = "rbxassetid://6042053363"
+    toggleOffSound.Volume = 0.45
+    toggleOffSound.Parent = sfxFolder
+
+    local clickSound = Instance.new("Sound")
+    clickSound.Name = "ClickAction"
+    clickSound.SoundId = "rbxassetid://6895079853"
+    clickSound.Volume = 0.55
+    clickSound.Parent = sfxFolder
+
+    PlayUiSound = function(kind)
+        if not State.Sounds then return end
+        local target = (kind == "on" and toggleOnSound) or (kind == "off" and toggleOffSound) or clickSound
+        pcall(function()
+            target.TimePosition = 0
+            target:Play()
+        end)
+    end
+end
+
+--------------------------------------------------
+-- 🩸 UI CRISTAL ROJO PRO - KING GAEL
 --------------------------------------------------
 do
     local okRoot, root = pcall(function()
@@ -45,7 +86,7 @@ do
     local parent = (okRoot and root) or LocalPlayer:WaitForChild("PlayerGui")
 
     ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "KING_GAEL_LITE"
+    ScreenGui.Name = "KING_GAEL_PRO_V5"
     ScreenGui.IgnoreGuiInset = true
     ScreenGui.ResetOnSpawn = false
     ScreenGui.DisplayOrder = 200
@@ -61,7 +102,7 @@ do
     local notifyHolder = Instance.new("Frame")
     notifyHolder.AnchorPoint = Vector2.new(1, 1)
     notifyHolder.Position = UDim2.new(1, -16, 1, -16)
-    notifyHolder.Size = UDim2.new(0, IsMobile and 240 or 295, 0, 210)
+    notifyHolder.Size = UDim2.new(0, IsMobile and 245 or 300, 0, 215)
     notifyHolder.BackgroundTransparency = 1
     notifyHolder.Active = false
     notifyHolder.ZIndex = 170
@@ -75,11 +116,11 @@ do
     nLayout.Parent = notifyHolder
 
     Notify = function(title, text, dur)
-        dur = dur or 3
+        dur = dur or 3.2
         local card = Instance.new("Frame")
-        card.Size = UDim2.new(1, 0, 0, 56)
+        card.Size = UDim2.new(1, 0, 0, 58)
         card.BackgroundColor3 = Color3.fromRGB(20, 7, 11)
-        card.BackgroundTransparency = 0.16
+        card.BackgroundTransparency = 0.14
         card.BorderSizePixel = 0
         card.ZIndex = 171
         card.Parent = notifyHolder
@@ -89,7 +130,7 @@ do
         cCorner.Parent = card
 
         local cStroke = Instance.new("UIStroke")
-        cStroke.Thickness = 1.2
+        cStroke.Thickness = 1.25
         cStroke.Color = Color3.fromRGB(255, 60, 82)
         cStroke.Parent = card
 
@@ -107,7 +148,7 @@ do
 
         local bLbl = Instance.new("TextLabel")
         bLbl.Position = UDim2.new(0, 12, 0, 25)
-        bLbl.Size = UDim2.new(1, -24, 0, 26)
+        bLbl.Size = UDim2.new(1, -24, 0, 28)
         bLbl.BackgroundTransparency = 1
         bLbl.Text = text
         bLbl.TextColor3 = Color3.fromRGB(245, 195, 202)
@@ -129,8 +170,8 @@ do
     end
 
     local vp = Camera.ViewportSize
-    local w = IsMobile and math.clamp(vp.X * 0.89, 325, 485) or 570
-    local h = IsMobile and math.clamp(vp.Y * 0.8, 270, 365) or 390
+    local w = IsMobile and math.clamp(vp.X * 0.9, 330, 490) or 580
+    local h = IsMobile and math.clamp(vp.Y * 0.82, 275, 370) or 400
 
     MainWindow = Instance.new("Frame")
     MainWindow.Name = "KING_GAEL_WINDOW"
@@ -138,7 +179,7 @@ do
     MainWindow.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainWindow.Size = UDim2.new(0, w, 0, h)
     MainWindow.BackgroundColor3 = Color3.fromRGB(16, 5, 9)
-    MainWindow.BackgroundTransparency = 0.2
+    MainWindow.BackgroundTransparency = 0.18
     MainWindow.BorderSizePixel = 0
     MainWindow.ClipsDescendants = true
     MainWindow.Active = true
@@ -150,13 +191,13 @@ do
     mCorner.Parent = MainWindow
 
     local mStroke = Instance.new("UIStroke")
-    mStroke.Thickness = 1.6
+    mStroke.Thickness = 1.7
     mStroke.Color = Color3.fromRGB(255, 48, 72)
     mStroke.Parent = MainWindow
 
     local grad = Instance.new("UIGradient")
     grad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 195, 205)),
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 200, 210)),
         ColorSequenceKeypoint.new(0.55, Color3.fromRGB(215, 55, 78)),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 10, 22))
     })
@@ -175,14 +216,14 @@ do
     local header = Instance.new("Frame")
     header.Size = UDim2.new(1, 0, 0, 44)
     header.BackgroundColor3 = Color3.fromRGB(255, 45, 70)
-    header.BackgroundTransparency = 0.85
+    header.BackgroundTransparency = 0.84
     header.BorderSizePixel = 0
     header.ZIndex = 35
     header.Parent = MainWindow
 
     local title = Instance.new("TextLabel")
     title.Position = UDim2.new(0, 14, 0, 0)
-    title.Size = UDim2.new(0.7, 0, 1, 0)
+    title.Size = UDim2.new(0.75, 0, 1, 0)
     title.BackgroundTransparency = 1
     title.Text = "KING GAEL"
     title.TextColor3 = Color3.fromRGB(255, 245, 248)
@@ -234,7 +275,7 @@ do
         end
     end)
 
-    local sideW = IsMobile and 104 or 132
+    local sideW = IsMobile and 106 or 136
     local sidebar = Instance.new("Frame")
     sidebar.Position = UDim2.new(0, 0, 0, 44)
     sidebar.Size = UDim2.new(0, sideW, 1, -44)
@@ -297,7 +338,11 @@ do
         layout.SortOrder = Enum.SortOrder.LayoutOrder
         layout.Parent = page
 
-        local function openThis()
+        local pad = Instance.new("UIPadding")
+        pad.PaddingBottom = UDim.new(0, 8)
+        pad.Parent = page
+
+        local function openThis(playSfx)
             for _, t in pairs(tabs) do
                 t.page.Visible = false
                 t.btn.BackgroundColor3 = Color3.fromRGB(255, 50, 75)
@@ -308,11 +353,12 @@ do
             btn.BackgroundColor3 = Color3.fromRGB(230, 32, 58)
             btn.BackgroundTransparency = 0.3
             btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            if playSfx and PlayUiSound then PlayUiSound("click") end
         end
 
-        btn.MouseButton1Click:Connect(openThis)
+        btn.MouseButton1Click:Connect(function() openThis(true) end)
         table.insert(tabs, {btn = btn, page = page})
-        if #tabs == 1 then openThis() end
+        if #tabs == 1 then openThis(false) end
         return page
     end
 
@@ -377,6 +423,7 @@ do
             pill.Text = on and "ON" or "OFF"
             pill.BackgroundColor3 = on and Color3.fromRGB(240, 35, 60) or Color3.fromRGB(48, 20, 28)
             pill.BackgroundTransparency = on and 0.15 or 0.35
+            if PlayUiSound then PlayUiSound(on and "on" or "off") end
             if cb then cb(on) end
         end)
     end
@@ -442,6 +489,7 @@ do
 
         barBg.InputBegan:Connect(function(inp)
             if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                if PlayUiSound then PlayUiSound("click") end
                 setFromX(inp.Position.X)
                 drag = {kind = "slider", fn = setFromX}
             end
@@ -465,6 +513,7 @@ do
         bCorner.Parent = btn
 
         btn.MouseButton1Click:Connect(function()
+            if PlayUiSound then PlayUiSound("on") end
             if cb then cb() end
         end)
     end
@@ -560,6 +609,7 @@ do
     eBtnCorner.Parent = enterBtn
 
     copyBtn.MouseButton1Click:Connect(function()
+        if PlayUiSound then PlayUiSound("on") end
         local ok = pcall(function()
             if setclipboard then setclipboard(WHATSAPP_CHANNEL_URL)
             elseif toclipboard then toclipboard(WHATSAPP_CHANNEL_URL)
@@ -569,6 +619,7 @@ do
     end)
 
     enterBtn.MouseButton1Click:Connect(function()
+        if PlayUiSound then PlayUiSound("click") end
         WaBanner.Visible = false
     end)
 
@@ -596,6 +647,7 @@ do
     local function toggleMenu(force)
         State.MenuOpen = (force ~= nil) and force or (not MainWindow.Visible)
         MainWindow.Visible = State.MenuOpen
+        if PlayUiSound then PlayUiSound(State.MenuOpen and "on" or "off") end
     end
 
     closeBtn.MouseButton1Click:Connect(function() toggleMenu(false) end)
@@ -685,6 +737,59 @@ local function hasLineOfSight(char)
     return (not hit or hit.Instance:IsDescendantOf(char)) and head or nil
 end
 
+local function getEnemyBasePosition()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("SpawnLocation") and obj.Enabled then
+            local nameLow = string.lower(obj.Name)
+            local teamAttr = obj:GetAttribute("Team") or obj:GetAttribute("TeamID")
+            local myTeam = LocalPlayer.Team and tostring(LocalPlayer.Team) or ""
+            if teamAttr ~= nil and tostring(teamAttr) ~= tostring(LocalPlayer:GetAttribute("TeamID") or "") then
+                return obj.Position + Vector3.new(0, 4, 0)
+            elseif myTeam ~= "" and not string.find(string.lower(myTeam), nameLow, 1, true) then
+                if string.find(nameLow, "red") or string.find(nameLow, "blue") or string.find(nameLow, "enemy") or string.find(nameLow, "base") then
+                    return obj.Position + Vector3.new(0, 4, 0)
+                end
+            end
+        end
+    end
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if isEnemy(plr) and plr.Character then
+            local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                return hrp.Position + Vector3.new(0, 3, 0)
+            end
+        end
+    end
+
+    return nil
+end
+
+local function teleportToEnemyBase()
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then
+        Notify("KING GAEL", "Personaje no disponible.", 2.5)
+        return
+    end
+
+    local targetPos = getEnemyBasePosition()
+    if not targetPos then
+        Notify("KING GAEL • Teleport", "No se detectó base o enemigo objetivo.", 3)
+        return
+    end
+
+    local ok = pcall(function()
+        hrp.CFrame = CFrame.new(targetPos)
+    end)
+
+    if ok then
+        Notify("KING GAEL • Teleport", "Teletransportado a zona enemiga.", 2.8)
+    else
+        Notify("KING GAEL • Teleport", "El juego bloqueó el teletransporte.", 3)
+    end
+end
+
 do
     local pTab = CreateTab("Jugador")
     AddSection(pTab, "Movimiento")
@@ -724,10 +829,16 @@ do
         end)
     end
 
+    local function applySpeed()
+        local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if h then
+            h.WalkSpeed = State.SpeedRun and State.SpeedRunValue or State.WalkSpeed
+        end
+    end
+
     LocalPlayer.CharacterAdded:Connect(function(char)
         task.wait(0.15)
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then hum.WalkSpeed = State.WalkSpeed end
+        applySpeed()
         if State.Fly then runFly() end
     end)
 
@@ -746,17 +857,34 @@ do
         end
     end)
 
+    AddToggle(pTab, "Speed Run", false, function(v)
+        State.SpeedRun = v
+        applySpeed()
+    end)
+
+    AddSlider(pTab, "Speed Run Power", 24, 150, 2, 48, " spd", function(v)
+        State.SpeedRunValue = v
+        applySpeed()
+    end)
+
+    AddToggle(pTab, "Traspasar Paredes", false, function(v)
+        State.Noclip = v
+    end)
+
+    AddButton(pTab, "Teleport a Base Enemiga", function()
+        teleportToEnemyBase()
+    end)
+
     AddToggle(pTab, "Fly", false, function(v)
         State.Fly = v
         if v then runFly() else stopFly() end
     end)
 
     AddToggle(pTab, "Infinite Jump", false, function(v) State.InfiniteJump = v end)
-    AddToggle(pTab, "Noclip", false, function(v) State.Noclip = v end)
+
     AddSlider(pTab, "WalkSpeed", 16, 200, 1, 16, " WS", function(v)
         State.WalkSpeed = v
-        local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if h then h.WalkSpeed = v end
+        applySpeed()
     end)
 end
 
@@ -765,15 +893,48 @@ local getFovRadius = function() return State.FovLevel * fovScale end
 
 do
     local cTab = CreateTab("Combate")
-    AddSection(cTab, "Apuntado")
+    AddSection(cTab, "Armas y Apuntado")
+
+    AddToggle(cTab, "Rapid Fire", false, function(v)
+        State.RapidFire = v
+        if v then
+            task.spawn(function()
+                while State.RapidFire do
+                    local char = LocalPlayer.Character
+                    if char then
+                        for _, item in ipairs(char:GetChildren()) do
+                            if item:IsA("Tool") then
+                                pcall(function()
+                                    if item:GetAttribute("FireRate") ~= nil then item:SetAttribute("FireRate", 0.02) end
+                                    if item:GetAttribute("Cooldown") ~= nil then item:SetAttribute("Cooldown", 0.02) end
+                                    for _, valObj in ipairs(item:GetDescendants()) do
+                                        if valObj:IsA("NumberValue") or valObj:IsA("IntValue") then
+                                            local n = string.lower(valObj.Name)
+                                            if string.find(n, "firerate") or string.find(n, "cooldown") or string.find(n, "reload") then
+                                                valObj.Value = 0.02
+                                            end
+                                        end
+                                    end
+                                end)
+                            end
+                        end
+                    end
+                    task.wait(0.25)
+                end
+            end)
+        end
+    end)
+
     AddToggle(cTab, "Silent Aim (Full Range)", false, function(v)
         State.SilentAim = v
         getgenv().SilentAimEnabled = v
     end)
+
     AddToggle(cTab, "Soft Lock (FOV Only)", false, function(v)
         State.SoftLock = v
         getgenv().SoftLockEnabled = v
     end)
+
     AddSlider(cTab, "Max Distance", 100, 2000, 50, 500, " st", function(v) State.MaxDistance = v end)
 
     AddSection(cTab, "FOV")
@@ -903,6 +1064,7 @@ do
     end)
     AddButton(vTab, "Mostrar Tarjeta WhatsApp", function() WaBanner.Visible = true end)
     AddToggle(vTab, "Menu Particles", true, function(v) State.Particles = v end)
+    AddToggle(vTab, "Menu Sounds", true, function(v) State.Sounds = v end)
     AddToggle(vTab, "Quick Button", true, function(v) State.QuickBtn = v QuickBtn.Visible = v end)
 
     AddSection(vTab, "Rendimiento")
@@ -1041,4 +1203,5 @@ oldIdx = hookmetamethod(game, "__index", newcclosure(function(self, idx)
     return oldIdx(self, idx)
 end))
 
-Notify("KING GAEL", "Menú ligero cargado.", 3)
+PlayUiSound("on")
+Notify("KING GAEL", "Menú PRO V5 con sonidos cargado.", 3)
