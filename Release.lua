@@ -5,7 +5,6 @@ local UIS = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local MarketplaceService = game:GetService("MarketplaceService")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -13,9 +12,6 @@ local IsMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
 
 local TARGET_PLACE_ID = 17625359962
 local WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029VbCHjR7LNSaCqoxB7P10"
-
-local BG_ASSET_ID = 138351747140128
-local LOGO_ASSET_ID = 124340778722653
 
 local State = {
     MenuOpen = true,
@@ -49,69 +45,31 @@ local State = {
     Fullbright = false
 }
 
-local ScreenGui, MainWindow, BgImageLabel, LogoImageLabel, EspOverlay, WaBanner, QuickBtn, StatusLbl
+local ScreenGui, MainWindow, EspOverlay, WaBanner, QuickBtn, StatusLbl
 local LeapDock, LeapBtn, LeapLockBtn, LeapTimerLbl
 local TpDock, TpBtn, TpLockBtn
 local FovCircle, FovStroke
 local Notify, PlayUiSound, CreateTab, AddSection, AddToggle, AddSlider, AddButton, teleportToEnemy, triggerLeapGlide, emergencyResetAll, syncAmmoWatchdog
 
+local BLUE_PRIMARY = Color3.fromRGB(16, 26, 48)
+local BLUE_PANEL = Color3.fromRGB(22, 35, 64)
+local BLUE_ROW = Color3.fromRGB(24, 38, 68)
+local BLUE_ROW_ON = Color3.fromRGB(28, 52, 92)
+local BLUE_BTN = Color3.fromRGB(32, 64, 122)
+local BLUE_BTN_PRESS = Color3.fromRGB(52, 104, 196)
+local BLUE_ACCENT = Color3.fromRGB(64, 156, 255)
+local BLUE_NEON = Color3.fromRGB(92, 188, 255)
+local GREEN_ON = Color3.fromRGB(45, 204, 132)
+local OFF_PILL = Color3.fromRGB(44, 58, 86)
+
 local function getRainbowColor(offset)
-    local hue = ((os.clock() * 0.24) + (offset or 0)) % 1
-    return Color3.fromHSV(hue, 0.88, 1)
+    local hue = ((os.clock() * 0.25) + (offset or 0)) % 1
+    return Color3.fromHSV(hue, 0.9, 1)
 end
 
-local function extractNumericAssetId(val)
-    if type(val) == "number" then
-        return val > 0 and val or nil
-    elseif type(val) == "string" then
-        local num = string.match(val, "%d%d%d%d%d%d+")
-        return num and tonumber(num) or nil
-    end
-    return nil
-end
-
-local function resolveImageAssetId(rawId)
-    local numId = extractNumericAssetId(rawId)
-    if not numId then return nil end
-
-    local okInfo, info = pcall(function()
-        return MarketplaceService:GetProductInfo(numId, Enum.InfoType.Asset)
-    end)
-
-    if okInfo and info then
-        if info.AssetTypeId == 1 then
-            return numId
-        end
-        if type(info.Description) == "string" then
-            local descId = string.match(info.Description, "rbxassetid://(%d+)") or string.match(info.Description, "(%d%d%d%d%d%d+)")
-            if descId and tonumber(descId) then
-                return tonumber(descId)
-            end
-        end
-    end
-
-    return numId
-end
-
-local function loadInitialImages()
-    if BgImageLabel then
-        BgImageLabel.Image = "rbxassetid://" .. tostring(BG_ASSET_ID)
-    end
-    if LogoImageLabel then
-        LogoImageLabel.Image = "rbxassetid://" .. tostring(LOGO_ASSET_ID)
-    end
-
-    task.spawn(function()
-        local resolvedBg = resolveImageAssetId(BG_ASSET_ID)
-        if resolvedBg and BgImageLabel and BgImageLabel.Parent then
-            BgImageLabel.Image = "rbxassetid://" .. tostring(resolvedBg)
-        end
-
-        local resolvedLogo = resolveImageAssetId(LOGO_ASSET_ID)
-        if resolvedLogo and LogoImageLabel and LogoImageLabel.Parent then
-            LogoImageLabel.Image = "rbxassetid://" .. tostring(resolvedLogo)
-        end
-    end)
+local function getBluePulse(offset)
+    local wave = (math.sin((os.clock() * 2.2) + (offset or 0)) + 1) * 0.5
+    return BLUE_ACCENT:Lerp(BLUE_NEON, wave)
 end
 
 --------------------------------------------------
@@ -120,7 +78,7 @@ end
 local sfxList = {}
 do
     local sfxFolder = Instance.new("Folder")
-    sfxFolder.Name = "KING_GAEL_SFX_RAINBOW"
+    sfxFolder.Name = "KING_GAEL_SFX_BLUE"
     sfxFolder.Parent = SoundService
 
     local function createSfx(name, assetId, mult, pitch)
@@ -166,10 +124,10 @@ local function syncSfxVolumes()
 end
 
 --------------------------------------------------
--- 🌈 UI PRO - KING GAEL
+-- 🔵 UI AZUL PRO - KING GAEL
 --------------------------------------------------
-local uiRainbowStrokes = {}
-local uiRainbowAccents = {}
+local uiBlueStrokes = {}
+local uiBlueAccents = {}
 
 do
     local okRoot, root = pcall(function()
@@ -177,13 +135,13 @@ do
     end)
     local parent = (okRoot and root) or LocalPlayer:WaitForChild("PlayerGui")
 
-    local oldGui = parent:FindFirstChild("KING_GAEL_RIVALS_RAINBOW")
+    local oldGui = parent:FindFirstChild("KING_GAEL_RIVALS_BLUE")
     if oldGui then
         pcall(function() oldGui:Destroy() end)
     end
 
     ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "KING_GAEL_RIVALS_RAINBOW"
+    ScreenGui.Name = "KING_GAEL_RIVALS_BLUE"
     ScreenGui.IgnoreGuiInset = true
     ScreenGui.ResetOnSpawn = false
     ScreenGui.DisplayOrder = 200
@@ -216,8 +174,8 @@ do
         dur = dur or 3.2
         local card = Instance.new("Frame")
         card.Size = UDim2.new(1, 0, 0, 58)
-        card.BackgroundColor3 = Color3.fromRGB(15, 16, 24)
-        card.BackgroundTransparency = 0.12
+        card.BackgroundColor3 = BLUE_PRIMARY
+        card.BackgroundTransparency = 0.08
         card.BorderSizePixel = 0
         card.ZIndex = 171
         card.Parent = notifyHolder
@@ -227,18 +185,18 @@ do
         cCorner.Parent = card
 
         local cStroke = Instance.new("UIStroke")
-        cStroke.Thickness = 1.4
-        cStroke.Color = getRainbowColor(0.1)
+        cStroke.Thickness = 1.45
+        cStroke.Color = BLUE_NEON
         cStroke.Parent = card
-        local strokeEntry = {stroke = cStroke, phase = 0.1}
-        table.insert(uiRainbowStrokes, strokeEntry)
+        local strokeEntry = {stroke = cStroke, phase = 0.4}
+        table.insert(uiBlueStrokes, strokeEntry)
 
         local tLbl = Instance.new("TextLabel")
         tLbl.Position = UDim2.new(0, 12, 0, 6)
         tLbl.Size = UDim2.new(1, -24, 0, 18)
         tLbl.BackgroundTransparency = 1
         tLbl.Text = title
-        tLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+        tLbl.TextColor3 = Color3.fromRGB(235, 246, 255)
         tLbl.Font = Enum.Font.GothamBlack
         tLbl.TextSize = 12.5
         tLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -250,7 +208,7 @@ do
         bLbl.Size = UDim2.new(1, -24, 0, 28)
         bLbl.BackgroundTransparency = 1
         bLbl.Text = text
-        bLbl.TextColor3 = Color3.fromRGB(225, 228, 245)
+        bLbl.TextColor3 = Color3.fromRGB(190, 218, 250)
         bLbl.Font = Enum.Font.GothamMedium
         bLbl.TextSize = 11
         bLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -278,8 +236,8 @@ do
     MainWindow.AnchorPoint = Vector2.new(0.5, 0.5)
     MainWindow.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainWindow.Size = UDim2.new(0, w, 0, h)
-    MainWindow.BackgroundColor3 = Color3.fromRGB(13, 14, 22)
-    MainWindow.BackgroundTransparency = 0.25
+    MainWindow.BackgroundColor3 = BLUE_PRIMARY
+    MainWindow.BackgroundTransparency = 0.08
     MainWindow.BorderSizePixel = 0
     MainWindow.ClipsDescendants = true
     MainWindow.Active = true
@@ -292,83 +250,63 @@ do
 
     local mStroke = Instance.new("UIStroke")
     mStroke.Thickness = 2
-    mStroke.Color = getRainbowColor(0)
+    mStroke.Color = BLUE_NEON
     mStroke.Parent = MainWindow
-    table.insert(uiRainbowStrokes, {stroke = mStroke, phase = 0})
+    table.insert(uiBlueStrokes, {stroke = mStroke, phase = 0})
 
-    local bgContainer = Instance.new("Frame")
-    bgContainer.Name = "KING_GAEL_BG_HOLDER"
-    bgContainer.Size = UDim2.new(1, 0, 1, 0)
-    bgContainer.Position = UDim2.new(0, 0, 0, 0)
-    bgContainer.BackgroundTransparency = 1
-    bgContainer.BorderSizePixel = 0
-    bgContainer.Active = false
-    bgContainer.ZIndex = 31
-    bgContainer.Parent = MainWindow
-
-    BgImageLabel = Instance.new("ImageLabel")
-    BgImageLabel.Name = "KING_GAEL_BG_IMAGE"
-    BgImageLabel.Size = UDim2.new(1, 0, 1, 0)
-    BgImageLabel.Position = UDim2.new(0, 0, 0, 0)
-    BgImageLabel.BackgroundTransparency = 1
-    BgImageLabel.BorderSizePixel = 0
-    BgImageLabel.Image = "rbxassetid://" .. tostring(BG_ASSET_ID)
-    BgImageLabel.ImageColor3 = Color3.fromRGB(255, 255, 255)
-    BgImageLabel.ImageTransparency = 0.18
-    BgImageLabel.ScaleType = Enum.ScaleType.Crop
-    BgImageLabel.ZIndex = 31
-    BgImageLabel.Active = false
-    BgImageLabel.Parent = bgContainer
-
-    local bgTint = Instance.new("Frame")
-    bgTint.Size = UDim2.new(1, 0, 1, 0)
-    bgTint.Position = UDim2.new(0, 0, 0, 0)
-    bgTint.BackgroundColor3 = Color3.fromRGB(10, 12, 20)
-    bgTint.BackgroundTransparency = 0.58
-    bgTint.BorderSizePixel = 0
-    bgTint.Active = false
-    bgTint.ZIndex = 32
-    bgTint.Parent = bgContainer
+    local bgGrad = Instance.new("UIGradient")
+    bgGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(14, 24, 46)),
+        ColorSequenceKeypoint.new(0.55, Color3.fromRGB(19, 36, 68)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(11, 19, 36))
+    })
+    bgGrad.Rotation = 135
+    bgGrad.Parent = MainWindow
 
     local header = Instance.new("Frame")
     header.Size = UDim2.new(1, 0, 0, 44)
-    header.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
-    header.BackgroundTransparency = 0.45
+    header.BackgroundColor3 = BLUE_PANEL
+    header.BackgroundTransparency = 0.25
     header.BorderSizePixel = 0
     header.ZIndex = 35
     header.Parent = MainWindow
 
-    LogoImageLabel = Instance.new("ImageLabel")
-    LogoImageLabel.Name = "KING_GAEL_LOGO_IMAGE"
-    LogoImageLabel.AnchorPoint = Vector2.new(0, 0.5)
-    LogoImageLabel.Position = UDim2.new(0, 10, 0.5, 0)
-    LogoImageLabel.Size = UDim2.new(0, 32, 0, 32)
-    LogoImageLabel.BackgroundColor3 = Color3.fromRGB(24, 26, 40)
-    LogoImageLabel.BackgroundTransparency = 0.2
-    LogoImageLabel.BorderSizePixel = 0
-    LogoImageLabel.Image = "rbxassetid://" .. tostring(LOGO_ASSET_ID)
-    LogoImageLabel.ImageColor3 = Color3.fromRGB(255, 255, 255)
-    LogoImageLabel.ScaleType = Enum.ScaleType.Fit
-    LogoImageLabel.ZIndex = 36
-    LogoImageLabel.Active = false
-    LogoImageLabel.Parent = header
+    local badge = Instance.new("Frame")
+    badge.AnchorPoint = Vector2.new(0, 0.5)
+    badge.Position = UDim2.new(0, 10, 0.5, 0)
+    badge.Size = UDim2.new(0, 32, 0, 32)
+    badge.BackgroundColor3 = BLUE_BTN
+    badge.BackgroundTransparency = 0.1
+    badge.BorderSizePixel = 0
+    badge.ZIndex = 36
+    badge.Parent = header
 
-    local lgCorner = Instance.new("UICorner")
-    lgCorner.CornerRadius = UDim.new(0, 8)
-    lgCorner.Parent = LogoImageLabel
+    local bgCorner = Instance.new("UICorner")
+    bgCorner.CornerRadius = UDim.new(0, 9)
+    bgCorner.Parent = badge
 
-    local lgStroke = Instance.new("UIStroke")
-    lgStroke.Thickness = 1.4
-    lgStroke.Color = getRainbowColor(0.2)
-    lgStroke.Parent = LogoImageLabel
-    table.insert(uiRainbowStrokes, {stroke = lgStroke, phase = 0.2})
+    local bgStroke = Instance.new("UIStroke")
+    bgStroke.Thickness = 1.4
+    bgStroke.Color = BLUE_NEON
+    bgStroke.Parent = badge
+    table.insert(uiBlueStrokes, {stroke = bgStroke, phase = 0.8})
+
+    local badgeTxt = Instance.new("TextLabel")
+    badgeTxt.Size = UDim2.new(1, 0, 1, 0)
+    badgeTxt.BackgroundTransparency = 1
+    badgeTxt.Text = "KG"
+    badgeTxt.TextColor3 = Color3.fromRGB(255, 255, 255)
+    badgeTxt.Font = Enum.Font.GothamBlack
+    badgeTxt.TextSize = 13
+    badgeTxt.ZIndex = 37
+    badgeTxt.Parent = badge
 
     local title = Instance.new("TextLabel")
     title.Position = UDim2.new(0, 48, 0, 0)
     title.Size = UDim2.new(0.38, 0, 1, 0)
     title.BackgroundTransparency = 1
     title.Text = "KING GAEL"
-    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.TextColor3 = Color3.fromRGB(240, 248, 255)
     title.Font = Enum.Font.GothamBlack
     title.TextSize = IsMobile and 15 or 17
     title.TextXAlignment = Enum.TextXAlignment.Left
@@ -380,24 +318,25 @@ do
     StatusLbl.Size = UDim2.new(0.45, 0, 1, 0)
     StatusLbl.BackgroundTransparency = 1
     StatusLbl.Text = "RIVALS • SAFE ON"
-    StatusLbl.TextColor3 = getRainbowColor(0.3)
+    StatusLbl.TextColor3 = BLUE_NEON
     StatusLbl.Font = Enum.Font.GothamBold
     StatusLbl.TextSize = 10
     StatusLbl.TextXAlignment = Enum.TextXAlignment.Left
     StatusLbl.ZIndex = 36
     StatusLbl.Parent = header
-    table.insert(uiRainbowAccents, {obj = StatusLbl, prop = "TextColor3", phase = 0.3})
+    table.insert(uiBlueAccents, {obj = StatusLbl, prop = "TextColor3", phase = 1.2})
 
     local closeBtn = Instance.new("TextButton")
     closeBtn.AnchorPoint = Vector2.new(1, 0.5)
     closeBtn.Position = UDim2.new(1, -12, 0.5, 0)
     closeBtn.Size = UDim2.new(0, 28, 0, 28)
-    closeBtn.BackgroundColor3 = Color3.fromRGB(34, 37, 54)
-    closeBtn.BackgroundTransparency = 0.15
+    closeBtn.BackgroundColor3 = Color3.fromRGB(32, 54, 96)
+    closeBtn.BackgroundTransparency = 0.1
     closeBtn.Text = "×"
     closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     closeBtn.Font = Enum.Font.GothamBold
     closeBtn.TextSize = 17
+    closeBtn.AutoButtonColor = false
     closeBtn.ZIndex = 36
     closeBtn.Parent = header
 
@@ -406,16 +345,16 @@ do
     clCorner.Parent = closeBtn
 
     local clStroke = Instance.new("UIStroke")
-    clStroke.Thickness = 1.1
-    clStroke.Color = Color3.fromRGB(255, 255, 255)
-    clStroke.Transparency = 0.78
+    clStroke.Thickness = 1.2
+    clStroke.Color = BLUE_NEON
+    clStroke.Transparency = 0.45
     clStroke.Parent = closeBtn
 
     closeBtn.MouseButton1Down:Connect(function()
-        TweenService:Create(closeBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(210, 65, 90)}):Play()
+        TweenService:Create(closeBtn, TweenInfo.new(0.09), {BackgroundColor3 = Color3.fromRGB(215, 65, 95)}):Play()
     end)
     closeBtn.MouseButton1Up:Connect(function()
-        TweenService:Create(closeBtn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(34, 37, 54)}):Play()
+        TweenService:Create(closeBtn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(32, 54, 96)}):Play()
     end)
 
     local drag = nil
@@ -460,8 +399,8 @@ do
     local sidebar = Instance.new("Frame")
     sidebar.Position = UDim2.new(0, 0, 0, 44)
     sidebar.Size = UDim2.new(0, sideW, 1, -44)
-    sidebar.BackgroundColor3 = Color3.fromRGB(16, 18, 28)
-    sidebar.BackgroundTransparency = 0.55
+    sidebar.BackgroundColor3 = BLUE_PANEL
+    sidebar.BackgroundTransparency = 0.35
     sidebar.BorderSizePixel = 0
     sidebar.ZIndex = 34
     sidebar.Parent = MainWindow
@@ -489,12 +428,13 @@ do
     CreateTab = function(name)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(1, 0, 0, IsMobile and 34 or 36)
-        btn.BackgroundColor3 = Color3.fromRGB(28, 30, 46)
-        btn.BackgroundTransparency = 0.25
+        btn.BackgroundColor3 = BLUE_ROW
+        btn.BackgroundTransparency = 0.18
         btn.Text = name
-        btn.TextColor3 = Color3.fromRGB(215, 220, 240)
+        btn.TextColor3 = Color3.fromRGB(195, 220, 250)
         btn.Font = Enum.Font.GothamBold
         btn.TextSize = IsMobile and 12 or 13
+        btn.AutoButtonColor = false
         btn.ZIndex = 35
         btn.Parent = sidebar
 
@@ -503,17 +443,17 @@ do
         bCorner.Parent = btn
 
         local bStroke = Instance.new("UIStroke")
-        bStroke.Thickness = 1.15
-        bStroke.Color = getRainbowColor(0.35)
-        bStroke.Transparency = 0.72
+        bStroke.Thickness = 1.2
+        bStroke.Color = BLUE_NEON
+        bStroke.Transparency = 0.65
         bStroke.Parent = btn
 
         local page = Instance.new("ScrollingFrame")
         page.Size = UDim2.new(1, 0, 1, 0)
         page.BackgroundTransparency = 1
         page.BorderSizePixel = 0
-        page.ScrollBarThickness = 2
-        page.ScrollBarImageColor3 = getRainbowColor(0.5)
+        page.ScrollBarThickness = 3
+        page.ScrollBarImageColor3 = BLUE_NEON
         page.CanvasSize = UDim2.new(0, 0, 0, 0)
         page.AutomaticCanvasSize = Enum.AutomaticSize.Y
         page.Visible = false
@@ -526,25 +466,25 @@ do
         layout.Parent = page
 
         local pad = Instance.new("UIPadding")
-        pad.PaddingBottom = UDim.new(0, 8)
+        pad.PaddingBottom = UDim.new(0, 10)
         pad.Parent = page
 
         local function openThis(playSfx)
             for _, t in pairs(tabs) do
                 t.page.Visible = false
                 TweenService:Create(t.btn, TweenInfo.new(0.14), {
-                    BackgroundColor3 = Color3.fromRGB(28, 30, 46),
-                    BackgroundTransparency = 0.28,
-                    TextColor3 = Color3.fromRGB(210, 215, 235)
+                    BackgroundColor3 = BLUE_ROW,
+                    BackgroundTransparency = 0.22,
+                    TextColor3 = Color3.fromRGB(190, 215, 245)
                 }):Play()
                 if t.stroke then
-                    t.stroke.Transparency = 0.75
+                    t.stroke.Transparency = 0.7
                 end
             end
             page.Visible = true
             TweenService:Create(btn, TweenInfo.new(0.14), {
-                BackgroundColor3 = Color3.fromRGB(58, 66, 112),
-                BackgroundTransparency = 0.1,
+                BackgroundColor3 = BLUE_BTN_PRESS,
+                BackgroundTransparency = 0.08,
                 TextColor3 = Color3.fromRGB(255, 255, 255)
             }):Play()
             bStroke.Transparency = 0.15
@@ -562,21 +502,21 @@ do
         lbl.Size = UDim2.new(1, 0, 0, 20)
         lbl.BackgroundTransparency = 1
         lbl.Text = string.upper(text)
-        lbl.TextColor3 = getRainbowColor(0.2)
+        lbl.TextColor3 = BLUE_NEON
         lbl.Font = Enum.Font.GothamBold
         lbl.TextSize = 11
         lbl.TextXAlignment = Enum.TextXAlignment.Left
         lbl.ZIndex = 36
         lbl.Parent = page
-        table.insert(uiRainbowAccents, {obj = lbl, prop = "TextColor3", phase = 0.2})
+        table.insert(uiBlueAccents, {obj = lbl, prop = "TextColor3", phase = 0.7})
     end
 
     AddToggle = function(page, text, def, cb)
         local on = def or false
         local row = Instance.new("TextButton")
         row.Size = UDim2.new(1, 0, 0, 38)
-        row.BackgroundColor3 = on and Color3.fromRGB(32, 38, 56) or Color3.fromRGB(24, 26, 40)
-        row.BackgroundTransparency = 0.24
+        row.BackgroundColor3 = on and BLUE_ROW_ON or BLUE_ROW
+        row.BackgroundTransparency = 0.16
         row.BorderSizePixel = 0
         row.Text = ""
         row.AutoButtonColor = false
@@ -588,9 +528,9 @@ do
         rCorner.Parent = row
 
         local rStroke = Instance.new("UIStroke")
-        rStroke.Thickness = 1.1
-        rStroke.Color = getRainbowColor(0.35)
-        rStroke.Transparency = on and 0.35 or 0.78
+        rStroke.Thickness = 1.15
+        rStroke.Color = BLUE_NEON
+        rStroke.Transparency = on and 0.25 or 0.72
         rStroke.Parent = row
 
         local lbl = Instance.new("TextLabel")
@@ -598,7 +538,7 @@ do
         lbl.Size = UDim2.new(1, -72, 1, 0)
         lbl.BackgroundTransparency = 1
         lbl.Text = text
-        lbl.TextColor3 = Color3.fromRGB(248, 250, 255)
+        lbl.TextColor3 = Color3.fromRGB(242, 249, 255)
         lbl.Font = Enum.Font.GothamSemiBold
         lbl.TextSize = IsMobile and 12 or 12.5
         lbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -608,9 +548,9 @@ do
         local pill = Instance.new("Frame")
         pill.AnchorPoint = Vector2.new(1, 0.5)
         pill.Position = UDim2.new(1, -10, 0.5, 0)
-        pill.Size = UDim2.new(0, 46, 0, 23)
-        pill.BackgroundColor3 = on and Color3.fromRGB(48, 205, 130) or Color3.fromRGB(48, 52, 72)
-        pill.BackgroundTransparency = 0.1
+        pill.Size = UDim2.new(0, 48, 0, 24)
+        pill.BackgroundColor3 = on and GREEN_ON or OFF_PILL
+        pill.BackgroundTransparency = 0.06
         pill.BorderSizePixel = 0
         pill.ZIndex = 37
         pill.Parent = row
@@ -620,9 +560,9 @@ do
         pCorner.Parent = pill
 
         local pStroke = Instance.new("UIStroke")
-        pStroke.Thickness = 1
-        pStroke.Color = Color3.fromRGB(255, 255, 255)
-        pStroke.Transparency = 0.75
+        pStroke.Thickness = 1.1
+        pStroke.Color = on and Color3.fromRGB(170, 255, 215) or BLUE_NEON
+        pStroke.Transparency = on and 0.35 or 0.65
         pStroke.Parent = pill
 
         local pTxt = Instance.new("TextLabel")
@@ -638,13 +578,21 @@ do
         local function syncVisual()
             pTxt.Text = on and "ON" or "OFF"
             TweenService:Create(pill, TweenInfo.new(0.14), {
-                BackgroundColor3 = on and Color3.fromRGB(48, 205, 130) or Color3.fromRGB(48, 52, 72)
+                BackgroundColor3 = on and GREEN_ON or OFF_PILL
             }):Play()
             TweenService:Create(row, TweenInfo.new(0.14), {
-                BackgroundColor3 = on and Color3.fromRGB(32, 38, 56) or Color3.fromRGB(24, 26, 40)
+                BackgroundColor3 = on and BLUE_ROW_ON or BLUE_ROW
             }):Play()
-            rStroke.Transparency = on and 0.35 or 0.78
+            rStroke.Transparency = on and 0.25 or 0.72
+            pStroke.Color = on and Color3.fromRGB(170, 255, 215) or BLUE_NEON
         end
+
+        row.MouseButton1Down:Connect(function()
+            TweenService:Create(row, TweenInfo.new(0.08), {BackgroundTransparency = 0.04}):Play()
+        end)
+        row.MouseButton1Up:Connect(function()
+            TweenService:Create(row, TweenInfo.new(0.12), {BackgroundTransparency = 0.16}):Play()
+        end)
 
         row.MouseButton1Click:Connect(function()
             on = not on
@@ -658,22 +606,28 @@ do
         local val = def or minV
         local row = Instance.new("Frame")
         row.Size = UDim2.new(1, 0, 0, 46)
-        row.BackgroundColor3 = Color3.fromRGB(26, 28, 42)
-        row.BackgroundTransparency = 0.32
+        row.BackgroundColor3 = BLUE_ROW
+        row.BackgroundTransparency = 0.18
         row.BorderSizePixel = 0
         row.ZIndex = 36
         row.Parent = page
 
         local rCorner = Instance.new("UICorner")
-        rCorner.CornerRadius = UDim.new(0, 10)
+        rCorner.CornerRadius = UDim.new(0, 11)
         rCorner.Parent = row
+
+        local rStroke = Instance.new("UIStroke")
+        rStroke.Thickness = 1
+        rStroke.Color = BLUE_NEON
+        rStroke.Transparency = 0.72
+        rStroke.Parent = row
 
         local topLbl = Instance.new("TextLabel")
         topLbl.Position = UDim2.new(0, 12, 0, 5)
         topLbl.Size = UDim2.new(1, -24, 0, 17)
         topLbl.BackgroundTransparency = 1
         topLbl.Text = string.format("%s: %s%s", text, tostring(val), suffix or "")
-        topLbl.TextColor3 = Color3.fromRGB(245, 247, 255)
+        topLbl.TextColor3 = Color3.fromRGB(242, 249, 255)
         topLbl.Font = Enum.Font.GothamMedium
         topLbl.TextSize = 12
         topLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -683,8 +637,8 @@ do
         local barBg = Instance.new("Frame")
         barBg.Position = UDim2.new(0, 12, 0, 28)
         barBg.Size = UDim2.new(1, -24, 0, 7)
-        barBg.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        barBg.BackgroundTransparency = 0.84
+        barBg.BackgroundColor3 = Color3.fromRGB(12, 22, 42)
+        barBg.BackgroundTransparency = 0.2
         barBg.BorderSizePixel = 0
         barBg.ZIndex = 37
         barBg.Parent = row
@@ -695,11 +649,11 @@ do
 
         local fill = Instance.new("Frame")
         fill.Size = UDim2.new(math.clamp((val - minV) / (maxV - minV), 0, 1), 0, 1, 0)
-        fill.BackgroundColor3 = getRainbowColor(0.4)
+        fill.BackgroundColor3 = BLUE_NEON
         fill.BorderSizePixel = 0
         fill.ZIndex = 38
         fill.Parent = barBg
-        table.insert(uiRainbowAccents, {obj = fill, prop = "BackgroundColor3", phase = 0.4})
+        table.insert(uiBlueAccents, {obj = fill, prop = "BackgroundColor3", phase = 0.5})
 
         local fCorner = Instance.new("UICorner")
         fCorner.CornerRadius = UDim.new(1, 0)
@@ -726,8 +680,8 @@ do
     AddButton = function(page, text, cb)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(1, 0, 0, 38)
-        btn.BackgroundColor3 = Color3.fromRGB(36, 42, 68)
-        btn.BackgroundTransparency = 0.14
+        btn.BackgroundColor3 = BLUE_BTN
+        btn.BackgroundTransparency = 0.08
         btn.Text = text
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
         btn.Font = Enum.Font.GothamBold
@@ -742,20 +696,20 @@ do
 
         local bStroke = Instance.new("UIStroke")
         bStroke.Thickness = 1.35
-        bStroke.Color = getRainbowColor(0.6)
+        bStroke.Color = BLUE_NEON
         bStroke.Parent = btn
-        table.insert(uiRainbowStrokes, {stroke = bStroke, phase = 0.6})
+        table.insert(uiBlueStrokes, {stroke = bStroke, phase = 0.9})
 
         btn.MouseButton1Down:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.09), {
-                BackgroundColor3 = Color3.fromRGB(58, 72, 118),
+            TweenService:Create(btn, TweenInfo.new(0.08), {
+                BackgroundColor3 = BLUE_BTN_PRESS,
                 Size = UDim2.new(1, -2, 0, 36)
             }):Play()
         end)
 
         btn.MouseButton1Up:Connect(function()
             TweenService:Create(btn, TweenInfo.new(0.12), {
-                BackgroundColor3 = Color3.fromRGB(36, 42, 68),
+                BackgroundColor3 = BLUE_BTN,
                 Size = UDim2.new(1, 0, 0, 38)
             }):Play()
         end)
@@ -769,8 +723,8 @@ do
     WaBanner.AnchorPoint = Vector2.new(0.5, 0.5)
     WaBanner.Position = UDim2.new(0.5, 0, 0.5, 0)
     WaBanner.Size = UDim2.new(0, IsMobile and 295 or 355, 0, 176)
-    WaBanner.BackgroundColor3 = Color3.fromRGB(16, 17, 26)
-    WaBanner.BackgroundTransparency = 0.08
+    WaBanner.BackgroundColor3 = BLUE_PRIMARY
+    WaBanner.BackgroundTransparency = 0.04
     WaBanner.BorderSizePixel = 0
     WaBanner.Visible = true
     WaBanner.ZIndex = 80
@@ -782,16 +736,16 @@ do
 
     local waStroke = Instance.new("UIStroke")
     waStroke.Thickness = 1.6
-    waStroke.Color = getRainbowColor(0.25)
+    waStroke.Color = BLUE_NEON
     waStroke.Parent = WaBanner
-    table.insert(uiRainbowStrokes, {stroke = waStroke, phase = 0.25})
+    table.insert(uiBlueStrokes, {stroke = waStroke, phase = 0.25})
 
     local waTitle = Instance.new("TextLabel")
     waTitle.Position = UDim2.new(0, 14, 0, 12)
     waTitle.Size = UDim2.new(1, -28, 0, 20)
     waTitle.BackgroundTransparency = 1
     waTitle.Text = "Canal WhatsApp • KING GAEL"
-    waTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    waTitle.TextColor3 = Color3.fromRGB(245, 250, 255)
     waTitle.Font = Enum.Font.GothamBlack
     waTitle.TextSize = 14
     waTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -803,7 +757,7 @@ do
     waDesc.Size = UDim2.new(1, -28, 0, 34)
     waDesc.BackgroundTransparency = 1
     waDesc.Text = "Sigue el canal de KING GAEL en WhatsApp para actualizaciones y scripts de Rivals."
-    waDesc.TextColor3 = Color3.fromRGB(225, 228, 245)
+    waDesc.TextColor3 = Color3.fromRGB(195, 220, 250)
     waDesc.Font = Enum.Font.Gotham
     waDesc.TextSize = 11.5
     waDesc.TextXAlignment = Enum.TextXAlignment.Left
@@ -814,10 +768,10 @@ do
     local waBox = Instance.new("TextBox")
     waBox.Position = UDim2.new(0, 14, 0, 74)
     waBox.Size = UDim2.new(1, -28, 0, 28)
-    waBox.BackgroundColor3 = Color3.fromRGB(35, 38, 56)
-    waBox.BackgroundTransparency = 0.25
+    waBox.BackgroundColor3 = BLUE_ROW
+    waBox.BackgroundTransparency = 0.15
     waBox.Text = WHATSAPP_CHANNEL_URL
-    waBox.TextColor3 = Color3.fromRGB(240, 245, 255)
+    waBox.TextColor3 = Color3.fromRGB(235, 246, 255)
     waBox.Font = Enum.Font.GothamMedium
     waBox.TextSize = 10.5
     waBox.ClearTextOnFocus = false
@@ -828,11 +782,12 @@ do
     local copyBtn = Instance.new("TextButton")
     copyBtn.Position = UDim2.new(0, 14, 1, -44)
     copyBtn.Size = UDim2.new(0.55, -18, 0, 33)
-    copyBtn.BackgroundColor3 = Color3.fromRGB(58, 74, 132)
+    copyBtn.BackgroundColor3 = BLUE_BTN_PRESS
     copyBtn.Text = "Copiar Enlace"
     copyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     copyBtn.Font = Enum.Font.GothamBold
     copyBtn.TextSize = 12
+    copyBtn.AutoButtonColor = false
     copyBtn.ZIndex = 81
     copyBtn.Parent = WaBanner
 
@@ -842,19 +797,19 @@ do
 
     local cBtnStroke = Instance.new("UIStroke")
     cBtnStroke.Thickness = 1.2
-    cBtnStroke.Color = getRainbowColor(0.45)
+    cBtnStroke.Color = BLUE_NEON
     cBtnStroke.Parent = copyBtn
-    table.insert(uiRainbowStrokes, {stroke = cBtnStroke, phase = 0.45})
 
     local enterBtn = Instance.new("TextButton")
     enterBtn.Position = UDim2.new(0.55, 4, 1, -44)
     enterBtn.Size = UDim2.new(0.45, -18, 0, 33)
-    enterBtn.BackgroundColor3 = Color3.fromRGB(36, 40, 62)
-    enterBtn.BackgroundTransparency = 0.14
+    enterBtn.BackgroundColor3 = BLUE_BTN
+    enterBtn.BackgroundTransparency = 0.1
     enterBtn.Text = "Entrar"
     enterBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     enterBtn.Font = Enum.Font.GothamBold
     enterBtn.TextSize = 12
+    enterBtn.AutoButtonColor = false
     enterBtn.ZIndex = 81
     enterBtn.Parent = WaBanner
 
@@ -864,9 +819,8 @@ do
 
     local eBtnStroke = Instance.new("UIStroke")
     eBtnStroke.Thickness = 1.2
-    eBtnStroke.Color = getRainbowColor(0.75)
+    eBtnStroke.Color = BLUE_NEON
     eBtnStroke.Parent = enterBtn
-    table.insert(uiRainbowStrokes, {stroke = eBtnStroke, phase = 0.75})
 
     copyBtn.MouseButton1Click:Connect(function()
         if PlayUiSound then PlayUiSound("boost") end
@@ -886,12 +840,13 @@ do
     QuickBtn = Instance.new("TextButton")
     QuickBtn.Size = IsMobile and UDim2.new(0, 96, 0, 34) or UDim2.new(0, 92, 0, 30)
     QuickBtn.Position = IsMobile and UDim2.new(0, 12, 0.5, -17) or UDim2.new(0, 12, 0, 12)
-    QuickBtn.BackgroundColor3 = Color3.fromRGB(18, 20, 32)
-    QuickBtn.BackgroundTransparency = 0.14
+    QuickBtn.BackgroundColor3 = BLUE_PRIMARY
+    QuickBtn.BackgroundTransparency = 0.1
     QuickBtn.Text = "KING GAEL"
-    QuickBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    QuickBtn.TextColor3 = Color3.fromRGB(245, 250, 255)
     QuickBtn.Font = Enum.Font.GothamBlack
     QuickBtn.TextSize = 11
+    QuickBtn.AutoButtonColor = false
     QuickBtn.ZIndex = 150
     QuickBtn.Parent = ScreenGui
 
@@ -901,9 +856,9 @@ do
 
     local qStroke = Instance.new("UIStroke")
     qStroke.Thickness = 1.6
-    qStroke.Color = getRainbowColor(0.15)
+    qStroke.Color = BLUE_NEON
     qStroke.Parent = QuickBtn
-    table.insert(uiRainbowStrokes, {stroke = qStroke, phase = 0.15})
+    table.insert(uiBlueStrokes, {stroke = qStroke, phase = 0.15})
 
     local function createFloatingDock(name, emoji, initX, initY, strokePhase, lockPhase, onTapFn, onLockToggle, isLockedFn)
         local dock = Instance.new("Frame")
@@ -920,8 +875,8 @@ do
         mainBtn.Name = name .. "_BTN"
         mainBtn.Size = UDim2.new(0, 52, 0, 52)
         mainBtn.Position = UDim2.new(0, 0, 0, 0)
-        mainBtn.BackgroundColor3 = Color3.fromRGB(22, 25, 40)
-        mainBtn.BackgroundTransparency = 0.1
+        mainBtn.BackgroundColor3 = BLUE_PRIMARY
+        mainBtn.BackgroundTransparency = 0.08
         mainBtn.Text = emoji
         mainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
         mainBtn.Font = Enum.Font.GothamBold
@@ -937,15 +892,15 @@ do
 
         local bStroke = Instance.new("UIStroke")
         bStroke.Thickness = 2
-        bStroke.Color = getRainbowColor(strokePhase)
+        bStroke.Color = BLUE_NEON
         bStroke.Parent = mainBtn
-        table.insert(uiRainbowStrokes, {stroke = bStroke, phase = strokePhase})
+        table.insert(uiBlueStrokes, {stroke = bStroke, phase = strokePhase})
 
         mainBtn.MouseButton1Down:Connect(function()
-            TweenService:Create(mainBtn, TweenInfo.new(0.08), {BackgroundColor3 = Color3.fromRGB(44, 52, 86)}):Play()
+            TweenService:Create(mainBtn, TweenInfo.new(0.08), {BackgroundColor3 = BLUE_BTN_PRESS}):Play()
         end)
         mainBtn.MouseButton1Up:Connect(function()
-            TweenService:Create(mainBtn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(22, 25, 40)}):Play()
+            TweenService:Create(mainBtn, TweenInfo.new(0.12), {BackgroundColor3 = BLUE_PRIMARY}):Play()
         end)
 
         local timerLbl = Instance.new("TextLabel")
@@ -964,8 +919,8 @@ do
         lockBtn.Name = name .. "_LOCK"
         lockBtn.Size = UDim2.new(0, 32, 0, 32)
         lockBtn.Position = UDim2.new(0, 58, 0, 10)
-        lockBtn.BackgroundColor3 = Color3.fromRGB(26, 29, 46)
-        lockBtn.BackgroundTransparency = 0.12
+        lockBtn.BackgroundColor3 = BLUE_PANEL
+        lockBtn.BackgroundTransparency = 0.1
         lockBtn.Text = "🔓"
         lockBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
         lockBtn.Font = Enum.Font.GothamBold
@@ -981,9 +936,9 @@ do
 
         local lkStroke = Instance.new("UIStroke")
         lkStroke.Thickness = 1.5
-        lkStroke.Color = getRainbowColor(lockPhase)
+        lkStroke.Color = BLUE_NEON
         lkStroke.Parent = lockBtn
-        table.insert(uiRainbowStrokes, {stroke = lkStroke, phase = lockPhase})
+        table.insert(uiBlueStrokes, {stroke = lkStroke, phase = lockPhase})
 
         mainBtn.InputBegan:Connect(function(inp)
             if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
@@ -1023,7 +978,7 @@ do
             State.LeapLocked = not State.LeapLocked
             LeapLockBtn.Text = State.LeapLocked and "🔒" or "🔓"
             TweenService:Create(LeapLockBtn, TweenInfo.new(0.14), {
-                BackgroundColor3 = State.LeapLocked and Color3.fromRGB(48, 205, 130) or Color3.fromRGB(26, 29, 46)
+                BackgroundColor3 = State.LeapLocked and GREEN_ON or BLUE_PANEL
             }):Play()
             PlayUiSound(State.LeapLocked and "on" or "off")
             Notify("KING GAEL • 🦘", State.LeapLocked and "Posición de 🦘 bloqueada." or "Posición de 🦘 desbloqueada.", 2.2)
@@ -1045,7 +1000,7 @@ do
             State.TpLocked = not State.TpLocked
             TpLockBtn.Text = State.TpLocked and "🔒" or "🔓"
             TweenService:Create(TpLockBtn, TweenInfo.new(0.14), {
-                BackgroundColor3 = State.TpLocked and Color3.fromRGB(48, 205, 130) or Color3.fromRGB(26, 29, 46)
+                BackgroundColor3 = State.TpLocked and GREEN_ON or BLUE_PANEL
             }):Play()
             PlayUiSound(State.TpLocked and "on" or "off")
             Notify("KING GAEL • ⚡", State.TpLocked and "Posición de ⚡ bloqueada." or "Posición de ⚡ desbloqueada.", 2.2)
@@ -1377,7 +1332,7 @@ do
         State.TpLocked = v
         TpLockBtn.Text = v and "🔒" or "🔓"
         TweenService:Create(TpLockBtn, TweenInfo.new(0.14), {
-            BackgroundColor3 = v and Color3.fromRGB(48, 205, 130) or Color3.fromRGB(26, 29, 46)
+            BackgroundColor3 = v and GREEN_ON or BLUE_PANEL
         }):Play()
     end)
 
@@ -1390,7 +1345,7 @@ do
         State.LeapLocked = v
         LeapLockBtn.Text = v and "🔒" or "🔓"
         TweenService:Create(LeapLockBtn, TweenInfo.new(0.14), {
-            BackgroundColor3 = v and Color3.fromRGB(48, 205, 130) or Color3.fromRGB(26, 29, 46)
+            BackgroundColor3 = v and GREEN_ON or BLUE_PANEL
         }):Play()
     end)
 
@@ -1512,7 +1467,7 @@ local setLine
 
 do
     local eTab = CreateTab("ESP")
-    AddSection(eTab, "Visuales Enemigos")
+    AddSection(eTab, "Visuales Enemigos Arcoíris")
     AddToggle(eTab, "Enemy Chams", false, function(v) State.Chams = v end)
     AddToggle(eTab, "Crosshair Tracers", false, function(v) State.Tracers = v end)
     AddToggle(eTab, "Box ESP", false, function(v) State.BoxEsp = v end)
@@ -1543,7 +1498,7 @@ do
 
     local function addPlr(p)
         if p == LocalPlayer or espMap[p] then return end
-        local th = IsMobile and 2 or 1.5
+        local th = IsMobile and 2.2 or 1.8
 
         local box = Instance.new("Frame")
         box.BackgroundTransparency = 1
@@ -1688,10 +1643,8 @@ do
     end)
 end
 
-loadInitialImages()
-
 --------------------------------------------------
--- 🌈 BUCLE PRINCIPAL LIGERO
+-- 🌈 BUCLE PRINCIPAL LIGERO (MENÚ AZUL + ESP ARCOÍRIS)
 --------------------------------------------------
 local activeTargetPos = nil
 
@@ -1701,23 +1654,21 @@ RunService.RenderStepped:Connect(function()
         Camera = curCam
     end
 
-    local col = getRainbowColor(0)
-
-    for i = #uiRainbowStrokes, 1, -1 do
-        local item = uiRainbowStrokes[i]
+    for i = #uiBlueStrokes, 1, -1 do
+        local item = uiBlueStrokes[i]
         if item.stroke and item.stroke.Parent then
-            item.stroke.Color = getRainbowColor(item.phase)
+            item.stroke.Color = getBluePulse(item.phase)
         elseif not item.stroke then
-            table.remove(uiRainbowStrokes, i)
+            table.remove(uiBlueStrokes, i)
         end
     end
 
-    for i = #uiRainbowAccents, 1, -1 do
-        local item = uiRainbowAccents[i]
+    for i = #uiBlueAccents, 1, -1 do
+        local item = uiBlueAccents[i]
         if item.obj and item.obj.Parent then
-            item.obj[item.prop] = getRainbowColor(item.phase)
+            item.obj[item.prop] = getBluePulse(item.phase)
         elseif not item.obj then
-            table.remove(uiRainbowAccents, i)
+            table.remove(uiBlueAccents, i)
         end
     end
 
@@ -1729,7 +1680,7 @@ RunService.RenderStepped:Connect(function()
     FovCircle.Visible = State.FovEnabled
     if State.FovEnabled then
         FovCircle.Size = UDim2.new(0, rad * 2, 0, rad * 2)
-        FovStroke.Color = col
+        FovStroke.Color = getRainbowColor(0)
     end
 
     local bestHead = nil
@@ -1739,7 +1690,7 @@ RunService.RenderStepped:Connect(function()
 
     for plr, d in pairs(espMap) do
         idx += 1
-        local pCol = getRainbowColor(idx * 0.14)
+        local pCol = getRainbowColor(idx * 0.16)
         local char = plr.Character
         local head = char and char:FindFirstChild("Head")
         local torso = char and (char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("HumanoidRootPart"))
@@ -1757,6 +1708,7 @@ RunService.RenderStepped:Connect(function()
                 if not hl then hl = Instance.new("Highlight", char) end
                 hl.Enabled = true
                 hl.FillColor = pCol
+                hl.OutlineColor = getRainbowColor((idx * 0.16) + 0.35)
             elseif hl then
                 hl.Enabled = false
             end
@@ -1768,7 +1720,7 @@ RunService.RenderStepped:Connect(function()
             end
 
             if State.TopLine and hOn and inRange then
-                setLine(d.top, top, Vector2.new(hPos.X, hPos.Y), pCol, d.th)
+                setLine(d.top, top, Vector2.new(hPos.X, hPos.Y), getRainbowColor((idx * 0.16) + 0.2), d.th)
             else
                 d.top.Visible = false
             end
