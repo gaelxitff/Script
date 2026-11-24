@@ -18,7 +18,8 @@ local State = {
     Particles = true,
     QuickBtn = true,
     Sounds = true,
-    SoundVolume = 0.8,
+    SoundVolume = 0.85,
+    LeapGlide = false,
     Fly = false,
     SpeedRun = false,
     SpeedRunValue = 45,
@@ -39,11 +40,11 @@ local State = {
     Fullbright = false
 }
 
-local ScreenGui, MainWindow, MenuParticlesBox, EspOverlay, WaBanner, QuickBtn, FovCircle, FovStroke
+local ScreenGui, MainWindow, MenuParticlesBox, EspOverlay, WaBanner, QuickBtn, LeapBtn, FovCircle, FovStroke
 local Notify, PlayUiSound, CreateTab, AddSection, AddToggle, AddSlider, AddButton
 
 --------------------------------------------------
--- 🔊 SONIDOS DE INTERFAZ - KING GAEL
+-- 🔊 SISTEMA DE SONIDO PRO - KING GAEL
 --------------------------------------------------
 local sfxList = {}
 do
@@ -62,10 +63,10 @@ do
         return s
     end
 
-    local sndOn = createSfx("ToggleOn", 6042053626, 1.0, 1.1)
-    local sndOff = createSfx("ToggleOff", 6042053363, 0.85, 0.9)
-    local sndClick = createSfx("Click", 6895079853, 0.95, 1.02)
-    local sndTp = createSfx("Teleport", 4612375233, 1.0, 1.12)
+    local sndOn = createSfx("ToggleOn", 6042053626, 1.0, 1.12)
+    local sndOff = createSfx("ToggleOff", 6042053363, 0.9, 0.88)
+    local sndClick = createSfx("Click", 6895079853, 0.95, 1.05)
+    local sndBoost = createSfx("Boost", 4612375233, 1.0, 1.18)
 
     PlayUiSound = function(kind)
         if not State.Sounds then return end
@@ -74,8 +75,8 @@ do
             target = sndOn
         elseif kind == "off" then
             target = sndOff
-        elseif kind == "tp" then
-            target = sndTp
+        elseif kind == "boost" then
+            target = sndBoost
         end
         pcall(function()
             target.Volume = math.clamp(State.SoundVolume, 0, 1)
@@ -637,7 +638,7 @@ do
     eBtnCorner.Parent = enterBtn
 
     copyBtn.MouseButton1Click:Connect(function()
-        if PlayUiSound then PlayUiSound("tp") end
+        if PlayUiSound then PlayUiSound("boost") end
         local ok = pcall(function()
             if setclipboard then setclipboard(WHATSAPP_CHANNEL_URL)
             elseif toclipboard then toclipboard(WHATSAPP_CHANNEL_URL)
@@ -671,6 +672,30 @@ do
     qStroke.Thickness = 1.4
     qStroke.Color = Color3.fromRGB(255, 50, 75)
     qStroke.Parent = QuickBtn
+
+    -- Botón flotante para salto alto + planeo/vuelo de 4 segundos
+    LeapBtn = Instance.new("TextButton")
+    LeapBtn.Name = "KING_GAEL_LEAP_BTN"
+    LeapBtn.Size = IsMobile and UDim2.new(0, 104, 0, 38) or UDim2.new(0, 108, 0, 36)
+    LeapBtn.Position = IsMobile and UDim2.new(1, -120, 0.62, 0) or UDim2.new(1, -130, 0.68, 0)
+    LeapBtn.BackgroundColor3 = Color3.fromRGB(225, 28, 56)
+    LeapBtn.BackgroundTransparency = 0.12
+    LeapBtn.Text = "LEAP 4s"
+    LeapBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    LeapBtn.Font = Enum.Font.GothamBlack
+    LeapBtn.TextSize = IsMobile and 12 or 12.5
+    LeapBtn.Visible = false
+    LeapBtn.ZIndex = 155
+    LeapBtn.Parent = ScreenGui
+
+    local lCorner = Instance.new("UICorner")
+    lCorner.CornerRadius = UDim.new(0, 11)
+    lCorner.Parent = LeapBtn
+
+    local lStroke = Instance.new("UIStroke")
+    lStroke.Thickness = 1.6
+    lStroke.Color = Color3.fromRGB(255, 110, 130)
+    lStroke.Parent = LeapBtn
 
     local function toggleMenu(force)
         State.MenuOpen = (force ~= nil) and force or (not MainWindow.Visible)
@@ -834,7 +859,7 @@ local function teleportToEnemy()
     end)
 
     if ok then
-        PlayUiSound("tp")
+        PlayUiSound("boost")
         Notify("KING GAEL • TP", string.format("Movido donde está %s (%.0fm).", targetPlr.DisplayName, dist), 3)
     else
         Notify("KING GAEL • TP", "El juego bloqueó el teletransporte.", 3)
@@ -864,7 +889,66 @@ end
 
 do
     local pTab = CreateTab("Jugador")
-    AddSection(pTab, "Movimiento y Teleport")
+    AddSection(pTab, "Movimiento y Impulso")
+
+    local leapRunning = false
+    local function triggerLeapGlide()
+        if leapRunning then return end
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if not hrp or not hum or hum.Health <= 0 then
+            Notify("KING GAEL • Leap", "Personaje no disponible.", 2.5)
+            return
+        end
+
+        leapRunning = true
+        PlayUiSound("boost")
+        Notify("KING GAEL • Leap", "Salto + planeo activado por 4 segundos.", 2.5)
+
+        local bv = hrp:FindFirstChild("KingGaelLeapGlide")
+        if not bv then
+            bv = Instance.new("BodyVelocity")
+            bv.Name = "KingGaelLeapGlide"
+            bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+            bv.Parent = hrp
+        end
+
+        local startT = os.clock()
+        local duration = 4.0
+
+        task.spawn(function()
+            while (os.clock() - startT) < duration do
+                local curChar = LocalPlayer.Character
+                local curHrp = curChar and curChar:FindFirstChild("HumanoidRootPart")
+                local curHum = curChar and curChar:FindFirstChildOfClass("Humanoid")
+                if not curHrp or not curHum or curHum.Health <= 0 then break end
+
+                local elapsed = os.clock() - startT
+                local left = math.max(0, duration - elapsed)
+                LeapBtn.Text = string.format("LEAP %.1fs", left)
+
+                local fwd = Camera.CFrame.LookVector
+                local flatFwd = Vector3.new(fwd.X, 0, fwd.Z)
+                if flatFwd.Magnitude > 0.01 then
+                    flatFwd = flatFwd.Unit
+                else
+                    flatFwd = curHrp.CFrame.LookVector
+                end
+
+                local yVel = (elapsed < 0.45) and 62 or 7
+                bv.Velocity = flatFwd * 56 + Vector3.new(0, yVel, 0)
+                task.wait()
+            end
+
+            local oldBv = hrp and hrp:FindFirstChild("KingGaelLeapGlide")
+            if oldBv then oldBv:Destroy() end
+            LeapBtn.Text = "LEAP 4s"
+            leapRunning = false
+        end)
+    end
+
+    LeapBtn.MouseButton1Click:Connect(triggerLeapGlide)
 
     local flyActive = false
     local function stopFly()
@@ -930,6 +1014,11 @@ do
                 if v:IsA("BasePart") then v.CanCollide = false end
             end
         end
+    end)
+
+    AddToggle(pTab, "Botón Leap + Vuelo (4s)", false, function(v)
+        State.LeapGlide = v
+        LeapBtn.Visible = v
     end)
 
     AddButton(pTab, "TP Donde Está el Enemigo", function()
@@ -1115,7 +1204,7 @@ do
     local vTab = CreateTab("Visuales")
     AddSection(vTab, "Comunidad y Sonido")
     AddButton(vTab, "Copiar Canal WhatsApp", function()
-        PlayUiSound("tp")
+        PlayUiSound("boost")
         local ok = pcall(function()
             if setclipboard then setclipboard(WHATSAPP_CHANNEL_URL)
             elseif toclipboard then toclipboard(WHATSAPP_CHANNEL_URL)
@@ -1128,7 +1217,7 @@ do
         WaBanner.Visible = true
     end)
     AddToggle(vTab, "Menu Sounds", true, function(v) State.Sounds = v end)
-    AddSlider(vTab, "Sound Volume", 10, 100, 5, 80, "%", function(v)
+    AddSlider(vTab, "Sound Volume", 10, 100, 5, 85, "%", function(v)
         State.SoundVolume = v / 100
         syncSfxVolumes()
     end)
