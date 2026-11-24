@@ -14,33 +14,22 @@ local IsMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
 local TARGET_PLACE_ID = 17625359962
 local WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029VbCHjR7LNSaCqoxB7P10"
 
-local BG_IDS = {
-    [1] = 138183089864109, -- IMG0197
-    [2] = 138351747140128
-}
-
-local LOGO_IDS = {
-    [1] = 129596142963991, -- IMG0199
-    [2] = 124340778722653
-}
+local BG_ASSET_ID = 138183089864109   -- IMG0197
+local LOGO_ASSET_ID = 129596142963991 -- IMG0199
 
 local State = {
     MenuOpen = true,
-    Particles = true,
     QuickBtn = true,
     Sounds = true,
     SoundVolume = 0.85,
-    CustomBgEnabled = true,
-    BgSlot = 1,
-    CustomLogoEnabled = true,
-    LogoSlot = 1,
+    SafeMode = true,
     LeapGlide = false,
     LeapLocked = false,
     TpBtnEnabled = false,
     TpLocked = false,
     Fly = false,
     SpeedRun = false,
-    SpeedRunValue = 45,
+    SpeedRunValue = 38,
     InfiniteJump = false,
     Noclip = false,
     WalkSpeed = 16,
@@ -48,6 +37,7 @@ local State = {
     FastReload = true,
     SilentAim = false,
     SoftLock = false,
+    SoftLockSmooth = 0.26,
     MaxDistance = 600,
     FovEnabled = false,
     FovLevel = 3,
@@ -59,73 +49,69 @@ local State = {
     Fullbright = false
 }
 
-local ScreenGui, MainWindow, BgImageLabel, LogoImageLabel, MenuParticlesBox, EspOverlay, WaBanner, QuickBtn
+local ScreenGui, MainWindow, BgImageLabel, LogoImageLabel, EspOverlay, WaBanner, QuickBtn, StatusLbl
 local LeapDock, LeapBtn, LeapLockBtn, LeapTimerLbl
 local TpDock, TpBtn, TpLockBtn
 local FovCircle, FovStroke
-local Notify, PlayUiSound, CreateTab, AddSection, AddToggle, AddSlider, AddButton, teleportToEnemy, triggerLeapGlide
+local Notify, PlayUiSound, CreateTab, AddSection, AddToggle, AddSlider, AddButton, teleportToEnemy, triggerLeapGlide, emergencyResetAll
 
 local function getRainbowColor(offset)
-    local hue = ((tick() * 0.24) + (offset or 0)) % 1
+    local hue = ((os.clock() * 0.24) + (offset or 0)) % 1
     return Color3.fromHSV(hue, 0.88, 1)
 end
 
-local resolvedIdCache = {}
-local function applyAssetToImageLabel(imgLabel, rawId, labelTag, silent)
-    if not imgLabel or not rawId then return end
-    local numId = tonumber(rawId)
-    if not numId then return end
-
-    if resolvedIdCache[numId] then
-        imgLabel.Image = "rbxassetid://" .. tostring(resolvedIdCache[numId])
-        return
+local function extractNumericAssetId(val)
+    if type(val) == "number" then
+        return val > 0 and val or nil
+    elseif type(val) == "string" then
+        local num = string.match(val, "%d%d%d%d%d%d+")
+        return num and tonumber(num) or nil
     end
-
-    imgLabel.Image = "rbxassetid://" .. tostring(numId)
-
-    task.spawn(function()
-        task.wait(0.85)
-        if not imgLabel or not imgLabel.Parent then return end
-        if imgLabel.IsLoaded then
-            resolvedIdCache[numId] = numId
-            return
-        end
-
-        local ok, info = pcall(function()
-            return MarketplaceService:GetProductInfo(numId, Enum.InfoType.Asset)
-        end)
-
-        if ok and info and type(info.Description) == "string" then
-            local extracted = string.match(info.Description, "%d%d%d%d%d%d+")
-            if extracted then
-                local candidate = tonumber(extracted)
-                if candidate and candidate ~= numId then
-                    resolvedIdCache[numId] = candidate
-                    imgLabel.Image = "rbxassetid://" .. tostring(candidate)
-                    return
-                end
-            end
-        end
-
-        if not silent and not imgLabel.IsLoaded and Notify then
-            Notify("KING GAEL • " .. tostring(labelTag or "Asset"), "ID " .. tostring(numId) .. " aún no carga (revisa visibilidad/moderación).", 3.2)
-        end
-    end)
+    return nil
 end
 
-local function refreshCustomVisuals(silent)
-    if BgImageLabel then
-        BgImageLabel.Visible = State.CustomBgEnabled
-        if State.CustomBgEnabled then
-            applyAssetToImageLabel(BgImageLabel, BG_IDS[State.BgSlot] or BG_IDS[1], "Fondo", silent)
+local function resolveImageAssetId(rawId)
+    local numId = extractNumericAssetId(rawId)
+    if not numId then return nil end
+
+    local okInfo, info = pcall(function()
+        return MarketplaceService:GetProductInfo(numId, Enum.InfoType.Asset)
+    end)
+
+    if okInfo and info then
+        if info.AssetTypeId == 1 then
+            return numId
         end
+        if type(info.Description) == "string" then
+            local descId = string.match(info.Description, "rbxassetid://(%d+)") or string.match(info.Description, "(%d%d%d%d%d%d+)")
+            if descId and tonumber(descId) then
+                return tonumber(descId)
+            end
+        end
+    end
+
+    return numId
+end
+
+local function loadInitialImages()
+    if BgImageLabel then
+        BgImageLabel.Image = "rbxassetid://" .. tostring(BG_ASSET_ID)
     end
     if LogoImageLabel then
-        LogoImageLabel.Visible = State.CustomLogoEnabled
-        if State.CustomLogoEnabled then
-            applyAssetToImageLabel(LogoImageLabel, LOGO_IDS[State.LogoSlot] or LOGO_IDS[1], "Logo", silent)
-        end
+        LogoImageLabel.Image = "rbxassetid://" .. tostring(LOGO_ASSET_ID)
     end
+
+    task.spawn(function()
+        local resolvedBg = resolveImageAssetId(BG_ASSET_ID)
+        if resolvedBg and BgImageLabel and BgImageLabel.Parent then
+            BgImageLabel.Image = "rbxassetid://" .. tostring(resolvedBg)
+        end
+
+        local resolvedLogo = resolveImageAssetId(LOGO_ASSET_ID)
+        if resolvedLogo and LogoImageLabel and LogoImageLabel.Parent then
+            LogoImageLabel.Image = "rbxassetid://" .. tostring(resolvedLogo)
+        end
+    end)
 end
 
 --------------------------------------------------
@@ -180,7 +166,7 @@ local function syncSfxVolumes()
 end
 
 --------------------------------------------------
--- 🌈 UI ARCOÍRIS PROFESIONAL - KING GAEL
+-- 🌈 UI PRO - KING GAEL
 --------------------------------------------------
 local uiRainbowStrokes = {}
 local uiRainbowAccents = {}
@@ -190,6 +176,11 @@ do
         return (gethui and gethui()) or game:GetService("CoreGui")
     end)
     local parent = (okRoot and root) or LocalPlayer:WaitForChild("PlayerGui")
+
+    local oldGui = parent:FindFirstChild("KING_GAEL_RIVALS_RAINBOW")
+    if oldGui then
+        pcall(function() oldGui:Destroy() end)
+    end
 
     ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "KING_GAEL_RIVALS_RAINBOW"
@@ -286,7 +277,7 @@ do
     MainWindow.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainWindow.Size = UDim2.new(0, w, 0, h)
     MainWindow.BackgroundColor3 = Color3.fromRGB(13, 14, 22)
-    MainWindow.BackgroundTransparency = 0.16
+    MainWindow.BackgroundTransparency = 0.25
     MainWindow.BorderSizePixel = 0
     MainWindow.ClipsDescendants = true
     MainWindow.Active = true
@@ -303,37 +294,39 @@ do
     mStroke.Parent = MainWindow
     table.insert(uiRainbowStrokes, {stroke = mStroke, phase = 0})
 
+    local bgContainer = Instance.new("Frame")
+    bgContainer.Name = "KING_GAEL_BG_HOLDER"
+    bgContainer.Size = UDim2.new(1, 0, 1, 0)
+    bgContainer.Position = UDim2.new(0, 0, 0, 0)
+    bgContainer.BackgroundTransparency = 1
+    bgContainer.BorderSizePixel = 0
+    bgContainer.Active = false
+    bgContainer.ZIndex = 31
+    bgContainer.Parent = MainWindow
+
     BgImageLabel = Instance.new("ImageLabel")
-    BgImageLabel.Name = "KING_GAEL_BG_IMG0197"
+    BgImageLabel.Name = "KING_GAEL_BG_IMAGE"
     BgImageLabel.Size = UDim2.new(1, 0, 1, 0)
     BgImageLabel.Position = UDim2.new(0, 0, 0, 0)
     BgImageLabel.BackgroundTransparency = 1
-    BgImageLabel.Image = "rbxassetid://" .. tostring(BG_IDS[State.BgSlot])
-    BgImageLabel.ImageTransparency = 0.52
+    BgImageLabel.BorderSizePixel = 0
+    BgImageLabel.Image = "rbxassetid://" .. tostring(BG_ASSET_ID)
+    BgImageLabel.ImageColor3 = Color3.fromRGB(255, 255, 255)
+    BgImageLabel.ImageTransparency = 0.22
     BgImageLabel.ScaleType = Enum.ScaleType.Crop
-    BgImageLabel.ZIndex = 30
+    BgImageLabel.ZIndex = 31
     BgImageLabel.Active = false
-    BgImageLabel.Parent = MainWindow
+    BgImageLabel.Parent = bgContainer
 
-    local grad = Instance.new("UIGradient")
-    grad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 95, 130)),
-        ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 210, 90)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(95, 255, 165)),
-        ColorSequenceKeypoint.new(0.75, Color3.fromRGB(100, 185, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(205, 115, 255))
-    })
-    grad.Rotation = 135
-    grad.Parent = MainWindow
-
-    MenuParticlesBox = Instance.new("Frame")
-    MenuParticlesBox.Size = UDim2.new(1, 0, 1, 0)
-    MenuParticlesBox.BackgroundTransparency = 1
-    MenuParticlesBox.BorderSizePixel = 0
-    MenuParticlesBox.ClipsDescendants = true
-    MenuParticlesBox.ZIndex = 32
-    MenuParticlesBox.Active = false
-    MenuParticlesBox.Parent = MainWindow
+    local bgTint = Instance.new("Frame")
+    bgTint.Size = UDim2.new(1, 0, 1, 0)
+    bgTint.Position = UDim2.new(0, 0, 0, 0)
+    bgTint.BackgroundColor3 = Color3.fromRGB(10, 12, 20)
+    bgTint.BackgroundTransparency = 0.55
+    bgTint.BorderSizePixel = 0
+    bgTint.Active = false
+    bgTint.ZIndex = 32
+    bgTint.Parent = bgContainer
 
     local header = Instance.new("Frame")
     header.Size = UDim2.new(1, 0, 0, 44)
@@ -344,13 +337,15 @@ do
     header.Parent = MainWindow
 
     LogoImageLabel = Instance.new("ImageLabel")
-    LogoImageLabel.Name = "KING_GAEL_LOGO_IMG0199"
+    LogoImageLabel.Name = "KING_GAEL_LOGO_IMAGE"
     LogoImageLabel.AnchorPoint = Vector2.new(0, 0.5)
     LogoImageLabel.Position = UDim2.new(0, 10, 0.5, 0)
-    LogoImageLabel.Size = UDim2.new(0, 30, 0, 30)
+    LogoImageLabel.Size = UDim2.new(0, 32, 0, 32)
     LogoImageLabel.BackgroundColor3 = Color3.fromRGB(24, 26, 40)
-    LogoImageLabel.BackgroundTransparency = 0.25
-    LogoImageLabel.Image = "rbxassetid://" .. tostring(LOGO_IDS[State.LogoSlot])
+    LogoImageLabel.BackgroundTransparency = 0.2
+    LogoImageLabel.BorderSizePixel = 0
+    LogoImageLabel.Image = "rbxassetid://" .. tostring(LOGO_ASSET_ID)
+    LogoImageLabel.ImageColor3 = Color3.fromRGB(255, 255, 255)
     LogoImageLabel.ScaleType = Enum.ScaleType.Fit
     LogoImageLabel.ZIndex = 36
     LogoImageLabel.Active = false
@@ -367,29 +362,29 @@ do
     table.insert(uiRainbowStrokes, {stroke = lgStroke, phase = 0.2})
 
     local title = Instance.new("TextLabel")
-    title.Position = UDim2.new(0, 46, 0, 0)
-    title.Size = UDim2.new(0.42, 0, 1, 0)
+    title.Position = UDim2.new(0, 48, 0, 0)
+    title.Size = UDim2.new(0.38, 0, 1, 0)
     title.BackgroundTransparency = 1
     title.Text = "KING GAEL"
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
     title.Font = Enum.Font.GothamBlack
-    title.TextSize = IsMobile and 15.5 or 17.5
+    title.TextSize = IsMobile and 15 or 17
     title.TextXAlignment = Enum.TextXAlignment.Left
     title.ZIndex = 36
     title.Parent = header
 
-    local sub = Instance.new("TextLabel")
-    sub.Position = UDim2.new(0, IsMobile and 144 or 158, 0, 1)
-    sub.Size = UDim2.new(0.42, 0, 1, 0)
-    sub.BackgroundTransparency = 1
-    sub.Text = "RIVALS • RAINBOW PRO"
-    sub.TextColor3 = getRainbowColor(0.3)
-    sub.Font = Enum.Font.GothamBold
-    sub.TextSize = 10
-    sub.TextXAlignment = Enum.TextXAlignment.Left
-    sub.ZIndex = 36
-    sub.Parent = header
-    table.insert(uiRainbowAccents, {obj = sub, prop = "TextColor3", phase = 0.3})
+    StatusLbl = Instance.new("TextLabel")
+    StatusLbl.Position = UDim2.new(0, IsMobile and 142 or 156, 0, 1)
+    StatusLbl.Size = UDim2.new(0.45, 0, 1, 0)
+    StatusLbl.BackgroundTransparency = 1
+    StatusLbl.Text = "RIVALS • SAFE ON"
+    StatusLbl.TextColor3 = getRainbowColor(0.3)
+    StatusLbl.Font = Enum.Font.GothamBold
+    StatusLbl.TextSize = 10
+    StatusLbl.TextXAlignment = Enum.TextXAlignment.Left
+    StatusLbl.ZIndex = 36
+    StatusLbl.Parent = header
+    table.insert(uiRainbowAccents, {obj = StatusLbl, prop = "TextColor3", phase = 0.3})
 
     local closeBtn = Instance.new("TextButton")
     closeBtn.AnchorPoint = Vector2.new(1, 0.5)
@@ -972,86 +967,6 @@ do
 end
 
 --------------------------------------------------
--- ✨ PARTÍCULAS ARCOÍRIS PRO DENTRO DEL MENÚ
---------------------------------------------------
-local updateParticles
-do
-    local list = {}
-    local count = IsMobile and 24 or 36
-    local w = MainWindow.AbsoluteSize.X > 0 and MainWindow.AbsoluteSize.X or 500
-    local h = MainWindow.AbsoluteSize.Y > 0 and MainWindow.AbsoluteSize.Y or 360
-
-    for i = 1, count do
-        local p = Instance.new("Frame")
-        local sz = math.random(4, 8)
-        p.Size = UDim2.new(0, sz, 0, sz)
-        p.Position = UDim2.new(0, math.random(6, math.max(12, w - 10)), 0, math.random(-h, h))
-        p.BackgroundColor3 = getRainbowColor(i / count)
-        p.BackgroundTransparency = math.random(18, 52) / 100
-        p.BorderSizePixel = 0
-        p.ZIndex = 32
-        p.Active = false
-        p.Parent = MenuParticlesBox
-
-        local c = Instance.new("UICorner")
-        c.CornerRadius = UDim.new(1, 0)
-        c.Parent = p
-
-        local pStroke = Instance.new("UIStroke")
-        pStroke.Thickness = 1
-        pStroke.Transparency = 0.45
-        pStroke.Color = getRainbowColor((i / count) + 0.12)
-        pStroke.Parent = p
-
-        table.insert(list, {
-            f = p,
-            stroke = pStroke,
-            baseSize = sz,
-            vy = math.random(42, 92),
-            swayAmp = math.random(10, 24),
-            swayFreq = math.random(18, 35) / 10,
-            phase = math.random() * 6.28,
-            hueOff = i / count
-        })
-    end
-
-    updateParticles = function(dt)
-        MenuParticlesBox.Visible = State.Particles and State.MenuOpen
-        if not (State.Particles and State.MenuOpen) then return end
-        local bw = math.max(MenuParticlesBox.AbsoluteSize.X, 10)
-        local bh = math.max(MenuParticlesBox.AbsoluteSize.Y, 10)
-        local t = tick()
-
-        for i = 1, #list do
-            local item = list[i]
-            local pos = item.f.Position
-            local x = pos.X.Offset + math.cos(t * item.swayFreq + item.phase) * item.swayAmp * dt
-            local y = pos.Y.Offset + item.vy * dt
-
-            if y > bh + 8 then
-                y = -math.random(8, 24)
-                x = math.random(8, math.max(12, bw - 12))
-            else
-                x = math.clamp(x, 4, bw - 10)
-            end
-
-            local pulse = 0.85 + ((math.sin(t * 4 + item.phase) + 1) * 0.25)
-            local curSz = math.clamp(math.floor(item.baseSize * pulse + 0.5), 3, 11)
-            item.f.Size = UDim2.new(0, curSz, 0, curSz)
-            item.f.Position = UDim2.new(0, x, 0, y)
-
-            local c1 = getRainbowColor(item.hueOff)
-            local c2 = getRainbowColor(item.hueOff + 0.15)
-            item.f.BackgroundColor3 = c1
-            item.f.BackgroundTransparency = 0.22 + ((math.sin(t * 3 + item.phase) + 1) * 0.16)
-            if item.stroke then
-                item.stroke.Color = c2
-            end
-        end
-    end
-end
-
---------------------------------------------------
 -- 🎯 LÓGICA RIVALS (17625359962)
 --------------------------------------------------
 local function isEnemy(plr)
@@ -1110,7 +1025,15 @@ local function findClosestEnemyTarget()
     return closestEnemy, closestDist
 end
 
+local lastTpTime = 0
 teleportToEnemy = function()
+    local now = os.clock()
+    if State.SafeMode and (now - lastTpTime) < 0.85 then
+        Notify("KING GAEL • ⚡ TP", "Modo Seguro: espera un instante entre TPs.", 2)
+        return
+    end
+    lastTpTime = now
+
     local myChar = LocalPlayer.Character
     local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
     local myHum = myChar and myChar:FindFirstChildOfClass("Humanoid")
@@ -1132,7 +1055,7 @@ teleportToEnemy = function()
         return
     end
 
-    local behindOffset = -enemyHrp.CFrame.LookVector * 3.5 + Vector3.new(0, 1.5, 0)
+    local behindOffset = -enemyHrp.CFrame.LookVector * 3.8 + Vector3.new(0, 1.5, 0)
     local destPos = enemyHrp.Position + behindOffset
 
     local ok = pcall(function()
@@ -1175,10 +1098,11 @@ local function processWeaponContainer(container)
                     if type(attrVal) == "boolean" and (string.find(low, "reload") or string.find(low, "reloading")) and attrVal == true then
                         desc:SetAttribute(attrName, false)
                     elseif type(attrVal) == "number" and (string.find(low, "reloadtime") or string.find(low, "cooldown") or string.find(low, "reloadspeed")) then
+                        local floorTime = State.SafeMode and 0.15 or 0.05
                         if string.find(low, "speed") then
-                            desc:SetAttribute(attrName, math.max(attrVal, 3))
-                        elseif attrVal > 0.05 then
-                            desc:SetAttribute(attrName, 0.05)
+                            desc:SetAttribute(attrName, math.max(attrVal, 2.5))
+                        elseif attrVal > floorTime then
+                            desc:SetAttribute(attrName, floorTime)
                         end
                     end
                 end
@@ -1187,12 +1111,22 @@ local function processWeaponContainer(container)
 
         if State.FastReload and (desc:IsA("BoolValue") or desc:IsA("NumberValue") or desc:IsA("IntValue")) then
             local n = string.lower(desc.Name)
+            local floorTime = State.SafeMode and 0.15 or 0.05
             if desc:IsA("BoolValue") and (string.find(n, "reload") or string.find(n, "reloading")) and desc.Value == true then
                 desc.Value = false
-            elseif (desc:IsA("NumberValue") or desc:IsA("IntValue")) and (string.find(n, "reloadtime") or string.find(n, "cooldown")) and desc.Value > 0.05 then
-                desc.Value = 0.05
+            elseif (desc:IsA("NumberValue") or desc:IsA("IntValue")) and (string.find(n, "reloadtime") or string.find(n, "cooldown")) and desc.Value > floorTime then
+                desc.Value = floorTime
             end
         end
+    end
+end
+
+local function clearBodyMoverByName(name)
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local mover = hrp and hrp:FindFirstChild(name)
+    if mover then
+        pcall(function() mover:Destroy() end)
     end
 end
 
@@ -1242,13 +1176,15 @@ triggerLeapGlide = function()
                 flatFwd = curHrp.CFrame.LookVector
             end
 
-            local yVel = (elapsed < 0.45) and 64 or 8
-            bv.Velocity = flatFwd * 58 + Vector3.new(0, yVel, 0)
+            local horizSpeed = State.SafeMode and 44 or 58
+            local upBurst = State.SafeMode and 48 or 64
+            local glideY = State.SafeMode and 4 or 8
+            local yVel = (elapsed < 0.45) and upBurst or glideY
+            bv.Velocity = flatFwd * horizSpeed + Vector3.new(0, yVel, 0)
             task.wait()
         end
 
-        local oldBv = hrp and hrp:FindFirstChild("KingGaelLeapGlide")
-        if oldBv then oldBv:Destroy() end
+        clearBodyMoverByName("KingGaelLeapGlide")
         if LeapTimerLbl then
             LeapTimerLbl.Text = ""
         end
@@ -1262,9 +1198,7 @@ do
 
     local flyActive = false
     local function stopFly()
-        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        local bv = hrp and hrp:FindFirstChild("KingGaelFly")
-        if bv then bv:Destroy() end
+        clearBodyMoverByName("KingGaelFly")
     end
 
     local function runFly()
@@ -1286,7 +1220,8 @@ do
                     if UIS:IsKeyDown(Enum.KeyCode.D) then mv += Camera.CFrame.RightVector end
                     if UIS:IsKeyDown(Enum.KeyCode.Space) then mv += Vector3.new(0, 1, 0) end
                     if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then mv -= Vector3.new(0, 1, 0) end
-                    bv.Velocity = mv * 62
+                    local flySpd = State.SafeMode and 44 or 62
+                    bv.Velocity = mv * flySpd
                 end
                 task.wait()
             end
@@ -1298,11 +1233,17 @@ do
     local function applySpeed()
         local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if h then
-            h.WalkSpeed = State.SpeedRun and State.SpeedRunValue or State.WalkSpeed
+            local targetSpd = State.SpeedRun and State.SpeedRunValue or State.WalkSpeed
+            if State.SafeMode then
+                targetSpd = math.min(targetSpd, 52)
+            end
+            h.WalkSpeed = targetSpd
         end
     end
 
-    LocalPlayer.CharacterAdded:Connect(function(char)
+    LocalPlayer.CharacterAdded:Connect(function()
+        clearBodyMoverByName("KingGaelFly")
+        clearBodyMoverByName("KingGaelLeapGlide")
         task.wait(0.15)
         applySpeed()
         if State.Fly then runFly() end
@@ -1357,7 +1298,7 @@ do
         applySpeed()
     end)
 
-    AddSlider(pTab, "Speed Run Power", 20, 120, 2, 45, " spd", function(v)
+    AddSlider(pTab, "Speed Run Power", 20, 120, 2, 38, " spd", function(v)
         State.SpeedRunValue = v
         applySpeed()
     end)
@@ -1396,7 +1337,7 @@ do
                     processWeaponContainer(LocalPlayer.Character)
                     processWeaponContainer(LocalPlayer:FindFirstChild("Backpack"))
                 end)
-                task.wait(0.05)
+                task.wait(State.SafeMode and 0.14 or 0.05)
             end
             ammoLoopRunning = false
         end)
@@ -1422,12 +1363,16 @@ do
 
     AddToggle(cTab, "Silent Aim (Full Range)", false, function(v)
         State.SilentAim = v
-        getgenv().SilentAimEnabled = v
+        if getgenv then getgenv().SilentAimEnabled = v end
     end)
 
     AddToggle(cTab, "Soft Lock (FOV Only)", false, function(v)
         State.SoftLock = v
-        getgenv().SoftLockEnabled = v
+        if getgenv then getgenv().SoftLockEnabled = v end
+    end)
+
+    AddSlider(cTab, "Soft Lock Suavidad", 5, 60, 5, 26, "%", function(v)
+        State.SoftLockSmooth = v / 100
     end)
 
     AddSlider(cTab, "Max Distance", 100, 2000, 50, 600, " st", function(v) State.MaxDistance = v end)
@@ -1546,57 +1491,43 @@ do
     Players.PlayerRemoving:Connect(delPlr)
 end
 
+emergencyResetAll = function()
+    State.Fly = false
+    State.SpeedRun = false
+    State.Noclip = false
+    State.InfiniteJump = false
+    State.SilentAim = false
+    State.SoftLock = false
+    State.FovEnabled = false
+    State.Chams = false
+    State.Tracers = false
+    State.BoxEsp = false
+    State.TopLine = false
+    State.Marker = false
+    clearBodyMoverByName("KingGaelFly")
+    clearBodyMoverByName("KingGaelLeapGlide")
+    local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if h then h.WalkSpeed = 16 end
+    for _, plr in ipairs(Players:GetPlayers()) do
+        local hl = plr.Character and plr.Character:FindFirstChild("Highlight")
+        if hl then hl.Enabled = false end
+    end
+    PlayUiSound("off")
+    Notify("KING GAEL", "Funciones activas limpiadas y velocidad restaurada.", 3)
+end
+
 do
     local vTab = CreateTab("Visuales")
-    AddSection(vTab, "Fondo y Logo Custom")
-
-    AddToggle(vTab, "Fondo Custom", true, function(v)
-        State.CustomBgEnabled = v
-        refreshCustomVisuals(false)
+    AddSection(vTab, "Seguridad y Control")
+    AddToggle(vTab, "Modo Precaución (Límites)", true, function(v)
+        State.SafeMode = v
+        if StatusLbl then
+            StatusLbl.Text = v and "RIVALS • SAFE ON" or "RIVALS • MAX PWR"
+        end
+        Notify("KING GAEL", v and "Límites moderados activos en movimiento/TP." or "Límites altos activados.", 2.5)
     end)
-
-    AddButton(vTab, "Fondo: IMG0197 (138183089864109)", function()
-        State.BgSlot = 1
-        State.CustomBgEnabled = true
-        PlayUiSound("click")
-        refreshCustomVisuals(false)
-        Notify("KING GAEL • Fondo", "Cargando IMG0197 (138183089864109).", 2.5)
-    end)
-
-    AddButton(vTab, "Fondo Alterno: 138351747140128", function()
-        State.BgSlot = 2
-        State.CustomBgEnabled = true
-        PlayUiSound("click")
-        refreshCustomVisuals(false)
-        Notify("KING GAEL • Fondo", "Cargando 138351747140128.", 2.5)
-    end)
-
-    AddToggle(vTab, "Logo Custom", true, function(v)
-        State.CustomLogoEnabled = v
-        refreshCustomVisuals(false)
-    end)
-
-    AddButton(vTab, "Logo: IMG0199 (129596142963991)", function()
-        State.LogoSlot = 1
-        State.CustomLogoEnabled = true
-        PlayUiSound("click")
-        refreshCustomVisuals(false)
-        Notify("KING GAEL • Logo", "Cargando IMG0199 (129596142963991).", 2.5)
-    end)
-
-    AddButton(vTab, "Logo Alterno: 124340778722653", function()
-        State.LogoSlot = 2
-        State.CustomLogoEnabled = true
-        PlayUiSound("click")
-        refreshCustomVisuals(false)
-        Notify("KING GAEL • Logo", "Cargando 124340778722653.", 2.5)
-    end)
-
-    AddButton(vTab, "Reintentar Cargar Fondo y Logo", function()
-        PlayUiSound("boost")
-        resolvedIdCache = {}
-        refreshCustomVisuals(false)
-        Notify("KING GAEL", "Reintentando cargar IMG0197 e IMG0199...", 2.5)
+    AddButton(vTab, "Limpieza Rápida (Reset Movimiento/ESP)", function()
+        emergencyResetAll()
     end)
 
     AddSection(vTab, "Comunidad y Sonido")
@@ -1618,7 +1549,6 @@ do
         State.SoundVolume = v / 100
         syncSfxVolumes()
     end)
-    AddToggle(vTab, "Menu Particles", true, function(v) State.Particles = v end)
     AddToggle(vTab, "Quick Button", true, function(v) State.QuickBtn = v QuickBtn.Visible = v end)
 
     AddSection(vTab, "Rendimiento")
@@ -1646,14 +1576,19 @@ do
     end)
 end
 
-refreshCustomVisuals(true)
+loadInitialImages()
 
 --------------------------------------------------
 -- 🌈 BUCLE PRINCIPAL LIGERO
 --------------------------------------------------
 local activeTargetPos = nil
 
-RunService.RenderStepped:Connect(function(dt)
+RunService.RenderStepped:Connect(function()
+    local curCam = workspace.CurrentCamera
+    if curCam then
+        Camera = curCam
+    end
+
     local col = getRainbowColor(0)
 
     for i = 1, #uiRainbowStrokes do
@@ -1669,8 +1604,6 @@ RunService.RenderStepped:Connect(function(dt)
             item.obj[item.prop] = getRainbowColor(item.phase)
         end
     end
-
-    updateParticles(dt)
 
     local vp = Camera.ViewportSize
     local center = vp * 0.5
@@ -1704,7 +1637,7 @@ RunService.RenderStepped:Connect(function(dt)
             local tPos, tOn = Camera:WorldToViewportPoint(torso.Position)
 
             local hl = char:FindFirstChild("Highlight")
-            if State.Chams then
+            if State.Chams and inRange then
                 if not hl then hl = Instance.new("Highlight", char) end
                 hl.Enabled = true
                 hl.FillColor = pCol
@@ -1765,20 +1698,32 @@ RunService.RenderStepped:Connect(function(dt)
     else
         activeTargetPos = nil
     end
+
+    if State.SoftLock and activeTargetPos then
+        pcall(function()
+            local goalCf = CFrame.lookAt(Camera.CFrame.Position, activeTargetPos)
+            local alpha = State.SafeMode and math.min(State.SoftLockSmooth, 0.22) or State.SoftLockSmooth
+            Camera.CFrame = Camera.CFrame:Lerp(goalCf, alpha)
+        end)
+    end
 end)
 
-local oldIdx
-oldIdx = hookmetamethod(game, "__index", newcclosure(function(self, idx)
-    if (State.SilentAim or State.SoftLock) and activeTargetPos and not checkcaller() and idx == "ViewportSize" and self == Camera then
-        local pos, on = Camera:WorldToViewportPoint(activeTargetPos)
-        if on then return Vector2.new(pos.X * 2, pos.Y * 2) end
-    end
-    return oldIdx(self, idx)
-end))
+if hookmetamethod and newcclosure then
+    pcall(function()
+        local oldIdx
+        oldIdx = hookmetamethod(game, "__index", newcclosure(function(self, idx)
+            if State.SilentAim and activeTargetPos and not checkcaller() and idx == "ViewportSize" and self == Camera then
+                local pos, on = Camera:WorldToViewportPoint(activeTargetPos)
+                if on then return Vector2.new(pos.X * 2, pos.Y * 2) end
+            end
+            return oldIdx(self, idx)
+        end))
+    end)
+end
 
 PlayUiSound("on")
 if game.PlaceId == TARGET_PLACE_ID then
-    Notify("KING GAEL", "Rainbow PRO cargado para RIVALS (17625359962).", 3.5)
+    Notify("KING GAEL", "GOD PRO cargado para RIVALS (17625359962).", 3.5)
 else
-    Notify("KING GAEL", "Rainbow PRO cargado (PlaceId: " .. tostring(game.PlaceId) .. ").", 3.5)
+    Notify("KING GAEL", "GOD PRO cargado (PlaceId: " .. tostring(game.PlaceId) .. ").", 3.5)
 end
