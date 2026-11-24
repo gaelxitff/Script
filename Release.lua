@@ -25,6 +25,7 @@ local State = {
     InfiniteJump = false,
     Noclip = false,
     WalkSpeed = 16,
+    InfiniteAmmo = false,
     SilentAim = false,
     SoftLock = false,
     MaxDistance = 600,
@@ -779,7 +780,6 @@ local function hasLineOfSight(char)
     return (not hit or hit.Instance:IsDescendantOf(char)) and head or nil
 end
 
--- Ubica directamente la posición actual del enemigo vivo más cercano
 local function findClosestEnemyTarget()
     local myHrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     local originPos = myHrp and myHrp.Position or Camera.CFrame.Position
@@ -825,7 +825,6 @@ local function teleportToEnemy()
         return
     end
 
-    -- Se coloca ligeramente detrás/al lado del enemigo mirando hacia él para no encimarse dentro de su hitbox
     local behindOffset = -enemyHrp.CFrame.LookVector * 3.5 + Vector3.new(0, 1.5, 0)
     local destPos = enemyHrp.Position + behindOffset
 
@@ -839,6 +838,27 @@ local function teleportToEnemy()
         Notify("KING GAEL • TP", string.format("Movido donde está %s (%.0fm).", targetPlr.DisplayName, dist), 3)
     else
         Notify("KING GAEL • TP", "El juego bloqueó el teletransporte.", 3)
+    end
+end
+
+local function refillAmmoInContainer(container)
+    if not container then return end
+    for _, desc in ipairs(container:GetDescendants()) do
+        if desc:IsA("NumberValue") or desc:IsA("IntValue") then
+            local n = string.lower(desc.Name)
+            if string.find(n, "ammo") or string.find(n, "mag") or string.find(n, "clip") or string.find(n, "bullet") or string.find(n, "reserve") then
+                local maxVal = desc:GetAttribute("MaxAmmo") or desc:GetAttribute("Max") or 999
+                desc.Value = tonumber(maxVal) or 999
+            end
+        elseif desc:IsA("Tool") then
+            for attrName, attrVal in pairs(desc:GetAttributes()) do
+                local low = string.lower(attrName)
+                if type(attrVal) == "number" and (string.find(low, "ammo") or string.find(low, "mag") or string.find(low, "clip") or string.find(low, "bullet") or string.find(low, "reserve")) then
+                    local maxAttr = desc:GetAttribute("Max" .. attrName) or 999
+                    desc:SetAttribute(attrName, tonumber(maxAttr) or 999)
+                end
+            end
+        end
     end
 end
 
@@ -948,7 +968,22 @@ local getFovRadius = function() return State.FovLevel * fovScale end
 
 do
     local cTab = CreateTab("Combate")
-    AddSection(cTab, "Apuntado Rivals")
+    AddSection(cTab, "Munición y Apuntado")
+
+    AddToggle(cTab, "Infinite Ammo", false, function(v)
+        State.InfiniteAmmo = v
+        if v then
+            task.spawn(function()
+                while State.InfiniteAmmo do
+                    pcall(function()
+                        refillAmmoInContainer(LocalPlayer.Character)
+                        refillAmmoInContainer(LocalPlayer:FindFirstChild("Backpack"))
+                    end)
+                    task.wait(0.15)
+                end
+            end)
+        end
+    end)
 
     AddToggle(cTab, "Silent Aim (Full Range)", false, function(v)
         State.SilentAim = v
