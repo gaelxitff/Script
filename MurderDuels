@@ -588,7 +588,7 @@ local function getBestMurderTarget(crosshair)
 end
 
 -- ==========================================
--- INTERFAZ ESTILO iOS + CONTADOR VIVOS/FPS + RGB
+-- INTERFAZ ESTILO iOS + SWITCHES FUNCIONALES + RGB
 -- ==========================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "TheMonster_KingGael_UI"
@@ -1013,24 +1013,23 @@ local function createPage(name)
 	btn.TextColor3 = Color3.fromRGB(190, 192, 202)
 	btn.Text = name
 	btn.AutoButtonColor = false
-	btn.ZIndex = 8
+	btn.ZIndex = 10
 	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
 
 	local page = Instance.new("ScrollingFrame", PagesHolder)
 	page.Name = name .. "Page"
 	page.Size = UDim2.new(1, 0, 1, 0)
 	page.BackgroundTransparency = 1
-	page.ScrollBarThickness = 2
+	page.ScrollBarThickness = 3
 	page.CanvasSize = UDim2.new(0, 0, 0, 0)
 	page.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	page.Visible = false
-	page.ZIndex = 8
+	page.ZIndex = 9
+	Instance.new("UIListLayout", page).Padding = UDim.new(0, 7)
 
-	local list = Instance.new("UIListLayout", page)
-	list.Padding = UDim.new(0, 7)
 	local pad = Instance.new("UIPadding", page)
 	pad.PaddingTop = UDim.new(0, 3)
-	pad.PaddingBottom = UDim.new(0, 10)
+	pad.PaddingBottom = UDim.new(0, 12)
 	pad.PaddingRight = UDim.new(0, 4)
 
 	btn.MouseButton1Click:Connect(function()
@@ -1051,15 +1050,15 @@ local function addSection(page, text)
 	lbl.TextSize = 11
 	lbl.TextColor3 = Color3.fromRGB(150, 152, 165)
 	lbl.Text = string.upper(text)
-	lbl.ZIndex = 8
+	lbl.ZIndex = 10
 end
 
 local function addToggle(page, labelText, initial, onChanged, syncKey, alertMsg)
 	local row = Instance.new("Frame", page)
-	row.Size = UDim2.new(1, 0, 0, 36)
+	row.Size = UDim2.new(1, 0, 0, 38)
 	row.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
 	row.BackgroundTransparency = 0.14
-	row.ZIndex = 8
+	row.ZIndex = 10
 	Instance.new("UICorner", row).CornerRadius = UDim.new(0, 12)
 
 	local rStroke = Instance.new("UIStroke", row)
@@ -1068,7 +1067,7 @@ local function addToggle(page, labelText, initial, onChanged, syncKey, alertMsg)
 	rStroke.Thickness = 1
 
 	local txt = Instance.new("TextLabel", row)
-	txt.Size = UDim2.new(1, -66, 1, 0)
+	txt.Size = UDim2.new(1, -72, 1, 0)
 	txt.Position = UDim2.new(0, 12, 0, 0)
 	txt.BackgroundTransparency = 1
 	txt.TextXAlignment = Enum.TextXAlignment.Left
@@ -1076,33 +1075,46 @@ local function addToggle(page, labelText, initial, onChanged, syncKey, alertMsg)
 	txt.TextSize = 12
 	txt.TextColor3 = Color3.fromRGB(242, 242, 247)
 	txt.Text = labelText
-	txt.ZIndex = 9
+	txt.ZIndex = 11
 
-	local switchTrack = Instance.new("TextButton", row)
-	switchTrack.Size = UDim2.new(0, 44, 0, 24)
-	switchTrack.Position = UDim2.new(1, -54, 0.5, -12)
-	switchTrack.AutoButtonColor = false
-	switchTrack.Text = ""
-	switchTrack.ZIndex = 9
+	local switchTrack = Instance.new("Frame", row)
+	switchTrack.Size = UDim2.new(0, 46, 0, 26)
+	switchTrack.Position = UDim2.new(1, -56, 0.5, -13)
+	switchTrack.BackgroundColor3 = Color3.fromRGB(72, 72, 82)
+	switchTrack.BorderSizePixel = 0
+	switchTrack.ZIndex = 11
 	Instance.new("UICorner", switchTrack).CornerRadius = UDim.new(1, 0)
 
 	local knob = Instance.new("Frame", switchTrack)
-	knob.Size = UDim2.new(0, 20, 0, 20)
+	knob.Size = UDim2.new(0, 22, 0, 22)
+	knob.Position = UDim2.new(0, 2, 0.5, -11)
 	knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	knob.ZIndex = 10
+	knob.BorderSizePixel = 0
+	knob.ZIndex = 12
 	Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+
+	local clickHit = Instance.new("TextButton", row)
+	clickHit.Name = "ToggleHitbox"
+	clickHit.Size = UDim2.new(1, 0, 1, 0)
+	clickHit.BackgroundTransparency = 1
+	clickHit.Text = ""
+	clickHit.AutoButtonColor = false
+	clickHit.Active = true
+	clickHit.ZIndex = 15
 
 	local state = initial == true
 
 	local function paint(instant)
-		local goalPos = state and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10)
+		local goalPos = state and UDim2.new(1, -24, 0.5, -11) or UDim2.new(0, 2, 0.5, -11)
 		local goalCol = state and Color3.fromRGB(48, 209, 88) or Color3.fromRGB(72, 72, 82)
 		if instant then
 			knob.Position = goalPos
 			switchTrack.BackgroundColor3 = goalCol
 		else
-			TweenService:Create(knob, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingOut), { Position = goalPos }):Play()
-			TweenService:Create(switchTrack, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingOut), { BackgroundColor3 = goalCol }):Play()
+			pcall(function()
+				TweenService:Create(knob, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingOut), { Position = goalPos }):Play()
+				TweenService:Create(switchTrack, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingOut), { BackgroundColor3 = goalCol }):Play()
+			end)
 		end
 	end
 
@@ -1114,12 +1126,15 @@ local function addToggle(page, labelText, initial, onChanged, syncKey, alertMsg)
 				notifyIOS(labelText, state and "Activado" or "Desactivado")
 			end
 			if onChanged then
-				onChanged(state)
+				local ok, err = pcall(onChanged, state)
+				if not ok then
+					warn("[The Monster Toggle Error] " .. labelText .. ": " .. tostring(err))
+				end
 			end
 		end
 	end
 
-	switchTrack.MouseButton1Click:Connect(function()
+	clickHit.Activated:Connect(function()
 		setVal(not state, true)
 	end)
 
@@ -1138,7 +1153,7 @@ local function addSlider(page, labelText, minVal, maxVal, initial, suffix, onCha
 	box.Size = UDim2.new(1, 0, 0, 46)
 	box.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
 	box.BackgroundTransparency = 0.14
-	box.ZIndex = 8
+	box.ZIndex = 10
 	Instance.new("UICorner", box).CornerRadius = UDim.new(0, 12)
 
 	local title = Instance.new("TextLabel", box)
@@ -1149,23 +1164,31 @@ local function addSlider(page, labelText, minVal, maxVal, initial, suffix, onCha
 	title.Font = Enum.Font.GothamMedium
 	title.TextSize = 11
 	title.TextColor3 = Color3.fromRGB(235, 235, 240)
-	title.ZIndex = 9
+	title.ZIndex = 11
 
 	local barBg = Instance.new("Frame", box)
-	barBg.Size = UDim2.new(1, -24, 0, 7)
+	barBg.Size = UDim2.new(1, -24, 0, 8)
 	barBg.Position = UDim2.new(0, 12, 0, 29)
 	barBg.BackgroundColor3 = Color3.fromRGB(58, 58, 68)
-	barBg.ZIndex = 9
+	barBg.ZIndex = 11
 	Instance.new("UICorner", barBg).CornerRadius = UDim.new(1, 0)
 
 	local barFill = Instance.new("Frame", barBg)
 	barFill.Size = UDim2.new(0, 0, 1, 0)
 	barFill.BackgroundColor3 = fillOverrideColor or Config.AccentColor
-	barFill.ZIndex = 10
+	barFill.ZIndex = 12
 	Instance.new("UICorner", barFill).CornerRadius = UDim.new(1, 0)
 	if not fillOverrideColor then
 		table.insert(accentHighlights, barFill)
 	end
+
+	local sliderBtn = Instance.new("TextButton", barBg)
+	sliderBtn.Size = UDim2.new(1, 0, 1, 16)
+	sliderBtn.Position = UDim2.new(0, 0, 0, -8)
+	sliderBtn.BackgroundTransparency = 1
+	sliderBtn.Text = ""
+	sliderBtn.AutoButtonColor = false
+	sliderBtn.ZIndex = 15
 
 	local current = math.clamp(initial, minVal, maxVal)
 
@@ -1175,7 +1198,7 @@ local function addSlider(page, labelText, minVal, maxVal, initial, suffix, onCha
 		barFill.Size = UDim2.new(ratio, 0, 1, 0)
 		title.Text = string.format("%s: %d%s", labelText, current, suffix or "")
 		if fire and onChanged then
-			onChanged(current)
+			pcall(onChanged, current)
 		end
 	end
 
@@ -1187,7 +1210,7 @@ local function addSlider(page, labelText, minVal, maxVal, initial, suffix, onCha
 		setNumeric(minVal + (maxVal - minVal) * r, true)
 	end
 
-	barBg.InputBegan:Connect(function(inp)
+	sliderBtn.InputBegan:Connect(function(inp)
 		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
 			sliding = true
 			updateFromInput(inp.Position.X)
@@ -1217,9 +1240,11 @@ local function addButton(page, text, onClick)
 	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 	btn.Text = text
 	btn.AutoButtonColor = true
-	btn.ZIndex = 8
+	btn.ZIndex = 11
 	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
-	btn.MouseButton1Click:Connect(onClick)
+	btn.Activated:Connect(function()
+		pcall(onClick)
+	end)
 	return btn
 end
 
@@ -1229,7 +1254,7 @@ local function addCustomRGBPicker(page)
 	card.Size = UDim2.new(1, 0, 0, 152)
 	card.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
 	card.BackgroundTransparency = 0.14
-	card.ZIndex = 8
+	card.ZIndex = 10
 	Instance.new("UICorner", card).CornerRadius = UDim.new(0, 12)
 
 	local header = Instance.new("TextLabel", card)
@@ -1241,14 +1266,14 @@ local function addCustomRGBPicker(page)
 	header.TextSize = 11
 	header.TextColor3 = Color3.fromRGB(242, 242, 247)
 	header.Text = "Custom RGB Color"
-	header.ZIndex = 9
+	header.ZIndex = 11
 
 	local previewSwatch = Instance.new("Frame", card)
 	previewSwatch.Size = UDim2.new(0, 34, 0, 16)
 	previewSwatch.Position = UDim2.new(1, -46, 0, 7)
 	previewSwatch.BackgroundColor3 = Config.AccentColor
 	previewSwatch.BorderSizePixel = 0
-	previewSwatch.ZIndex = 9
+	previewSwatch.ZIndex = 11
 	Instance.new("UICorner", previewSwatch).CornerRadius = UDim.new(1, 0)
 
 	local function makeChannelRow(yPos, chName, initialVal, tintCol, onChChange)
@@ -1257,7 +1282,7 @@ local function addCustomRGBPicker(page)
 		row.Position = UDim2.new(0, 10, 0, yPos)
 		row.BackgroundColor3 = Color3.fromRGB(22, 22, 27)
 		row.BackgroundTransparency = 0.15
-		row.ZIndex = 9
+		row.ZIndex = 11
 		Instance.new("UICorner", row).CornerRadius = UDim.new(0, 10)
 
 		local lbl = Instance.new("TextLabel", row)
@@ -1268,20 +1293,28 @@ local function addCustomRGBPicker(page)
 		lbl.Font = Enum.Font.GothamMedium
 		lbl.TextSize = 10
 		lbl.TextColor3 = Color3.fromRGB(225, 225, 232)
-		lbl.ZIndex = 10
+		lbl.ZIndex = 12
 
 		local bg = Instance.new("Frame", row)
-		bg.Size = UDim2.new(1, -16, 0, 6)
+		bg.Size = UDim2.new(1, -16, 0, 7)
 		bg.Position = UDim2.new(0, 8, 0, 24)
 		bg.BackgroundColor3 = Color3.fromRGB(54, 54, 64)
-		bg.ZIndex = 10
+		bg.ZIndex = 12
 		Instance.new("UICorner", bg).CornerRadius = UDim.new(1, 0)
 
 		local fill = Instance.new("Frame", bg)
 		fill.Size = UDim2.new(0, 0, 1, 0)
 		fill.BackgroundColor3 = tintCol
-		fill.ZIndex = 11
+		fill.ZIndex = 13
 		Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+
+		local hit = Instance.new("TextButton", bg)
+		hit.Size = UDim2.new(1, 0, 1, 14)
+		hit.Position = UDim2.new(0, 0, 0, -7)
+		hit.BackgroundTransparency = 1
+		hit.Text = ""
+		hit.AutoButtonColor = false
+		hit.ZIndex = 16
 
 		local val = math.clamp(initialVal, 0, 255)
 		local function setCh(v, fire)
@@ -1300,7 +1333,7 @@ local function addCustomRGBPicker(page)
 			setCh(255 * math.clamp((px - ax) / aw, 0, 1), true)
 		end
 
-		bg.InputBegan:Connect(function(inp)
+		hit.InputBegan:Connect(function(inp)
 			if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
 				drag = true
 				updatePos(inp.Position.X)
@@ -1362,7 +1395,7 @@ local function addAnimatedRoleColorControl(page, roleKey, roleTitle, getterFn, s
 	card.Size = UDim2.new(1, 0, 0, 88)
 	card.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
 	card.BackgroundTransparency = 0.14
-	card.ZIndex = 8
+	card.ZIndex = 10
 	Instance.new("UICorner", card).CornerRadius = UDim.new(0, 12)
 
 	local cStroke = Instance.new("UIStroke", card)
@@ -1379,18 +1412,18 @@ local function addAnimatedRoleColorControl(page, roleKey, roleTitle, getterFn, s
 	header.TextSize = 11
 	header.TextColor3 = Color3.fromRGB(242, 242, 247)
 	header.Text = roleTitle .. " Color"
-	header.ZIndex = 9
+	header.ZIndex = 11
 
 	local rainbowBtn = Instance.new("TextButton", card)
-	rainbowBtn.Size = UDim2.new(0, 62, 0, 18)
-	rainbowBtn.Position = UDim2.new(1, -104, 0, 5)
+	rainbowBtn.Size = UDim2.new(0, 62, 0, 20)
+	rainbowBtn.Position = UDim2.new(1, -104, 0, 4)
 	rainbowBtn.BackgroundColor3 = rainbowGetter() and Color3.fromRGB(48, 209, 88) or Color3.fromRGB(52, 52, 62)
 	rainbowBtn.Font = Enum.Font.GothamBold
 	rainbowBtn.TextSize = 9
 	rainbowBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 	rainbowBtn.Text = "RAINBOW"
 	rainbowBtn.AutoButtonColor = false
-	rainbowBtn.ZIndex = 10
+	rainbowBtn.ZIndex = 15
 	Instance.new("UICorner", rainbowBtn).CornerRadius = UDim.new(1, 0)
 
 	local swatch = Instance.new("Frame", card)
@@ -1398,14 +1431,14 @@ local function addAnimatedRoleColorControl(page, roleKey, roleTitle, getterFn, s
 	swatch.Position = UDim2.new(1, -34, 0, 7)
 	swatch.BackgroundColor3 = getterFn()
 	swatch.BorderSizePixel = 0
-	swatch.ZIndex = 9
+	swatch.ZIndex = 11
 	Instance.new("UICorner", swatch).CornerRadius = UDim.new(1, 0)
 
 	local rowHolder = Instance.new("Frame", card)
-	rowHolder.Size = UDim2.new(1, -20, 0, 22)
-	rowHolder.Position = UDim2.new(0, 10, 0, 30)
+	rowHolder.Size = UDim2.new(1, -20, 0, 24)
+	rowHolder.Position = UDim2.new(0, 10, 0, 29)
 	rowHolder.BackgroundTransparency = 1
-	rowHolder.ZIndex = 9
+	rowHolder.ZIndex = 11
 
 	local layout = Instance.new("UIListLayout", rowHolder)
 	layout.FillDirection = Enum.FillDirection.Horizontal
@@ -1422,7 +1455,7 @@ local function addAnimatedRoleColorControl(page, roleKey, roleTitle, getterFn, s
 	statusLbl.TextSize = 10
 	statusLbl.TextColor3 = Color3.fromRGB(165, 168, 182)
 	statusLbl.Text = rainbowGetter() and "Mode: Rainbow automático" or "Mode: Color fijo"
-	statusLbl.ZIndex = 9
+	statusLbl.ZIndex = 11
 
 	local function animateToColor(newCol, presetName)
 		setterFn(newCol)
@@ -1441,7 +1474,7 @@ local function addAnimatedRoleColorControl(page, roleKey, roleTitle, getterFn, s
 		statusLbl.Text = active and "Mode: Rainbow automático" or "Mode: Color fijo"
 	end
 
-	rainbowBtn.MouseButton1Click:Connect(function()
+	rainbowBtn.Activated:Connect(function()
 		local nextState = not rainbowGetter()
 		rainbowSetter(nextState)
 		refreshRainbowUI()
@@ -1450,11 +1483,11 @@ local function addAnimatedRoleColorControl(page, roleKey, roleTitle, getterFn, s
 
 	for _, item in ipairs(RolePalette) do
 		local dotBtn = Instance.new("TextButton", rowHolder)
-		dotBtn.Size = UDim2.new(0, 20, 0, 20)
+		dotBtn.Size = UDim2.new(0, 22, 0, 22)
 		dotBtn.BackgroundColor3 = item.Color
 		dotBtn.Text = ""
 		dotBtn.AutoButtonColor = false
-		dotBtn.ZIndex = 10
+		dotBtn.ZIndex = 15
 		Instance.new("UICorner", dotBtn).CornerRadius = UDim.new(1, 0)
 
 		local dStroke = Instance.new("UIStroke", dotBtn)
@@ -1462,18 +1495,10 @@ local function addAnimatedRoleColorControl(page, roleKey, roleTitle, getterFn, s
 		dStroke.Transparency = 0.82
 		dStroke.Thickness = 1
 
-		dotBtn.MouseButton1Click:Connect(function()
+		dotBtn.Activated:Connect(function()
 			rainbowSetter(false)
 			refreshRainbowUI()
 			animateToColor(item.Color, item.Name)
-			pcall(function()
-				TweenService:Create(dotBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingOut), { Size = UDim2.new(0, 17, 0, 17) }):Play()
-				task.delay(0.1, function()
-					if dotBtn and dotBtn.Parent then
-						TweenService:Create(dotBtn, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingOut), { Size = UDim2.new(0, 20, 0, 20) }):Play()
-					end
-				end)
-			end)
 		end)
 	end
 
@@ -1505,7 +1530,7 @@ addToggle(VisualsPage, "Box ESP (Caja 2D)", Config.BoxESPEnabled, function(s)
 	Config.BoxESPEnabled = s
 	if not s then for p in pairs(boxDrawings) do hideBox(p) end end
 end, nil, true)
-addToggle(VisualsPage, "Role Colors", Config.RoleBasedColors, function(s) Config.RoleBasedColors = s end)
+addToggle(VisualsPage, "Role Colors", Config.RoleBasedColors, function(s) Config.RoleBasedColors = s end, nil, true)
 addToggle(VisualsPage, "Show Names", Config.ESPNames, function(s) Config.ESPNames = s end)
 addToggle(VisualsPage, "Show Role", Config.ESPRole, function(s) Config.ESPRole = s end)
 addToggle(VisualsPage, "Show Distance", Config.ESPDistance, function(s) Config.ESPDistance = s end)
@@ -1516,7 +1541,7 @@ addToggle(VisualsPage, "Top Tracers (Desde Arriba)", Config.TracersEnabled, func
 	Config.TracersEnabled = s
 	if not s then clearTracers() end
 end, nil, true)
-addToggle(VisualsPage, "Tracer Rainbow", Config.TracerRainbow, function(s) Config.TracerRainbow = s end)
+addToggle(VisualsPage, "Tracer Rainbow", Config.TracerRainbow, function(s) Config.TracerRainbow = s end, nil, true)
 addToggle(VisualsPage, "Cham Gun (Black)", Config.GunESPEnabled, function(s)
 	Config.GunESPEnabled = s
 	if not s then clearGunVisuals() end
@@ -1525,7 +1550,7 @@ end, nil, true)
 addToggle(VisualsPage, "Gun Top Tracer", Config.GunTracerEnabled, function(s)
 	Config.GunTracerEnabled = s
 	if not s and gunTracerLine then gunTracerLine.Visible = false end
-end)
+end, nil, true)
 
 -- Roles
 addSection(RolesPage, "Animated Role Colors & Rainbow")
@@ -1564,12 +1589,12 @@ addToggle(CombatPage, "Aimbot Lock", Config.AimbotEnabled, function(s)
 	if not s and fovCircle then fovCircle.Visible = false end
 	refreshAimCircleVisual()
 end, "Aimbot", true)
-addToggle(CombatPage, "Only When Sheriff", Config.OnlyWhenSheriff, function(s) Config.OnlyWhenSheriff = s end)
-addToggle(CombatPage, "Show FOV Circle", Config.ShowFOV, function(s) Config.ShowFOV = s end)
-addToggle(CombatPage, "Wall Check", Config.WallCheck, function(s) Config.WallCheck = s end)
+addToggle(CombatPage, "Only When Sheriff", Config.OnlyWhenSheriff, function(s) Config.OnlyWhenSheriff = s end, nil, true)
+addToggle(CombatPage, "Show FOV Circle", Config.ShowFOV, function(s) Config.ShowFOV = s end, nil, true)
+addToggle(CombatPage, "Wall Check", Config.WallCheck, function(s) Config.WallCheck = s end, nil, true)
 addToggle(CombatPage, "Target Head (OFF = Torso)", Config.AimbotHitbox == "Head", function(s)
 	Config.AimbotHitbox = s and "Head" or "HumanoidRootPart"
-end)
+end, nil, true)
 addSlider(CombatPage, "FOV Radius", 50, 450, Config.AimbotFOV, "px", function(v) Config.AimbotFOV = v end)
 addSlider(CombatPage, "Smoothness", 5, 100, math.floor(Config.AimbotSmooth * 100), "%", function(v)
 	Config.AimbotSmooth = math.clamp(v / 100, 0.05, 1)
@@ -1581,7 +1606,7 @@ addToggle(CombatPage, "Big Head", Config.BigHeadEnabled, function(s)
 	if not s then restoreHeads() end
 end, nil, true)
 addSlider(CombatPage, "Head Size", 2, 16, Config.HeadSize, " studs", function(v) Config.HeadSize = v end)
-addToggle(CombatPage, "Head Rainbow", Config.HeadRainbow, function(s) Config.HeadRainbow = s end)
+addToggle(CombatPage, "Head Rainbow", Config.HeadRainbow, function(s) Config.HeadRainbow = s end, nil, true)
 
 -- Player
 addSection(PlayerPage, "Movement & Utilities")
@@ -1598,10 +1623,10 @@ addToggle(PlayerPage, "Jump Boost", Config.JumpBoostEnabled, function(s)
 	Config.JumpBoostEnabled = s
 	local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
 	if h and not s then h.JumpPower = 50 end
-end)
+end, nil, true)
 addSlider(PlayerPage, "Jump Power", 30, 110, Config.JumpPowerValue, "", function(v) Config.JumpPowerValue = v end)
 addToggle(PlayerPage, "Infinite Jump", Config.InfiniteJump, function(s) Config.InfiniteJump = s end, nil, true)
-addToggle(PlayerPage, "Anti-AFK", Config.AntiAFK, function(s) Config.AntiAFK = s end)
+addToggle(PlayerPage, "Anti-AFK", Config.AntiAFK, function(s) Config.AntiAFK = s end, nil, true)
 
 addSection(PlayerPage, "Speed Control")
 addToggle(PlayerPage, "Enable Speed", Config.SpeedEnabled, function(s)
@@ -1722,7 +1747,6 @@ _G.MonsterRenderConn = RunService.RenderStepped:Connect(function(dt)
 	local now = os.clock()
 	glassGrad.Rotation = (now * 14) % 360
 
-	-- Cálculo ligero de FPS y contador superior de vivos
 	fpsFrames += 1
 	fpsAccum += (dt or 0)
 	if fpsAccum >= 0.5 then
@@ -1891,4 +1915,4 @@ _G.MonsterRenderConn = RunService.RenderStepped:Connect(function(dt)
 	end
 end)
 
-print("[The Monster • by King Gael] Top Alive + FPS pill loaded.")
+print("[The Monster • by King Gael] Full polished iOS edition loaded.")
