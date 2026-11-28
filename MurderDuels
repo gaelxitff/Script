@@ -1,17 +1,3 @@
-local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
-
-local Window = Rayfield:CreateWindow({
-	Name = "The Monster | by King Gael",
-	LoadingTitle = "The Monster",
-	LoadingSubtitle = "by King Gael • MM2 Mobile",
-	ConfigurationSaving = {
-		Enabled = true,
-		FolderName = "TheMonster_KingGael",
-		FileName = "MM2_MobileConfig"
-	},
-	KeySystem = false
-})
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -25,34 +11,48 @@ local Camera = Workspace.CurrentCamera
 local IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
 local HasDrawing = pcall(function()
-	local test = Drawing.new("Line")
-	test:Remove()
+	local d = Drawing.new("Line")
+	d:Remove()
 end)
 
+-- Limpieza al re-ejecutar
+local oldUI = CoreGui:FindFirstChild("MonsterIOS_KingGael") or (LocalPlayer:FindFirstChild("PlayerGui") and LocalPlayer.PlayerGui:FindFirstChild("MonsterIOS_KingGael"))
+if oldUI then
+	pcall(function() oldUI:Destroy() end)
+end
+if _G.MonsterIOS_Step then pcall(function() _G.MonsterIOS_Step:Disconnect() end) end
+if _G.MonsterIOS_Render then pcall(function() _G.MonsterIOS_Render:Disconnect() end) end
+
 local Config = {
-	-- ESP Jugadores
+	-- ESP & Box
 	ESPEnabled = false,
+	BoxESPEnabled = true,
 	RoleBasedColors = true,
 	ESPNames = true,
 	ESPRole = true,
 	ESPDistance = true,
-	ESPColor = Color3.fromRGB(255, 50, 50),
+	ESPColor = Color3.fromRGB(255, 59, 48),
 	ESPRainbow = false,
 
-	-- Gun Caída
+	-- Rainbow por Rol
+	MurderRainbow = false,
+	SheriffRainbow = false,
+	InnocentRainbow = false,
+
+	-- Gun Drop
 	GunESPEnabled = true,
 	GunTracerEnabled = false,
-	GunFillColor = Color3.fromRGB(0, 0, 0),
+	GunFillColor = Color3.fromRGB(10, 10, 14),
 	GunOutlineColor = Color3.fromRGB(255, 255, 255),
 
-	-- Tracers
+	-- Tracers (desde arriba hacia el jugador)
 	TracersEnabled = false,
-	TracerColor = Color3.fromRGB(255, 50, 50),
+	TracerColor = Color3.fromRGB(10, 132, 255),
 	TracerRainbow = false,
 
 	-- Aimbot & Hitbox
 	AimbotEnabled = false,
-	AimbotSmooth = 0.24,
+	AimbotSmooth = 0.25,
 	AimbotFOV = IsMobile and 220 or 190,
 	ShowFOV = true,
 	AimbotHitbox = "Head",
@@ -75,275 +75,55 @@ local Config = {
 	FlySpeed = 42,
 	AntiAFK = true,
 
-	-- Botones Flotantes Móvil
-	FloatingButtons = true,
+	-- Estilo iOS / iPhone
+	AccentColor = Color3.fromRGB(10, 132, 255),
+	RainbowMenu = false,
+	MenuTransparency = 0.14,
 
-	-- Apariencia del Menú
-	MenuAccent = Color3.fromRGB(0, 225, 255),
-	MenuRainbow = false,
-	MenuTransparency = 0.1,
-
-	-- Colores de Roles
-	ColorMurder = Color3.fromRGB(255, 45, 45),
-	ColorSheriff = Color3.fromRGB(45, 145, 255),
-	ColorInnocent = Color3.fromRGB(45, 255, 110)
+	-- Colores de Roles (editables con animación)
+	ColorMurder = Color3.fromRGB(255, 59, 48),
+	ColorSheriff = Color3.fromRGB(10, 132, 255),
+	ColorInnocent = Color3.fromRGB(48, 209, 88)
 }
 
 local highlights = {}
 local nameTags = {}
+local boxDrawings = {}
 local tracers = {}
 local gunHighlights = {}
 local gunTags = {}
 local originalHeads = {}
 local noclipParts = {}
+
 local fovCircle = nil
 local gunTracerLine = nil
 local flyBodyVel = nil
 local flyBodyGyro = nil
-
-local floatGui = nil
-local toggleMenuBtn = nil
-local aimFloatBtn = nil
-local menuVisible = true
-local aimToggleRef = nil
 
 if HasDrawing then
 	fovCircle = Drawing.new("Circle")
 	fovCircle.Thickness = 1.6
 	fovCircle.NumSides = 80
 	fovCircle.Filled = false
-	fovCircle.Transparency = 0.85
-	fovCircle.Color = Config.MenuAccent
+	fovCircle.Transparency = 0.88
+	fovCircle.Color = Config.AccentColor
 	fovCircle.Visible = false
 
 	gunTracerLine = Drawing.new("Line")
 	gunTracerLine.Thickness = 1.8
-	gunTracerLine.Transparency = 0.9
+	gunTracerLine.Transparency = 0.92
 	gunTracerLine.Color = Config.GunOutlineColor
 	gunTracerLine.Visible = false
 end
 
-local function getRayfieldRoot()
-	return CoreGui:FindFirstChild("Rayfield") or LocalPlayer:FindFirstChildOfClass("PlayerGui")
-end
-
-local function getRainbowColor(speed)
+local function getRainbowColor(speed, offset)
 	speed = speed or 1
-	local hue = (os.clock() * speed * 0.22) % 1
-	return Color3.fromHSV(hue, 1, 1)
+	offset = offset or 0
+	local hue = ((os.clock() * speed * 0.22) + offset) % 1
+	return Color3.fromHSV(hue, 0.85, 1)
 end
 
-local function setRayfieldVisible(visible)
-	menuVisible = visible
-	local root = getRayfieldRoot()
-	if not root then return end
-
-	for _, child in ipairs(root:GetChildren()) do
-		if child:IsA("ScreenGui") or child:IsA("Frame") then
-			if child ~= floatGui then
-				pcall(function()
-					child.Enabled = visible
-				end)
-				if child:IsA("Frame") then
-					pcall(function()
-						child.Visible = visible
-					end)
-				end
-			end
-		elseif child:IsA("GuiObject") and child ~= floatGui then
-			pcall(function()
-				child.Visible = visible
-			end)
-		end
-	end
-end
-
-local function refreshAimFloatVisual()
-	if not aimFloatBtn then return end
-	if Config.AimbotEnabled then
-		aimFloatBtn.Text = "AIM: ON"
-		aimFloatBtn.BackgroundColor3 = Color3.fromRGB(25, 145, 85)
-	else
-		aimFloatBtn.Text = "AIM: OFF"
-		aimFloatBtn.BackgroundColor3 = Color3.fromRGB(22, 24, 34)
-	end
-end
-
-local function makeDraggable(frame)
-	local dragging = false
-	local dragInput = nil
-	local dragStart = nil
-	local startPos = nil
-
-	frame.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = true
-			dragStart = input.Position
-			startPos = frame.Position
-			dragInput = input
-
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					dragging = false
-				end
-			end)
-		end
-	end)
-
-	frame.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-			dragInput = input
-		end
-	end)
-
-	UserInputService.InputChanged:Connect(function(input)
-		if dragging and input == dragInput and dragStart and startPos then
-			local delta = input.Position - dragStart
-			frame.Position = UDim2.new(
-				startPos.X.Scale,
-				startPos.X.Offset + delta.X,
-				startPos.Y.Scale,
-				startPos.Y.Offset + delta.Y
-			)
-		end
-	end)
-end
-
-local function ensureFloatingButtons()
-	if floatGui then
-		floatGui.Enabled = Config.FloatingButtons
-		return
-	end
-
-	local gui = Instance.new("ScreenGui")
-	gui.Name = "TheMonsterFloatingGUI"
-	gui.ResetOnSpawn = false
-	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
-	local placed = pcall(function() gui.Parent = CoreGui end)
-	if not placed or not gui.Parent then
-		gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-	end
-
-	local menuBtn = Instance.new("TextButton")
-	menuBtn.Name = "ToggleMenuButton"
-	menuBtn.Size = UDim2.new(0, 118, 0, 36)
-	menuBtn.Position = UDim2.new(0, 14, 0.5, -55)
-	menuBtn.BackgroundColor3 = Color3.fromRGB(18, 20, 28)
-	menuBtn.BackgroundTransparency = 0.12
-	menuBtn.Text = "MONSTER UI"
-	menuBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-	menuBtn.Font = Enum.Font.GothamBold
-	menuBtn.TextSize = 12
-	menuBtn.Parent = gui
-	Instance.new("UICorner", menuBtn).CornerRadius = UDim.new(0, 10)
-	local s1 = Instance.new("UIStroke", menuBtn)
-	s1.Color = Config.MenuAccent
-	s1.Thickness = 1.4
-
-	local aimBtn = Instance.new("TextButton")
-	aimBtn.Name = "QuickAimButton"
-	aimBtn.Size = UDim2.new(0, 118, 0, 36)
-	aimBtn.Position = UDim2.new(0, 14, 0.5, -10)
-	aimBtn.BackgroundColor3 = Color3.fromRGB(22, 24, 34)
-	aimBtn.BackgroundTransparency = 0.12
-	aimBtn.Text = "AIM: OFF"
-	aimBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-	aimBtn.Font = Enum.Font.GothamBold
-	aimBtn.TextSize = 12
-	aimBtn.Parent = gui
-	Instance.new("UICorner", aimBtn).CornerRadius = UDim.new(0, 10)
-	local s2 = Instance.new("UIStroke", aimBtn)
-	s2.Color = Config.MenuAccent
-	s2.Thickness = 1.4
-
-	makeDraggable(menuBtn)
-	makeDraggable(aimBtn)
-
-	menuBtn.MouseButton1Click:Connect(function()
-		setRayfieldVisible(not menuVisible)
-	end)
-
-	aimBtn.MouseButton1Click:Connect(function()
-		Config.AimbotEnabled = not Config.AimbotEnabled
-		if not Config.AimbotEnabled and fovCircle then
-			fovCircle.Visible = false
-		end
-		refreshAimFloatVisual()
-		if aimToggleRef and aimToggleRef.Set then
-			pcall(function() aimToggleRef:Set(Config.AimbotEnabled) end)
-		end
-	end)
-
-	floatGui = gui
-	toggleMenuBtn = menuBtn
-	aimFloatBtn = aimBtn
-	gui.Enabled = Config.FloatingButtons
-	refreshAimFloatVisual()
-end
-
-local function animateMenuColor(targetColor)
-	Config.MenuAccent = targetColor
-	if fovCircle and not Config.AimbotEnabled then
-		fovCircle.Color = targetColor
-	end
-
-	if floatGui then
-		for _, obj in ipairs(floatGui:GetDescendants()) do
-			if obj:IsA("UIStroke") then
-				pcall(function()
-					TweenService:Create(obj, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingOut), {
-						Color = targetColor
-					}):Play()
-				end)
-			end
-		end
-	end
-
-	local root = getRayfieldRoot()
-	if not root then return end
-
-	for _, obj in ipairs(root:GetDescendants()) do
-		if obj:IsA("UIStroke") then
-			pcall(function()
-				TweenService:Create(obj, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingOut), {
-					Color = targetColor
-				}):Play()
-			end)
-		elseif obj:IsA("Frame") then
-			local sz = obj.Size
-			if (sz.X.Offset > 0 and sz.X.Offset <= 14) or (sz.Y.Offset > 0 and sz.Y.Offset <= 6) then
-				if obj.BackgroundColor3 ~= Color3.fromRGB(25, 25, 25) and obj.BackgroundColor3 ~= Color3.fromRGB(30, 30, 30) then
-					pcall(function()
-						TweenService:Create(obj, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingOut), {
-							BackgroundColor3 = targetColor
-						}):Play()
-					end)
-				end
-			end
-		end
-	end
-end
-
-local function applyMenuTransparency(alpha)
-	Config.MenuTransparency = math.clamp(alpha, 0, 0.85)
-	local root = getRayfieldRoot()
-	if not root then return end
-
-	for _, obj in ipairs(root:GetDescendants()) do
-		if obj:IsA("Frame") or obj:IsA("ScrollingFrame") then
-			if obj.BackgroundTransparency < 0.95 then
-				pcall(function()
-					TweenService:Create(obj, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingOut), {
-						BackgroundTransparency = math.clamp(Config.MenuTransparency + (obj.BackgroundTransparency * 0.15), 0, 0.9)
-					}):Play()
-				end)
-			end
-		end
-	end
-end
-
--- Roles MM2
+-- Roles MM2 (con soporte de Rainbow individual por rol)
 local function hasTool(player, toolName)
 	if not player then return false end
 	local char = player.Character
@@ -354,11 +134,14 @@ end
 
 local function getRole(player)
 	if hasTool(player, "Knife") then
-		return "Murder", Config.ColorMurder
+		local col = Config.MurderRainbow and getRainbowColor(1.4, 0.0) or Config.ColorMurder
+		return "Murder", col
 	elseif hasTool(player, "Gun") or hasTool(player, "Revolver") then
-		return "Sheriff", Config.ColorSheriff
+		local col = Config.SheriffRainbow and getRainbowColor(1.4, 0.33) or Config.ColorSheriff
+		return "Sheriff", col
 	end
-	return "Innocent", Config.ColorInnocent
+	local col = Config.InnocentRainbow and getRainbowColor(1.4, 0.66) or Config.ColorInnocent
+	return "Innocent", col
 end
 
 local function getMurderer()
@@ -370,7 +153,7 @@ local function getMurderer()
 	return nil
 end
 
--- Gun caída
+-- Gun Caída
 local function isInsidePlayer(inst)
 	local cur = inst.Parent
 	while cur and cur ~= Workspace do
@@ -466,7 +249,7 @@ local function updateGunESP()
 	for i, item in ipairs(found) do
 		if not gunHighlights[item.obj] or not gunHighlights[item.obj].Parent then
 			local hl = Instance.new("Highlight")
-			hl.Name = "MonsterGunCham"
+			hl.Name = "MonsterIOS_GunCham"
 			hl.Adornee = item.adornee
 			hl.FillColor = Config.GunFillColor
 			hl.FillTransparency = 0.15
@@ -479,7 +262,7 @@ local function updateGunESP()
 
 		if not gunTags[item.obj] or not gunTags[item.obj].Parent then
 			local bb = Instance.new("BillboardGui")
-			bb.Name = "MonsterGunTag"
+			bb.Name = "MonsterIOS_GunTag"
 			bb.Adornee = item.part
 			bb.Size = UDim2.new(0, 96, 0, 22)
 			bb.StudsOffset = Vector3.new(0, 1.5, 0)
@@ -494,7 +277,7 @@ local function updateGunESP()
 			lbl.TextColor3 = Config.GunOutlineColor
 			lbl.Font = Enum.Font.GothamBold
 			lbl.TextSize = 12
-			Instance.new("UICorner", lbl).CornerRadius = UDim.new(0, 6)
+			Instance.new("UICorner", lbl).CornerRadius = UDim.new(0, 8)
 
 			local stroke = Instance.new("UIStroke", lbl)
 			stroke.Color = Config.GunOutlineColor
@@ -506,7 +289,7 @@ local function updateGunESP()
 		if i == 1 and HasDrawing and Config.GunTracerEnabled and gunTracerLine then
 			local pos, onScreen = Camera:WorldToViewportPoint(item.part.Position)
 			if pos.Z > 0 and onScreen then
-				gunTracerLine.From = Vector2.new(Camera.ViewportSize.X * 0.5, Camera.ViewportSize.Y)
+				gunTracerLine.From = Vector2.new(Camera.ViewportSize.X * 0.5, 0)
 				gunTracerLine.To = Vector2.new(pos.X, pos.Y)
 				gunTracerLine.Color = Config.GunOutlineColor
 				gunTracerLine.Visible = true
@@ -517,7 +300,80 @@ local function updateGunESP()
 	end
 end
 
--- ESP Jugadores
+-- ESP Box 2D (Drawing)
+local function ensureBox(player)
+	if not HasDrawing then return nil end
+	if boxDrawings[player] then return boxDrawings[player] end
+
+	local outline = Drawing.new("Square")
+	outline.Thickness = 3
+	outline.Filled = false
+	outline.Color = Color3.fromRGB(0, 0, 0)
+	outline.Transparency = 0.65
+	outline.Visible = false
+
+	local box = Drawing.new("Square")
+	box.Thickness = 1.6
+	box.Filled = false
+	box.Transparency = 0.95
+	box.Visible = false
+
+	local entry = { outline = outline, box = box }
+	boxDrawings[player] = entry
+	return entry
+end
+
+local function hideBox(player)
+	local entry = boxDrawings[player]
+	if entry then
+		if entry.outline then entry.outline.Visible = false end
+		if entry.box then entry.box.Visible = false end
+	end
+end
+
+local function removeBox(player)
+	local entry = boxDrawings[player]
+	if entry then
+		if entry.outline then pcall(function() entry.outline:Remove() end) end
+		if entry.box then pcall(function() entry.box:Remove() end) end
+		boxDrawings[player] = nil
+	end
+end
+
+local function updateBoxESP(player, char, hum, hrp, head, activeColor)
+	if not HasDrawing or not Config.ESPEnabled or not Config.BoxESPEnabled then
+		hideBox(player)
+		return
+	end
+
+	local entry = ensureBox(player)
+	if not entry then return end
+
+	local rootPos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+	local topPos = Camera:WorldToViewportPoint((head.CFrame * CFrame.new(0, 0.85, 0)).Position)
+	local bottomPos = Camera:WorldToViewportPoint((hrp.CFrame * CFrame.new(0, -3.1, 0)).Position)
+
+	if not onScreen or rootPos.Z <= 0 or topPos.Z <= 0 or bottomPos.Z <= 0 then
+		hideBox(player)
+		return
+	end
+
+	local height = math.clamp(math.abs(bottomPos.Y - topPos.Y), 10, Camera.ViewportSize.Y * 0.9)
+	local width = math.clamp(height * 0.56, 8, Camera.ViewportSize.X * 0.6)
+	local pos = Vector2.new(rootPos.X - (width * 0.5), topPos.Y)
+	local size = Vector2.new(width, height)
+
+	entry.outline.Position = pos
+	entry.outline.Size = size
+	entry.outline.Visible = true
+
+	entry.box.Position = pos
+	entry.box.Size = size
+	entry.box.Color = activeColor
+	entry.box.Visible = true
+end
+
+-- ESP Jugadores (Highlight + Tag + Box)
 local function removeESP(player)
 	if highlights[player] then
 		pcall(function() highlights[player]:Destroy() end)
@@ -527,6 +383,7 @@ local function removeESP(player)
 		pcall(function() nameTags[player]:Destroy() end)
 		nameTags[player] = nil
 	end
+	removeBox(player)
 end
 
 local function applyESP(player)
@@ -540,7 +397,7 @@ local function applyESP(player)
 	local hrp = char and char:FindFirstChild("HumanoidRootPart")
 	local head = char and char:FindFirstChild("Head")
 
-	if not char or not hum or not hrp or hum.Health <= 0 then
+	if not char or not hum or not hrp or not head or hum.Health <= 0 then
 		removeESP(player)
 		return
 	end
@@ -553,10 +410,10 @@ local function applyESP(player)
 	if not hl or not hl.Parent or hl.Adornee ~= char then
 		if hl then pcall(function() hl:Destroy() end) end
 		hl = Instance.new("Highlight")
-		hl.Name = "MonsterPlayerHighlight"
+		hl.Name = "MonsterIOS_Highlight"
 		hl.Adornee = char
 		hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-		hl.FillTransparency = 0.55
+		hl.FillTransparency = 0.58
 		hl.OutlineTransparency = 0.1
 		hl.Parent = CoreGui
 		highlights[player] = hl
@@ -564,14 +421,16 @@ local function applyESP(player)
 	hl.FillColor = activeColor
 	hl.OutlineColor = Color3.fromRGB(255, 255, 255)
 
-	if (Config.ESPNames or Config.ESPRole or Config.ESPDistance) and head then
+	updateBoxESP(player, char, hum, hrp, head, activeColor)
+
+	if (Config.ESPNames or Config.ESPRole or Config.ESPDistance) then
 		local tag = nameTags[player]
 		if not tag or not tag.Parent or tag.Adornee ~= head then
 			if tag then pcall(function() tag:Destroy() end) end
 			tag = Instance.new("BillboardGui")
-			tag.Name = "MonsterPlayerTag"
+			tag.Name = "MonsterIOS_Tag"
 			tag.Adornee = head
-			tag.Size = UDim2.new(0, 180, 0, 26)
+			tag.Size = UDim2.new(0, 185, 0, 26)
 			tag.StudsOffset = Vector3.new(0, 2.2, 0)
 			tag.AlwaysOnTop = true
 			tag.Parent = CoreGui
@@ -627,7 +486,6 @@ local function restoreHeads()
 	end
 end
 
--- Noclip & Fly
 local function restoreNoclip()
 	for part, oldCollide in pairs(noclipParts) do
 		if part and part.Parent then
@@ -678,7 +536,6 @@ local function getFlyMoveVector(hum)
 	return Vector3.zero
 end
 
--- Aimbot helpers
 local function getCrosshair()
 	if IsMobile then
 		return Vector2.new(Camera.ViewportSize.X * 0.5, Camera.ViewportSize.Y * 0.45)
@@ -722,431 +579,778 @@ local function getBestMurderTarget(crosshair)
 	return nil
 end
 
--- Tabs
-local VisualTab = Window:CreateTab("Visuals", 4483362458)
-local CombatTab = Window:CreateTab("Combat", 4483362458)
-local PlayerTab = Window:CreateTab("Player", 4483362458)
-local ThemeTab = Window:CreateTab("Theme", 4483362458)
+-- ==========================================
+-- INTERFAZ ESTILO iOS / iPHONE (by King Gael)
+-- ==========================================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MonsterIOS_KingGael"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Visuals Tab
-VisualTab:CreateSection("Player ESP")
+local okParent = pcall(function() ScreenGui.Parent = CoreGui end)
+if not okParent or not ScreenGui.Parent then
+	ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+end
 
-VisualTab:CreateToggle({
-	Name = "Enable ESP",
-	CurrentValue = Config.ESPEnabled,
-	Flag = "KG_ESP",
-	Callback = function(state)
-		Config.ESPEnabled = state
-		if not state then
-			for p in pairs(highlights) do removeESP(p) end
+local function makeDraggable(guiObj)
+	local dragging = false
+	local dragInput = nil
+	local dragStart = nil
+	local startPos = nil
+
+	guiObj.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = guiObj.Position
+			dragInput = input
+
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	guiObj.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			dragInput = input
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and input == dragInput and dragStart and startPos then
+			local delta = input.Position - dragStart
+			guiObj.Position = UDim2.new(
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+-- Botón Circular iOS para Aimbot (arrastrable, sin botón de cerrar/abrir GUI)
+local AimCircleBtn = Instance.new("ImageButton")
+AimCircleBtn.Name = "IOS_AimCircle"
+AimCircleBtn.Size = UDim2.new(0, 64, 0, 64)
+AimCircleBtn.Position = UDim2.new(1, -88, 0.56, -32)
+AimCircleBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 26)
+AimCircleBtn.BackgroundTransparency = 0.12
+AimCircleBtn.AutoButtonColor = false
+AimCircleBtn.Parent = ScreenGui
+Instance.new("UICorner", AimCircleBtn).CornerRadius = UDim.new(1, 0)
+
+local aimCircleStroke = Instance.new("UIStroke", AimCircleBtn)
+aimCircleStroke.Color = Config.AccentColor
+aimCircleStroke.Thickness = 2.2
+
+local aimInnerRing = Instance.new("Frame", AimCircleBtn)
+aimInnerRing.Size = UDim2.new(1, -10, 1, -10)
+aimInnerRing.Position = UDim2.new(0, 5, 0, 5)
+aimInnerRing.BackgroundTransparency = 1
+Instance.new("UICorner", aimInnerRing).CornerRadius = UDim.new(1, 0)
+local ringStroke = Instance.new("UIStroke", aimInnerRing)
+ringStroke.Color = Color3.fromRGB(255, 255, 255)
+ringStroke.Transparency = 0.72
+ringStroke.Thickness = 1
+
+local aimCircleLabel = Instance.new("TextLabel", AimCircleBtn)
+aimCircleLabel.Size = UDim2.new(1, 0, 1, 0)
+aimCircleLabel.BackgroundTransparency = 1
+aimCircleLabel.Font = Enum.Font.GothamBold
+aimCircleLabel.TextSize = 11
+aimCircleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+aimCircleLabel.Text = "AIM\nOFF"
+
+makeDraggable(AimCircleBtn)
+
+-- Ventana Principal Estilo iPhone Glass / Dark Card
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "IOS_MainCard"
+MainFrame.Size = IsMobile and UDim2.new(0, 452, 0, 298) or UDim2.new(0, 516, 0, 328)
+MainFrame.Position = UDim2.new(0.5, IsMobile and -226 or -258, 0.5, IsMobile and -149 or -164)
+MainFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 20)
+MainFrame.BackgroundTransparency = Config.MenuTransparency
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = ScreenGui
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 22)
+
+local mainStroke = Instance.new("UIStroke", MainFrame)
+mainStroke.Color = Color3.fromRGB(255, 255, 255)
+mainStroke.Transparency = 0.78
+mainStroke.Thickness = 1.3
+
+-- Textura sutil tipo vidrio/malla iOS con brillo animado
+local TextureOverlay = Instance.new("Frame", MainFrame)
+TextureOverlay.Name = "IOSTextureOverlay"
+TextureOverlay.Size = UDim2.new(1, 0, 1, 0)
+TextureOverlay.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextureOverlay.BackgroundTransparency = 0.962
+TextureOverlay.BorderSizePixel = 0
+TextureOverlay.ZIndex = 1
+Instance.new("UICorner", TextureOverlay).CornerRadius = UDim.new(0, 22)
+
+local glassGrad = Instance.new("UIGradient", TextureOverlay)
+glassGrad.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+	ColorSequenceKeypoint.new(0.35, Color3.fromRGB(110, 115, 138)),
+	ColorSequenceKeypoint.new(0.68, Color3.fromRGB(235, 240, 255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(95, 100, 122))
+})
+glassGrad.Rotation = 32
+
+-- Header iOS
+local TopBar = Instance.new("Frame", MainFrame)
+TopBar.Name = "IOS_TopBar"
+TopBar.Size = UDim2.new(1, -16, 0, 42)
+TopBar.Position = UDim2.new(0, 8, 0, 8)
+TopBar.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
+TopBar.BackgroundTransparency = math.clamp(Config.MenuTransparency + 0.06, 0, 0.9)
+TopBar.BorderSizePixel = 0
+TopBar.ZIndex = 2
+Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 16)
+
+local accentDot = Instance.new("Frame", TopBar)
+accentDot.Size = UDim2.new(0, 8, 0, 8)
+accentDot.Position = UDim2.new(0, 14, 0.5, -4)
+accentDot.BackgroundColor3 = Config.AccentColor
+accentDot.BorderSizePixel = 0
+Instance.new("UICorner", accentDot).CornerRadius = UDim.new(1, 0)
+
+local TitleLabel = Instance.new("TextLabel", TopBar)
+TitleLabel.Size = UDim2.new(1, -36, 1, 0)
+TitleLabel.Position = UDim2.new(0, 28, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextSize = 13
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.Text = "The Monster  •  by King Gael"
+
+makeDraggable(MainFrame)
+
+-- Sidebar iOS
+local TabBar = Instance.new("Frame", MainFrame)
+TabBar.Name = "IOS_TabBar"
+TabBar.Size = UDim2.new(0, 116, 1, -64)
+TabBar.Position = UDim2.new(0, 8, 0, 56)
+TabBar.BackgroundColor3 = Color3.fromRGB(24, 24, 29)
+TabBar.BackgroundTransparency = math.clamp(Config.MenuTransparency + 0.08, 0, 0.9)
+TabBar.BorderSizePixel = 0
+TabBar.ZIndex = 2
+Instance.new("UICorner", TabBar).CornerRadius = UDim.new(0, 16)
+
+local tabLayout = Instance.new("UIListLayout", TabBar)
+tabLayout.Padding = UDim.new(0, 6)
+tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+local tabPad = Instance.new("UIPadding", TabBar)
+tabPad.PaddingTop = UDim.new(0, 8)
+tabPad.PaddingBottom = UDim.new(0, 8)
+
+-- Pages Holder
+local PagesHolder = Instance.new("Frame", MainFrame)
+PagesHolder.Name = "IOS_PagesHolder"
+PagesHolder.Size = UDim2.new(1, -140, 1, -64)
+PagesHolder.Position = UDim2.new(0, 132, 0, 56)
+PagesHolder.BackgroundTransparency = 1
+PagesHolder.ZIndex = 2
+
+local accentStrokes = { aimCircleStroke }
+local accentHighlights = { accentDot }
+local transparentContainers = { MainFrame, TopBar, TabBar }
+local toggleSyncCallbacks = {}
+local roleLiveVisuals = {}
+
+local function refreshAimCircleVisual()
+	if Config.AimbotEnabled then
+		aimCircleLabel.Text = "AIM\nON"
+		aimCircleBtn.BackgroundColor3 = Color3.fromRGB(48, 209, 88)
+		aimCircleLabel.TextColor3 = Color3.fromRGB(10, 14, 12)
+	else
+		aimCircleLabel.Text = "AIM\nOFF"
+		aimCircleBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 26)
+		aimCircleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	end
+end
+
+local function applyThemeColor(col)
+	Config.AccentColor = col
+	if fovCircle and not Config.AimbotEnabled then
+		fovCircle.Color = col
+	end
+	for _, st in ipairs(accentStrokes) do
+		if st and st.Parent then
+			pcall(function()
+				TweenService:Create(st, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingOut), { Color = col }):Play()
+			end)
 		end
 	end
-})
-
-VisualTab:CreateToggle({
-	Name = "Role Colors",
-	CurrentValue = Config.RoleBasedColors,
-	Flag = "KG_RoleColors",
-	Callback = function(state)
-		Config.RoleBasedColors = state
-	end
-})
-
-VisualTab:CreateToggle({
-	Name = "Names",
-	CurrentValue = Config.ESPNames,
-	Flag = "KG_Names",
-	Callback = function(state)
-		Config.ESPNames = state
-	end
-})
-
-VisualTab:CreateToggle({
-	Name = "Role Tag",
-	CurrentValue = Config.ESPRole,
-	Flag = "KG_RoleTag",
-	Callback = function(state)
-		Config.ESPRole = state
-	end
-})
-
-VisualTab:CreateToggle({
-	Name = "Distance",
-	CurrentValue = Config.ESPDistance,
-	Flag = "KG_Distance",
-	Callback = function(state)
-		Config.ESPDistance = state
-	end
-})
-
-VisualTab:CreateColorPicker({
-	Name = "Custom ESP Color",
-	Color = Config.ESPColor,
-	Flag = "KG_ESPColor",
-	Callback = function(color)
-		Config.ESPColor = color
-	end
-})
-
-VisualTab:CreateToggle({
-	Name = "ESP Rainbow",
-	CurrentValue = Config.ESPRainbow,
-	Flag = "KG_ESPRainbow",
-	Callback = function(state)
-		Config.ESPRainbow = state
-	end
-})
-
-VisualTab:CreateSection("Gun Drop")
-
-VisualTab:CreateToggle({
-	Name = "Cham Gun (Black)",
-	CurrentValue = Config.GunESPEnabled,
-	Flag = "KG_GunCham",
-	Callback = function(state)
-		Config.GunESPEnabled = state
-		if not state then clearGunVisuals() end
-	end
-})
-
-VisualTab:CreateToggle({
-	Name = "Gun Tracer",
-	CurrentValue = Config.GunTracerEnabled,
-	Flag = "KG_GunTracer",
-	Callback = function(state)
-		Config.GunTracerEnabled = state
-		if not state and gunTracerLine then gunTracerLine.Visible = false end
-	end
-})
-
-VisualTab:CreateSection("Tracers")
-
-VisualTab:CreateToggle({
-	Name = "Enable Tracers",
-	CurrentValue = Config.TracersEnabled,
-	Flag = "KG_Tracers",
-	Callback = function(state)
-		Config.TracersEnabled = state
-		if not state then clearTracers() end
-	end
-})
-
-VisualTab:CreateColorPicker({
-	Name = "Tracer Color",
-	Color = Config.TracerColor,
-	Flag = "KG_TracerColor",
-	Callback = function(color)
-		Config.TracerColor = color
-	end
-})
-
-VisualTab:CreateToggle({
-	Name = "Tracer Rainbow",
-	CurrentValue = Config.TracerRainbow,
-	Flag = "KG_TracerRainbow",
-	Callback = function(state)
-		Config.TracerRainbow = state
-	end
-})
-
--- Combat Tab
-CombatTab:CreateSection("Murder Aimbot")
-
-aimToggleRef = CombatTab:CreateToggle({
-	Name = "Aimbot Lock",
-	CurrentValue = Config.AimbotEnabled,
-	Flag = "KG_Aimbot",
-	Callback = function(state)
-		Config.AimbotEnabled = state
-		if not state and fovCircle then fovCircle.Visible = false end
-		refreshAimFloatVisual()
-	end
-})
-
-CombatTab:CreateToggle({
-	Name = "Only When Sheriff",
-	CurrentValue = Config.OnlyWhenSheriff,
-	Flag = "KG_OnlySheriff",
-	Callback = function(state)
-		Config.OnlyWhenSheriff = state
-	end
-})
-
-CombatTab:CreateToggle({
-	Name = "Show FOV Circle",
-	CurrentValue = Config.ShowFOV,
-	Flag = "KG_ShowFOV",
-	Callback = function(state)
-		Config.ShowFOV = state
-	end
-})
-
-CombatTab:CreateToggle({
-	Name = "Wall Check",
-	CurrentValue = Config.WallCheck,
-	Flag = "KG_WallCheck",
-	Callback = function(state)
-		Config.WallCheck = state
-	end
-})
-
-CombatTab:CreateDropdown({
-	Name = "Target Hitbox",
-	Options = { "Head", "HumanoidRootPart" },
-	CurrentOption = { Config.AimbotHitbox },
-	Flag = "KG_Hitbox",
-	Callback = function(option)
-		local sel = type(option) == "table" and option[1] or option
-		if sel == "Head" or sel == "HumanoidRootPart" then
-			Config.AimbotHitbox = sel
+	for _, fr in ipairs(accentHighlights) do
+		if fr and fr.Parent then
+			pcall(function()
+				TweenService:Create(fr, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingOut), { BackgroundColor3 = col }):Play()
+			end)
 		end
 	end
-})
+end
 
-CombatTab:CreateSlider({
-	Name = "FOV Radius",
-	Range = { 40, 500 },
-	Increment = 5,
-	Suffix = "px",
-	CurrentValue = Config.AimbotFOV,
-	Flag = "KG_FOV",
-	Callback = function(val)
-		Config.AimbotFOV = val
-	end
-})
-
-CombatTab:CreateSlider({
-	Name = "Smoothness",
-	Range = { 5, 100 },
-	Increment = 1,
-	Suffix = "%",
-	CurrentValue = math.floor(Config.AimbotSmooth * 100),
-	Flag = "KG_Smooth",
-	Callback = function(val)
-		Config.AimbotSmooth = math.clamp(val / 100, 0.05, 1)
-	end
-})
-
-CombatTab:CreateSection("Hitbox")
-
-CombatTab:CreateToggle({
-	Name = "Big Head",
-	CurrentValue = Config.BigHeadEnabled,
-	Flag = "KG_BigHead",
-	Callback = function(state)
-		Config.BigHeadEnabled = state
-		if not state then restoreHeads() end
-	end
-})
-
-CombatTab:CreateSlider({
-	Name = "Head Size",
-	Range = { 2, 16 },
-	Increment = 1,
-	Suffix = " studs",
-	CurrentValue = Config.HeadSize,
-	Flag = "KG_HeadSize",
-	Callback = function(val)
-		Config.HeadSize = val
-	end
-})
-
-CombatTab:CreateColorPicker({
-	Name = "Head Color",
-	Color = Config.HeadColor,
-	Flag = "KG_HeadColor",
-	Callback = function(color)
-		Config.HeadColor = color
-	end
-})
-
-CombatTab:CreateToggle({
-	Name = "Head Rainbow",
-	CurrentValue = Config.HeadRainbow,
-	Flag = "KG_HeadRainbow",
-	Callback = function(state)
-		Config.HeadRainbow = state
-	end
-})
-
--- Player Tab
-PlayerTab:CreateSection("Movement & Utilities")
-
-PlayerTab:CreateToggle({
-	Name = "Noclip",
-	CurrentValue = Config.NoclipEnabled,
-	Flag = "KG_Noclip",
-	Callback = function(state)
-		Config.NoclipEnabled = state
-		if not state then restoreNoclip() end
-	end
-})
-
-PlayerTab:CreateToggle({
-	Name = "Fly (Joystick Friendly)",
-	CurrentValue = Config.FlyEnabled,
-	Flag = "KG_Fly",
-	Callback = function(state)
-		Config.FlyEnabled = state
-		if not state then stopFly() end
-	end
-})
-
-PlayerTab:CreateSlider({
-	Name = "Fly Speed",
-	Range = { 16, 90 },
-	Increment = 2,
-	Suffix = "",
-	CurrentValue = Config.FlySpeed,
-	Flag = "KG_FlySpeed",
-	Callback = function(val)
-		Config.FlySpeed = val
-	end
-})
-
-PlayerTab:CreateToggle({
-	Name = "Jump Boost",
-	CurrentValue = Config.JumpBoostEnabled,
-	Flag = "KG_JumpBoost",
-	Callback = function(state)
-		Config.JumpBoostEnabled = state
-		local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-		if hum and not state then hum.JumpPower = 50 end
-	end
-})
-
-PlayerTab:CreateSlider({
-	Name = "Jump Power",
-	Range = { 30, 110 },
-	Increment = 1,
-	Suffix = "",
-	CurrentValue = Config.JumpPowerValue,
-	Flag = "KG_JumpValue",
-	Callback = function(val)
-		Config.JumpPowerValue = val
-	end
-})
-
-PlayerTab:CreateToggle({
-	Name = "Infinite Jump",
-	CurrentValue = Config.InfiniteJump,
-	Flag = "KG_InfJump",
-	Callback = function(state)
-		Config.InfiniteJump = state
-	end
-})
-
-PlayerTab:CreateToggle({
-	Name = "Anti-AFK",
-	CurrentValue = Config.AntiAFK,
-	Flag = "KG_AntiAFK",
-	Callback = function(state)
-		Config.AntiAFK = state
-	end
-})
-
-PlayerTab:CreateSection("Speed Control")
-
-PlayerTab:CreateToggle({
-	Name = "Enable Speed",
-	CurrentValue = Config.SpeedEnabled,
-	Flag = "KG_SpeedToggle",
-	Callback = function(state)
-		Config.SpeedEnabled = state
-		local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-		if hum and not state then hum.WalkSpeed = 16 end
-	end
-})
-
-PlayerTab:CreateSlider({
-	Name = "Walk Speed",
-	Range = { 16, 42 },
-	Increment = 1,
-	Suffix = " WS",
-	CurrentValue = Config.WalkSpeedValue,
-	Flag = "KG_WalkSpeed",
-	Callback = function(val)
-		Config.WalkSpeedValue = val
-	end
-})
-
-PlayerTab:CreateButton({
-	Name = "Reset Speed (16)",
-	Callback = function()
-		Config.WalkSpeedValue = 16
-		local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-		if hum then hum.WalkSpeed = 16 end
-		Rayfield:Notify({
-			Title = "The Monster • by King Gael",
-			Content = "WalkSpeed reset to 16.",
-			Duration = 2.5
-		})
-	end
-})
-
--- Theme Tab
-ThemeTab:CreateSection("Mobile & Menu Style")
-
-ThemeTab:CreateToggle({
-	Name = "Floating Buttons",
-	CurrentValue = Config.FloatingButtons,
-	Flag = "KG_FloatBtns",
-	Callback = function(state)
-		Config.FloatingButtons = state
-		ensureFloatingButtons()
-	end
-})
-
-ThemeTab:CreateColorPicker({
-	Name = "Menu Color",
-	Color = Config.MenuAccent,
-	Flag = "KG_MenuColor",
-	Callback = function(color)
-		animateMenuColor(color)
-	end
-})
-
-ThemeTab:CreateToggle({
-	Name = "Animated Rainbow Menu",
-	CurrentValue = Config.MenuRainbow,
-	Flag = "KG_MenuRainbow",
-	Callback = function(state)
-		Config.MenuRainbow = state
-		if not state then
-			animateMenuColor(Config.MenuAccent)
+local function applyMenuAlpha(alpha)
+	Config.MenuTransparency = math.clamp(alpha, 0, 0.85)
+	for _, cont in ipairs(transparentContainers) do
+		if cont and cont.Parent then
+			local offset = (cont == MainFrame) and 0 or 0.07
+			pcall(function()
+				TweenService:Create(cont, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingOut), {
+					BackgroundTransparency = math.clamp(Config.MenuTransparency + offset, 0, 0.92)
+				}):Play()
+			end)
 		end
 	end
-})
+end
 
-ThemeTab:CreateSlider({
-	Name = "Menu Transparency",
-	Range = { 0, 85 },
-	Increment = 5,
-	Suffix = "%",
-	CurrentValue = math.floor(Config.MenuTransparency * 100),
-	Flag = "KG_MenuTransp",
-	Callback = function(val)
-		applyMenuTransparency(val / 100)
+local pages = {}
+local tabButtons = {}
+
+local function selectTab(name)
+	for pName, page in pairs(pages) do
+		page.Visible = (pName == name)
 	end
-})
-
-ThemeTab:CreateButton({
-	Name = "Reset Menu Style",
-	Callback = function()
-		Config.MenuRainbow = false
-		animateMenuColor(Color3.fromRGB(0, 225, 255))
-		applyMenuTransparency(0.1)
-		Rayfield:Notify({
-			Title = "The Monster • by King Gael",
-			Content = "Menu color & transparency reset.",
-			Duration = 2.5
-		})
+	for tName, btn in pairs(tabButtons) do
+		local active = (tName == name)
+		btn.BackgroundColor3 = active and Config.AccentColor or Color3.fromRGB(34, 34, 41)
+		btn.TextColor3 = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(190, 192, 202)
 	end
-})
+end
 
-ensureFloatingButtons()
+local function createPage(name)
+	local btn = Instance.new("TextButton", TabBar)
+	btn.Name = name .. "Tab"
+	btn.Size = UDim2.new(1, -12, 0, 32)
+	btn.BackgroundColor3 = Color3.fromRGB(34, 34, 41)
+	btn.BackgroundTransparency = 0.08
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 12
+	btn.TextColor3 = Color3.fromRGB(190, 192, 202)
+	btn.Text = name
+	btn.AutoButtonColor = false
+	btn.ZIndex = 3
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
 
--- Connections
+	local page = Instance.new("ScrollingFrame", PagesHolder)
+	page.Name = name .. "Page"
+	page.Size = UDim2.new(1, 0, 1, 0)
+	page.BackgroundTransparency = 1
+	page.ScrollBarThickness = 2
+	page.CanvasSize = UDim2.new(0, 0, 0, 0)
+	page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	page.Visible = false
+	page.ZIndex = 3
+
+	local list = Instance.new("UIListLayout", page)
+	list.Padding = UDim.new(0, 7)
+	local pad = Instance.new("UIPadding", page)
+	pad.PaddingTop = UDim.new(0, 3)
+	pad.PaddingBottom = UDim.new(0, 10)
+	pad.PaddingRight = UDim.new(0, 4)
+
+	btn.MouseButton1Click:Connect(function()
+		selectTab(name)
+	end)
+
+	pages[name] = page
+	tabButtons[name] = btn
+	return page
+end
+
+local function addSection(page, text)
+	local lbl = Instance.new("TextLabel", page)
+	lbl.Size = UDim2.new(1, 0, 0, 18)
+	lbl.BackgroundTransparency = 1
+	lbl.TextXAlignment = Enum.TextXAlignment.Left
+	lbl.Font = Enum.Font.GothamBold
+	lbl.TextSize = 11
+	lbl.TextColor3 = Color3.fromRGB(150, 152, 165)
+	lbl.Text = string.upper(text)
+	lbl.ZIndex = 3
+end
+
+local function addToggle(page, labelText, initial, onChanged, syncKey)
+	local row = Instance.new("Frame", page)
+	row.Size = UDim2.new(1, 0, 0, 36)
+	row.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
+	row.BackgroundTransparency = 0.14
+	row.ZIndex = 3
+	Instance.new("UICorner", row).CornerRadius = UDim.new(0, 12)
+
+	local rStroke = Instance.new("UIStroke", row)
+	rStroke.Color = Color3.fromRGB(255, 255, 255)
+	rStroke.Transparency = 0.92
+	rStroke.Thickness = 1
+
+	local txt = Instance.new("TextLabel", row)
+	txt.Size = UDim2.new(1, -66, 1, 0)
+	txt.Position = UDim2.new(0, 12, 0, 0)
+	txt.BackgroundTransparency = 1
+	txt.TextXAlignment = Enum.TextXAlignment.Left
+	txt.Font = Enum.Font.GothamMedium
+	txt.TextSize = 12
+	txt.TextColor3 = Color3.fromRGB(242, 242, 247)
+	txt.Text = labelText
+	txt.ZIndex = 4
+
+	local switchTrack = Instance.new("TextButton", row)
+	switchTrack.Size = UDim2.new(0, 44, 0, 24)
+	switchTrack.Position = UDim2.new(1, -54, 0.5, -12)
+	switchTrack.AutoButtonColor = false
+	switchTrack.Text = ""
+	switchTrack.ZIndex = 4
+	Instance.new("UICorner", switchTrack).CornerRadius = UDim.new(1, 0)
+
+	local knob = Instance.new("Frame", switchTrack)
+	knob.Size = UDim2.new(0, 20, 0, 20)
+	knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	knob.ZIndex = 5
+	Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+
+	local state = initial == true
+
+	local function paint(instant)
+		local goalPos = state and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10)
+		local goalCol = state and Color3.fromRGB(48, 209, 88) or Color3.fromRGB(72, 72, 82)
+		if instant then
+			knob.Position = goalPos
+			switchTrack.BackgroundColor3 = goalCol
+		else
+			TweenService:Create(knob, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingOut), { Position = goalPos }):Play()
+			TweenService:Create(switchTrack, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingOut), { BackgroundColor3 = goalCol }):Play()
+		end
+	end
+
+	local function setVal(newVal, fireCallback)
+		state = newVal == true
+		paint(false)
+		if fireCallback ~= false and onChanged then
+			onChanged(state)
+		end
+	end
+
+	switchTrack.MouseButton1Click:Connect(function()
+		setVal(not state, true)
+	end)
+
+	if syncKey then
+		toggleSyncCallbacks[syncKey] = function(v)
+			setVal(v, false)
+		end
+	end
+
+	paint(true)
+	return setVal
+end
+
+local function addSlider(page, labelText, minVal, maxVal, initial, suffix, onChanged)
+	local box = Instance.new("Frame", page)
+	box.Size = UDim2.new(1, 0, 0, 46)
+	box.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
+	box.BackgroundTransparency = 0.14
+	box.ZIndex = 3
+	Instance.new("UICorner", box).CornerRadius = UDim.new(0, 12)
+
+	local title = Instance.new("TextLabel", box)
+	title.Size = UDim2.new(1, -18, 0, 18)
+	title.Position = UDim2.new(0, 12, 0, 4)
+	title.BackgroundTransparency = 1
+	title.TextXAlignment = Enum.TextXAlignment.Left
+	title.Font = Enum.Font.GothamMedium
+	title.TextSize = 11
+	title.TextColor3 = Color3.fromRGB(235, 235, 240)
+	title.ZIndex = 4
+
+	local barBg = Instance.new("Frame", box)
+	barBg.Size = UDim2.new(1, -24, 0, 7)
+	barBg.Position = UDim2.new(0, 12, 0, 29)
+	barBg.BackgroundColor3 = Color3.fromRGB(58, 58, 68)
+	barBg.ZIndex = 4
+	Instance.new("UICorner", barBg).CornerRadius = UDim.new(1, 0)
+
+	local barFill = Instance.new("Frame", barBg)
+	barFill.Size = UDim2.new(0, 0, 1, 0)
+	barFill.BackgroundColor3 = Config.AccentColor
+	barFill.ZIndex = 5
+	Instance.new("UICorner", barFill).CornerRadius = UDim.new(1, 0)
+	table.insert(accentHighlights, barFill)
+
+	local current = math.clamp(initial, minVal, maxVal)
+
+	local function setNumeric(val, fire)
+		current = math.clamp(math.floor(val + 0.5), minVal, maxVal)
+		local ratio = (current - minVal) / math.max(maxVal - minVal, 1)
+		barFill.Size = UDim2.new(ratio, 0, 1, 0)
+		title.Text = string.format("%s: %d%s", labelText, current, suffix or "")
+		if fire and onChanged then
+			onChanged(current)
+		end
+	end
+
+	local sliding = false
+	local function updateFromInput(posX)
+		local absX = barBg.AbsolutePosition.X
+		local absW = math.max(barBg.AbsoluteSize.X, 1)
+		local r = math.clamp((posX - absX) / absW, 0, 1)
+		setNumeric(minVal + (maxVal - minVal) * r, true)
+	end
+
+	barBg.InputBegan:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+			sliding = true
+			updateFromInput(inp.Position.X)
+			inp.Changed:Connect(function()
+				if inp.UserInputState == Enum.UserInputState.End then sliding = false end
+			end)
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(inp)
+		if sliding and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+			updateFromInput(inp.Position.X)
+		end
+	end)
+
+	setNumeric(current, false)
+	return setNumeric
+end
+
+local function addButton(page, text, onClick)
+	local btn = Instance.new("TextButton", page)
+	btn.Size = UDim2.new(1, 0, 0, 34)
+	btn.BackgroundColor3 = Color3.fromRGB(38, 38, 46)
+	btn.BackgroundTransparency = 0.12
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 12
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Text = text
+	btn.AutoButtonColor = true
+	btn.ZIndex = 3
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
+	btn.MouseButton1Click:Connect(onClick)
+	return btn
+end
+
+local RolePalette = {
+	{ Name = "Crimson Red", Color = Color3.fromRGB(255, 59, 48) },
+	{ Name = "iOS Blue", Color = Color3.fromRGB(10, 132, 255) },
+	{ Name = "Emerald Green", Color = Color3.fromRGB(48, 209, 88) },
+	{ Name = "Electric Purple", Color = Color3.fromRGB(191, 90, 242) },
+	{ Name = "Solar Gold", Color = Color3.fromRGB(255, 214, 10) },
+	{ Name = "Hot Pink", Color = Color3.fromRGB(255, 55, 95) }
+}
+
+local function addAnimatedRoleColorControl(page, roleKey, roleTitle, getterFn, setterFn, rainbowGetter, rainbowSetter)
+	local card = Instance.new("Frame", page)
+	card.Size = UDim2.new(1, 0, 0, 88)
+	card.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
+	card.BackgroundTransparency = 0.14
+	card.ZIndex = 3
+	Instance.new("UICorner", card).CornerRadius = UDim.new(0, 12)
+
+	local cStroke = Instance.new("UIStroke", card)
+	cStroke.Color = getterFn()
+	cStroke.Transparency = 0.45
+	cStroke.Thickness = 1.2
+
+	local header = Instance.new("TextLabel", card)
+	header.Size = UDim2.new(1, -110, 0, 18)
+	header.Position = UDim2.new(0, 12, 0, 5)
+	header.BackgroundTransparency = 1
+	header.TextXAlignment = Enum.TextXAlignment.Left
+	header.Font = Enum.Font.GothamBold
+	header.TextSize = 11
+	header.TextColor3 = Color3.fromRGB(242, 242, 247)
+	header.Text = roleTitle .. " Color"
+	header.ZIndex = 4
+
+	local rainbowBtn = Instance.new("TextButton", card)
+	rainbowBtn.Size = UDim2.new(0, 62, 0, 18)
+	rainbowBtn.Position = UDim2.new(1, -104, 0, 5)
+	rainbowBtn.BackgroundColor3 = rainbowGetter() and Color3.fromRGB(48, 209, 88) or Color3.fromRGB(52, 52, 62)
+	rainbowBtn.Font = Enum.Font.GothamBold
+	rainbowBtn.TextSize = 9
+	rainbowBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	rainbowBtn.Text = "RAINBOW"
+	rainbowBtn.AutoButtonColor = false
+	rainbowBtn.ZIndex = 5
+	Instance.new("UICorner", rainbowBtn).CornerRadius = UDim.new(1, 0)
+
+	local swatch = Instance.new("Frame", card)
+	swatch.Size = UDim2.new(0, 22, 0, 14)
+	swatch.Position = UDim2.new(1, -34, 0, 7)
+	swatch.BackgroundColor3 = getterFn()
+	swatch.BorderSizePixel = 0
+	swatch.ZIndex = 4
+	Instance.new("UICorner", swatch).CornerRadius = UDim.new(1, 0)
+
+	local rowHolder = Instance.new("Frame", card)
+	rowHolder.Size = UDim2.new(1, -20, 0, 22)
+	rowHolder.Position = UDim2.new(0, 10, 0, 30)
+	rowHolder.BackgroundTransparency = 1
+	rowHolder.ZIndex = 4
+
+	local layout = Instance.new("UIListLayout", rowHolder)
+	layout.FillDirection = Enum.FillDirection.Horizontal
+	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	layout.VerticalAlignment = Enum.VerticalAlignment.Center
+	layout.Padding = UDim.new(0, 8)
+
+	local statusLbl = Instance.new("TextLabel", card)
+	statusLbl.Size = UDim2.new(1, -24, 0, 16)
+	statusLbl.Position = UDim2.new(0, 12, 0, 62)
+	statusLbl.BackgroundTransparency = 1
+	statusLbl.TextXAlignment = Enum.TextXAlignment.Left
+	statusLbl.Font = Enum.Font.GothamMedium
+	statusLbl.TextSize = 10
+	statusLbl.TextColor3 = Color3.fromRGB(165, 168, 182)
+	statusLbl.Text = rainbowGetter() and "Mode: Rainbow automático" or "Mode: Color fijo"
+	statusLbl.ZIndex = 4
+
+	local function animateToColor(newCol)
+		setterFn(newCol)
+		pcall(function()
+			TweenService:Create(swatch, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingOut), { BackgroundColor3 = newCol }):Play()
+			TweenService:Create(cStroke, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingOut), { Color = newCol }):Play()
+		end)
+	end
+
+	local function refreshRainbowUI()
+		local active = rainbowGetter()
+		rainbowBtn.BackgroundColor3 = active and Color3.fromRGB(48, 209, 88) or Color3.fromRGB(52, 52, 62)
+		statusLbl.Text = active and "Mode: Rainbow automático" or "Mode: Color fijo"
+	end
+
+	rainbowBtn.MouseButton1Click:Connect(function()
+		rainbowSetter(not rainbowGetter())
+		refreshRainbowUI()
+	end)
+
+	for _, item in ipairs(RolePalette) do
+		local dotBtn = Instance.new("TextButton", rowHolder)
+		dotBtn.Size = UDim2.new(0, 20, 0, 20)
+		dotBtn.BackgroundColor3 = item.Color
+		dotBtn.Text = ""
+		dotBtn.AutoButtonColor = false
+		dotBtn.ZIndex = 5
+		Instance.new("UICorner", dotBtn).CornerRadius = UDim.new(1, 0)
+
+		local dStroke = Instance.new("UIStroke", dotBtn)
+		dStroke.Color = Color3.fromRGB(255, 255, 255)
+		dStroke.Transparency = 0.82
+		dStroke.Thickness = 1
+
+		dotBtn.MouseEnter:Connect(function()
+			pcall(function()
+				TweenService:Create(dotBtn, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingOut), { Size = UDim2.new(0, 23, 0, 23) }):Play()
+				TweenService:Create(dStroke, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingOut), { Transparency = 0.2 }):Play()
+			end)
+		end)
+
+		dotBtn.MouseLeave:Connect(function()
+			pcall(function()
+				TweenService:Create(dotBtn, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingOut), { Size = UDim2.new(0, 20, 0, 20) }):Play()
+				TweenService:Create(dStroke, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingOut), { Transparency = 0.82 }):Play()
+			end)
+		end)
+
+		dotBtn.MouseButton1Click:Connect(function()
+			rainbowSetter(false)
+			refreshRainbowUI()
+			animateToColor(item.Color)
+			pcall(function()
+				TweenService:Create(dotBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingOut), { Size = UDim2.new(0, 17, 0, 17) }):Play()
+				task.delay(0.1, function()
+					if dotBtn and dotBtn.Parent then
+						TweenService:Create(dotBtn, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingOut), { Size = UDim2.new(0, 20, 0, 20) }):Play()
+					end
+				end)
+			end)
+		end)
+	end
+
+	roleLiveVisuals[roleKey] = {
+		swatch = swatch,
+		stroke = cStroke,
+		rainbowGetter = rainbowGetter,
+		colorGetter = getterFn
+	}
+end
+
+-- Pestañas
+local VisualsPage = createPage("Visuals")
+local RolesPage = createPage("Roles")
+local CombatPage = createPage("Combat")
+local PlayerPage = createPage("Player")
+local ThemePage = createPage("Theme")
+
+-- Visuals
+addSection(VisualsPage, "ESP & Box")
+addToggle(VisualsPage, "Enable ESP", Config.ESPEnabled, function(s)
+	Config.ESPEnabled = s
+	if not s then for p in pairs(highlights) do removeESP(p) end end
+end)
+addToggle(VisualsPage, "Box ESP (Caja 2D)", Config.BoxESPEnabled, function(s)
+	Config.BoxESPEnabled = s
+	if not s then for p in pairs(boxDrawings) do hideBox(p) end end
+end)
+addToggle(VisualsPage, "Role Colors", Config.RoleBasedColors, function(s) Config.RoleBasedColors = s end)
+addToggle(VisualsPage, "Show Names", Config.ESPNames, function(s) Config.ESPNames = s end)
+addToggle(VisualsPage, "Show Role", Config.ESPRole, function(s) Config.ESPRole = s end)
+addToggle(VisualsPage, "Show Distance", Config.ESPDistance, function(s) Config.ESPDistance = s end)
+addToggle(VisualsPage, "ESP Rainbow (Global)", Config.ESPRainbow, function(s) Config.ESPRainbow = s end)
+
+addSection(VisualsPage, "Top Tracers & Gun")
+addToggle(VisualsPage, "Top Tracers (Desde Arriba)", Config.TracersEnabled, function(s)
+	Config.TracersEnabled = s
+	if not s then clearTracers() end
+end)
+addToggle(VisualsPage, "Tracer Rainbow", Config.TracerRainbow, function(s) Config.TracerRainbow = s end)
+addToggle(VisualsPage, "Cham Gun (Black)", Config.GunESPEnabled, function(s)
+	Config.GunESPEnabled = s
+	if not s then clearGunVisuals() end
+end)
+addToggle(VisualsPage, "Gun Top Tracer", Config.GunTracerEnabled, function(s)
+	Config.GunTracerEnabled = s
+	if not s and gunTracerLine then gunTracerLine.Visible = false end
+end)
+
+-- Roles Colors (Murder / Sheriff / Innocent + Rainbow)
+addSection(RolesPage, "Animated Role Colors & Rainbow")
+addAnimatedRoleColorControl(
+	RolesPage,
+	"Murder",
+	"Murder",
+	function() return Config.ColorMurder end,
+	function(c) Config.ColorMurder = c end,
+	function() return Config.MurderRainbow end,
+	function(b) Config.MurderRainbow = b end
+)
+addAnimatedRoleColorControl(
+	RolesPage,
+	"Sheriff",
+	"Sheriff",
+	function() return Config.ColorSheriff end,
+	function(c) Config.ColorSheriff = c end,
+	function() return Config.SheriffRainbow end,
+	function(b) Config.SheriffRainbow = b end
+)
+addAnimatedRoleColorControl(
+	RolesPage,
+	"Innocent",
+	"Innocent",
+	function() return Config.ColorInnocent end,
+	function(c) Config.ColorInnocent = c end,
+	function() return Config.InnocentRainbow end,
+	function(b) Config.InnocentRainbow = b end
+)
+
+-- Combat
+addSection(CombatPage, "Aimbot")
+addToggle(CombatPage, "Aimbot Lock", Config.AimbotEnabled, function(s)
+	Config.AimbotEnabled = s
+	if not s and fovCircle then fovCircle.Visible = false end
+	refreshAimCircleVisual()
+end, "Aimbot")
+addToggle(CombatPage, "Only When Sheriff", Config.OnlyWhenSheriff, function(s) Config.OnlyWhenSheriff = s end)
+addToggle(CombatPage, "Show FOV Circle", Config.ShowFOV, function(s) Config.ShowFOV = s end)
+addToggle(CombatPage, "Wall Check", Config.WallCheck, function(s) Config.WallCheck = s end)
+addToggle(CombatPage, "Target Head (OFF = Torso)", Config.AimbotHitbox == "Head", function(s)
+	Config.AimbotHitbox = s and "Head" or "HumanoidRootPart"
+end)
+addSlider(CombatPage, "FOV Radius", 50, 450, Config.AimbotFOV, "px", function(v) Config.AimbotFOV = v end)
+addSlider(CombatPage, "Smoothness", 5, 100, math.floor(Config.AimbotSmooth * 100), "%", function(v)
+	Config.AimbotSmooth = math.clamp(v / 100, 0.05, 1)
+end)
+
+addSection(CombatPage, "Hitbox")
+addToggle(CombatPage, "Big Head", Config.BigHeadEnabled, function(s)
+	Config.BigHeadEnabled = s
+	if not s then restoreHeads() end
+end)
+addSlider(CombatPage, "Head Size", 2, 16, Config.HeadSize, " studs", function(v) Config.HeadSize = v end)
+addToggle(CombatPage, "Head Rainbow", Config.HeadRainbow, function(s) Config.HeadRainbow = s end)
+
+-- Player
+addSection(PlayerPage, "Movement & Utilities")
+addToggle(PlayerPage, "Noclip", Config.NoclipEnabled, function(s)
+	Config.NoclipEnabled = s
+	if not s then restoreNoclip() end
+end)
+addToggle(PlayerPage, "Fly", Config.FlyEnabled, function(s)
+	Config.FlyEnabled = s
+	if not s then stopFly() end
+end)
+addSlider(PlayerPage, "Fly Speed", 16, 90, Config.FlySpeed, "", function(v) Config.FlySpeed = v end)
+addToggle(PlayerPage, "Jump Boost", Config.JumpBoostEnabled, function(s)
+	Config.JumpBoostEnabled = s
+	local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+	if h and not s then h.JumpPower = 50 end
+end)
+addSlider(PlayerPage, "Jump Power", 30, 110, Config.JumpPowerValue, "", function(v) Config.JumpPowerValue = v end)
+addToggle(PlayerPage, "Infinite Jump", Config.InfiniteJump, function(s) Config.InfiniteJump = s end)
+addToggle(PlayerPage, "Anti-AFK", Config.AntiAFK, function(s) Config.AntiAFK = s end)
+
+addSection(PlayerPage, "Speed Control")
+addToggle(PlayerPage, "Enable Speed", Config.SpeedEnabled, function(s)
+	Config.SpeedEnabled = s
+	local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+	if h and not s then h.WalkSpeed = 16 end
+end)
+addSlider(PlayerPage, "Walk Speed", 16, 42, Config.WalkSpeedValue, " WS", function(v) Config.WalkSpeedValue = v end)
+addButton(PlayerPage, "Reset Speed (16)", function()
+	Config.WalkSpeedValue = 16
+	local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+	if h then h.WalkSpeed = 16 end
+end)
+
+-- Theme
+addSection(ThemePage, "iOS Style & Glass")
+addToggle(ThemePage, "Animated Rainbow Accent", Config.RainbowMenu, function(s)
+	Config.RainbowMenu = s
+	if not s then applyThemeColor(Config.AccentColor) end
+end)
+addSlider(ThemePage, "Glass Transparency", 0, 85, math.floor(Config.MenuTransparency * 100), "%", function(v)
+	applyMenuAlpha(v / 100)
+end)
+
+local iosPresets = {
+	{ Name = "iOS Blue", Color = Color3.fromRGB(10, 132, 255) },
+	{ Name = "iOS Red", Color = Color3.fromRGB(255, 59, 48) },
+	{ Name = "iOS Purple", Color = Color3.fromRGB(191, 90, 242) },
+	{ Name = "iOS Mint", Color = Color3.fromRGB(100, 210, 255) },
+	{ Name = "iOS Orange", Color = Color3.fromRGB(255, 159, 10) }
+}
+for _, pr in ipairs(iosPresets) do
+	addButton(ThemePage, "Tint: " .. pr.Name, function()
+		Config.RainbowMenu = false
+		applyThemeColor(pr.Color)
+	end)
+end
+
+selectTab("Visuals")
+refreshAimCircleVisual()
+
+AimCircleBtn.MouseButton1Click:Connect(function()
+	Config.AimbotEnabled = not Config.AimbotEnabled
+	if not Config.AimbotEnabled and fovCircle then
+		fovCircle.Visible = false
+	end
+	refreshAimCircleVisual()
+	if toggleSyncCallbacks.Aimbot then
+		toggleSyncCallbacks.Aimbot(Config.AimbotEnabled)
+	end
+end)
+
+-- Conexiones
 Players.PlayerRemoving:Connect(function(player)
 	removeESP(player)
 	if tracers[player] then
@@ -1171,10 +1375,7 @@ LocalPlayer.Idled:Connect(function()
 	end
 end)
 
-local lastThemeTick = 0
-local lastGunTick = 0
-
-RunService.Stepped:Connect(function()
+_G.MonsterIOS_Step = RunService.Stepped:Connect(function()
 	if Config.NoclipEnabled and LocalPlayer.Character then
 		for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
 			if part:IsA("BasePart") and part.CanCollide then
@@ -1187,13 +1388,29 @@ RunService.Stepped:Connect(function()
 	end
 end)
 
-RunService.RenderStepped:Connect(function()
+local lastThemeTick = 0
+local lastGunTick = 0
+
+_G.MonsterIOS_Render = RunService.RenderStepped:Connect(function()
 	Camera = Workspace.CurrentCamera or Camera
 	if not Camera then return end
 
-	if Config.MenuRainbow and (os.clock() - lastThemeTick) >= 0.1 then
+	-- Brillo suave en la textura iOS
+	glassGrad.Rotation = (os.clock() * 14) % 360
+
+	-- Actualizar muestras de rol si están en modo Rainbow
+	local offsets = { Murder = 0.0, Sheriff = 0.33, Innocent = 0.66 }
+	for rKey, vis in pairs(roleLiveVisuals) do
+		if vis and vis.rainbowGetter() then
+			local rCol = getRainbowColor(1.4, offsets[rKey] or 0)
+			if vis.swatch and vis.swatch.Parent then vis.swatch.BackgroundColor3 = rCol end
+			if vis.stroke and vis.stroke.Parent then vis.stroke.Color = rCol end
+		end
+	end
+
+	if Config.RainbowMenu and (os.clock() - lastThemeTick) >= 0.1 then
 		lastThemeTick = os.clock()
-		animateMenuColor(getRainbowColor(1.6))
+		applyThemeColor(getRainbowColor(1.6, 0))
 	end
 
 	if (os.clock() - lastGunTick) >= 0.18 then
@@ -1228,11 +1445,16 @@ RunService.RenderStepped:Connect(function()
 		for _, player in ipairs(Players:GetPlayers()) do
 			pcall(applyESP, player)
 		end
+	else
+		for player in pairs(boxDrawings) do
+			hideBox(player)
+		end
 	end
 
+	-- Tracers desde arriba hacia el jugador
 	if HasDrawing and Config.TracersEnabled then
-		local bottomCenter = Vector2.new(Camera.ViewportSize.X * 0.5, Camera.ViewportSize.Y)
-		local trColor = Config.TracerRainbow and getRainbowColor(1.2) or Config.TracerColor
+		local topOrigin = Vector2.new(Camera.ViewportSize.X * 0.5, 0)
+		local trColor = Config.TracerRainbow and getRainbowColor(1.2, 0.25) or Config.TracerColor
 
 		for _, player in ipairs(Players:GetPlayers()) do
 			if player ~= LocalPlayer and player.Character then
@@ -1248,10 +1470,10 @@ RunService.RenderStepped:Connect(function()
 						if not line then
 							line = Drawing.new("Line")
 							line.Thickness = 1.8
-							line.Transparency = 0.85
+							line.Transparency = 0.9
 							tracers[player] = line
 						end
-						line.From = bottomCenter
+						line.From = topOrigin
 						line.To = Vector2.new(screenPos.X, screenPos.Y)
 						line.Color = lineColor
 						line.Visible = true
@@ -1273,7 +1495,7 @@ RunService.RenderStepped:Connect(function()
 
 	if Config.BigHeadEnabled then
 		local hSize = Vector3.new(Config.HeadSize, Config.HeadSize, Config.HeadSize)
-		local hColor = Config.HeadRainbow and getRainbowColor(1.2) or Config.HeadColor
+		local hColor = Config.HeadRainbow and getRainbowColor(1.2, 0.5) or Config.HeadColor
 
 		for _, player in ipairs(Players:GetPlayers()) do
 			if player ~= LocalPlayer and player.Character then
@@ -1317,7 +1539,7 @@ RunService.RenderStepped:Connect(function()
 		if Config.AimbotEnabled and Config.ShowFOV then
 			fovCircle.Position = crosshair
 			fovCircle.Radius = Config.AimbotFOV
-			fovCircle.Color = locked and Color3.fromRGB(255, 255, 255) or Config.MenuAccent
+			fovCircle.Color = locked and Color3.fromRGB(255, 255, 255) or Config.AccentColor
 			fovCircle.Visible = true
 		else
 			fovCircle.Visible = false
@@ -1325,10 +1547,4 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
-Rayfield:Notify({
-	Title = "The Monster",
-	Content = "by King Gael • Floating buttons & mobile ready.",
-	Duration = 4
-})
-
-print("[The Monster by King Gael] Loaded.")
+print("[The Monster • by King Gael] Full iOS + Role Rainbow loaded.")
