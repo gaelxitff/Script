@@ -1,5 +1,5 @@
 --[[
-    KING GAEL v2 • iOS GLASS EDITION (NO FREEZE)
+    KING GAEL v2 • iOS GLASS EDITION (INSTANT / NO FREEZE)
     Target PlaceId: 120851538706364
 ]]
 
@@ -52,11 +52,12 @@ local espCache   = {}
 local chamsCache = {}
 local origSizes  = {}
 local flyBV, flyBG
-local fpsBoosting = false
+local fpsRunning = false
+local menuReady  = false
 
-local function getRainbow(offset)
-    local h = ((os.clock() * 0.25) + (offset or 0)) % 1
-    return Color3.fromHSV(h, 0.88, 1)
+local function getAccentColor(offset)
+    local h = ((os.clock() * 0.18) + (offset or 0)) % 1
+    return Color3.fromHSV(h, 0.72, 1)
 end
 
 -- ======================== HELPERS ========================
@@ -173,7 +174,6 @@ espLayer.Active = false
 espLayer.ZIndex = 10
 espLayer.Parent = gui
 
--- Círculo FOV en UI (sin depender de Drawing API)
 local fovRing = Instance.new("Frame")
 fovRing.AnchorPoint = Vector2.new(0.5, 0.5)
 fovRing.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -194,12 +194,12 @@ fovStroke.Color = Color3.fromRGB(120, 215, 255)
 fovStroke.Transparency = 0.25
 fovStroke.Parent = fovRing
 
--- Pantalla de carga ("Loading...")
+-- Tarjeta rápida de carga ("Loading...") sin bloqueo
 local loadCard = Instance.new("Frame")
 loadCard.AnchorPoint = Vector2.new(0.5, 0.5)
 loadCard.Position = UDim2.new(0.5, 0, 0.5, 0)
-loadCard.Size = UDim2.new(0, IsMobile and 250 or 290, 0, 120)
-loadCard.BackgroundColor3 = Color3.fromRGB(16, 22, 36)
+loadCard.Size = UDim2.new(0, IsMobile and 250 or 290, 0, 134)
+loadCard.BackgroundColor3 = Color3.fromRGB(15, 22, 38)
 loadCard.BackgroundTransparency = 0.14
 loadCard.BorderSizePixel = 0
 loadCard.ZIndex = 190
@@ -216,7 +216,7 @@ lcStroke.Transparency = 0.3
 lcStroke.Parent = loadCard
 
 local loadTitle = Instance.new("TextLabel")
-loadTitle.Position = UDim2.new(0, 16, 0, 16)
+loadTitle.Position = UDim2.new(0, 16, 0, 14)
 loadTitle.Size = UDim2.new(1, -32, 0, 22)
 loadTitle.BackgroundTransparency = 1
 loadTitle.Text = "KING GAEL v2"
@@ -227,18 +227,18 @@ loadTitle.ZIndex = 191
 loadTitle.Parent = loadCard
 
 local loadSub = Instance.new("TextLabel")
-loadSub.Position = UDim2.new(0, 16, 0, 40)
+loadSub.Position = UDim2.new(0, 16, 0, 36)
 loadSub.Size = UDim2.new(1, -32, 0, 18)
 loadSub.BackgroundTransparency = 1
 loadSub.Text = "Loading..."
 loadSub.TextColor3 = Color3.fromRGB(145, 205, 255)
 loadSub.Font = Enum.Font.GothamMedium
-loadSub.TextSize = 12.5
+loadSub.TextSize = 12
 loadSub.ZIndex = 191
 loadSub.Parent = loadCard
 
 local barTrack = Instance.new("Frame")
-barTrack.Position = UDim2.new(0, 20, 0, 74)
+barTrack.Position = UDim2.new(0, 20, 0, 64)
 barTrack.Size = UDim2.new(1, -40, 0, 8)
 barTrack.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 barTrack.BackgroundTransparency = 0.85
@@ -252,7 +252,7 @@ btCorner.Parent = barTrack
 
 local barFill = Instance.new("Frame")
 barFill.Size = UDim2.new(0, 0, 1, 0)
-barFill.BackgroundColor3 = Color3.fromRGB(75, 190, 255)
+barFill.BackgroundColor3 = Color3.fromRGB(80, 195, 255)
 barFill.BorderSizePixel = 0
 barFill.ZIndex = 192
 barFill.Parent = barTrack
@@ -260,6 +260,24 @@ barFill.Parent = barTrack
 local bfCorner = Instance.new("UICorner")
 bfCorner.CornerRadius = UDim.new(1, 0)
 bfCorner.Parent = barFill
+
+local skipBtn = Instance.new("TextButton")
+skipBtn.AnchorPoint = Vector2.new(0.5, 1)
+skipBtn.Position = UDim2.new(0.5, 0, 1, -12)
+skipBtn.Size = UDim2.new(0, 96, 0, 26)
+skipBtn.BackgroundColor3 = Color3.fromRGB(55, 145, 245)
+skipBtn.BackgroundTransparency = 0.25
+skipBtn.Text = "Abrir ya"
+skipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+skipBtn.Font = Enum.Font.GothamBold
+skipBtn.TextSize = 11
+skipBtn.AutoButtonColor = false
+skipBtn.ZIndex = 192
+skipBtn.Parent = loadCard
+
+local sbCorner = Instance.new("UICorner")
+sbCorner.CornerRadius = UDim.new(0, 10)
+sbCorner.Parent = skipBtn
 
 -- Ventana principal tipo cristal iOS
 local vp = Camera.ViewportSize
@@ -271,7 +289,7 @@ win.Name = "KingGaelGlassWindow"
 win.AnchorPoint = Vector2.new(0.5, 0.5)
 win.Position = UDim2.new(0.5, 0, 0.5, 0)
 win.Size = UDim2.new(0, winW, 0, winH)
-win.BackgroundColor3 = Color3.fromRGB(16, 22, 36)
+win.BackgroundColor3 = Color3.fromRGB(15, 22, 38)
 win.BackgroundTransparency = 0.22
 win.BorderSizePixel = 0
 win.ClipsDescendants = true
@@ -363,6 +381,20 @@ fbStroke.Color = Color3.fromRGB(130, 210, 255)
 fbStroke.Transparency = 0.35
 fbStroke.Parent = floatBtn
 
+local function finishLoading()
+    if menuReady then return end
+    menuReady = true
+    if loadCard and loadCard.Parent then
+        pcall(function() loadCard:Destroy() end)
+    end
+    if win and win.Parent then
+        S.MenuOpen = true
+        win.Visible = true
+    end
+end
+
+skipBtn.MouseButton1Click:Connect(finishLoading)
+
 local dragState = nil
 topBar.InputBegan:Connect(function(inp)
     if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
@@ -398,8 +430,12 @@ end)
 UserInputService.InputEnded:Connect(function(inp)
     if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
         if dragState and dragState.kind == "btn" and not dragState.moved then
-            S.MenuOpen = not win.Visible
-            win.Visible = S.MenuOpen
+            if not menuReady then
+                finishLoading()
+            else
+                S.MenuOpen = not win.Visible
+                win.Visible = S.MenuOpen
+            end
         end
         dragState = nil
     end
@@ -647,12 +683,12 @@ makeSlider(combatPage, "Tamaño Hitbox", 2, 10, 0.5, 5.0, " st", function(v) S.H
 makeToggle(combatPage, "Team Check", true, function(v) S.TeamCheck = v end)
 makeToggle(combatPage, "Wall Check", true, function(v) S.WallCheck = v end)
 
-local espPage = makeTab("ESP Arcoíris")
+local espPage = makeTab("ESP")
 makeToggle(espPage, "ESP Activo", true, function(v) S.ESP = v end)
-makeToggle(espPage, "Box ESP Arcoíris", true, function(v) S.BoxESP = v end)
-makeToggle(espPage, "Líneas Arcoíris", true, function(v) S.Tracers = v end)
+makeToggle(espPage, "Box ESP", true, function(v) S.BoxESP = v end)
+makeToggle(espPage, "Líneas / Tracers", true, function(v) S.Tracers = v end)
 makeToggle(espPage, "Nombre y Distancia", true, function(v) S.NameESP = v end)
-makeToggle(espPage, "Chams Arcoíris", false, function(v) S.Chams = v end)
+makeToggle(espPage, "Chams", false, function(v) S.Chams = v end)
 makeSlider(espPage, "Distancia Máxima", 200, 4000, 100, 2200, " st", function(v) S.MaxDist = v end)
 
 local movePage = makeTab("Jugador")
@@ -677,8 +713,8 @@ makeToggle(worldPage, "Fullbright", false, function(v)
     Lighting.GlobalShadows = not v
 end)
 makeToggle(worldPage, "FPS Boost Seguro", false, function(v)
-    if v and not fpsBoosting then
-        fpsBoosting = true
+    if v and not fpsRunning then
+        fpsRunning = true
         task.spawn(function()
             pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
             local list = Workspace:GetDescendants()
@@ -691,16 +727,14 @@ makeToggle(worldPage, "FPS Boost Seguro", false, function(v)
                         d.Material = Enum.Material.SmoothPlastic
                     end
                 end
-                if i % 350 == 0 then
-                    task.wait()
-                end
+                if i % 400 == 0 then task.wait() end
             end
-            fpsBoosting = false
+            fpsRunning = false
         end)
     end
 end)
 
--- ======================== ESP ARCOÍRIS ========================
+-- ======================== ESP ========================
 local function removeEsp(plr)
     local c = espCache[plr]
     if not c then return end
@@ -773,7 +807,7 @@ local function updateEspAndChams()
 
     for _, plr in ipairs(Players:GetPlayers()) do
         idx += 1
-        local rbCol = getRainbow(idx * 0.17)
+        local col = getAccentColor(idx * 0.16)
 
         if not S.ESP or not isEnemyPlayer(plr) then
             removeEsp(plr)
@@ -808,8 +842,8 @@ local function updateEspAndChams()
                 hl.Parent = char
                 chamsCache[plr] = hl
             end
-            hl.FillColor = rbCol
-            hl.OutlineColor = getRainbow((idx * 0.17) + 0.35)
+            hl.FillColor = col
+            hl.OutlineColor = getAccentColor((idx * 0.16) + 0.3)
         elseif chamsCache[plr] then
             pcall(function() chamsCache[plr]:Destroy() end)
             chamsCache[plr] = nil
@@ -825,21 +859,21 @@ local function updateEspAndChams()
             local w = math.clamp(h * 0.56, 12, 240)
             entry.box.Size = UDim2.new(0, w, 0, h)
             entry.box.Position = UDim2.new(0, rootScr.X - w * 0.5, 0, math.min(topScr.Y, botScr.Y))
-            entry.stroke.Color = rbCol
+            entry.stroke.Color = col
             entry.box.Visible = true
         else
             entry.box.Visible = false
         end
 
         if S.Tracers and rootOn and rootScr.Z > 0 then
-            drawLineFrame(entry.tracer, originBottom, Vector2.new(rootScr.X, rootScr.Y), rbCol, IsMobile and 2 or 1.5)
+            drawLineFrame(entry.tracer, originBottom, Vector2.new(rootScr.X, rootScr.Y), col, IsMobile and 2 or 1.5)
         else
             entry.tracer.Visible = false
         end
 
         if S.NameESP and topOn and topScr.Z > 0 then
             entry.label.Text = string.format("%s [%dm]", plr.DisplayName, math.floor(dist3D))
-            entry.label.TextColor3 = rbCol
+            entry.label.TextColor3 = col
             entry.label.Position = UDim2.new(0, topScr.X, 0, math.max(12, topScr.Y - 4))
             entry.label.Visible = true
         else
@@ -889,9 +923,7 @@ local function updateMovement()
     local hrp = getHRP()
     if not (char and hum and hrp) then return end
 
-    if S.Speed then
-        hum.WalkSpeed = S.WalkSpeed
-    end
+    if S.Speed then hum.WalkSpeed = S.WalkSpeed end
 
     if S.Noclip then
         for _, d in ipairs(char:GetDescendants()) do
@@ -932,15 +964,11 @@ end)
 
 UserInputService.InputBegan:Connect(function(inp, gp)
     if gp then return end
-    if inp.UserInputType == Enum.UserInputType.MouseButton2 then
-        HoldingAim = true
-    end
+    if inp.UserInputType == Enum.UserInputType.MouseButton2 then HoldingAim = true end
 end)
 
 UserInputService.InputEnded:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton2 then
-        HoldingAim = false
-    end
+    if inp.UserInputType == Enum.UserInputType.MouseButton2 then HoldingAim = false end
 end)
 
 RunService.RenderStepped:Connect(function()
@@ -949,7 +977,7 @@ RunService.RenderStepped:Connect(function()
 
     fovRing.Position = UDim2.new(0, center.X, 0, center.Y)
     fovRing.Size = UDim2.new(0, S.FOV * 2, 0, S.FOV * 2)
-    fovStroke.Color = getRainbow(0)
+    fovStroke.Color = getAccentColor(0)
     fovRing.Visible = S.ShowFOV and S.Aimbot
 
     if S.Aimbot and (S.AlwaysOn or HoldingAim) then
@@ -979,16 +1007,9 @@ LocalPlayer.CharacterAdded:Connect(function()
     if flyBG then pcall(function() flyBG:Destroy() end) flyBG = nil end
 end)
 
-task.spawn(function()
-    loadSub.Text = "Loading..."
-    local tw = TweenService:Create(barFill, TweenInfo.new(1.0, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-        Size = UDim2.new(1, 0, 1, 0)
-    })
-    tw:Play()
-    tw.Completed:Wait()
-    task.wait(0.15)
-    if loadCard and loadCard.Parent then loadCard:Destroy() end
-    if win and win.Parent and S.MenuOpen then
-        win.Visible = true
-    end
-end)
+-- Carga no bloqueante
+TweenService:Create(barFill, TweenInfo.new(0.75, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+    Size = UDim2.new(1, 0, 1, 0)
+}):Play()
+
+task.delay(0.8, finishLoading)
